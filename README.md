@@ -3,6 +3,10 @@
 A Flutter library to enable developers to easily add interactive
 generative UI to their applications.
 
+See the [Getting started with GenUI](https://www.youtube.com/watch?v=nWr6eZKM6no) video for an overview of the package.
+
+[<img src="docs/assets/genui_intro_video_still.png" alt="GenUI Intro video still" height="500">](https://www.youtube.com/watch?v=nWr6eZKM6no)
+
 ## Status: Highly Experimental
 
 This is a highly experimental package, which means the API will change (sometimes drastically).
@@ -36,58 +40,6 @@ chatbots and next-generation agent-based user experiences.
   type out answers to questions, the LLM can render sliders, checkboxes, and more.
 - Create dynamically composed UIs: an agent can generate a complete form with sliders, date pickers,
   and text fields on the fly based on a user's request to "book a flight."
-
-## Example
-
-### Using the GenUI SDK with Firebase AI Logic
-
-```dart
-// Adding your widgets into the catalog.
-// Start with the built-in catalog and add your own custom widgets.
-final catalog = CoreCatalogItems.asCatalog().copyWith([
-  myCustomNewWidget,
-]);
-
-/// Initializing the library.
-final genUiManager = GenUiManager(catalog: catalog);
-final contentGenerator = FirebaseAiContentGenerator(
-  catalog: catalog,
-  systemInstruction: '''
-  You are a bicycle maintenance assistant who is an expert in diagnosing issues and
-  giving step-by-step instructions.
-  ''',
-);
-late final _genUiConversation = GenUiConversation(
-  genUiManager: genUiManager,
-  contentGenerator: contentGenerator,
-  onSurfaceAdded: _onSurfaceAdded,
-  onSurfaceDeleted: (_) {},
-  onTextResponse: (_) {},
-  // ignore: avoid_print
-  onWarning: (value) => print('Warning from GenUiConversation: $value'),
-);
-
-// Put the surface, added by AI, to the list of messages that should be rendered,
-// trigger re-render, and scroll to bottom.
-void _onSurfaceAdded(SurfaceAdded surface) {
-  if (!mounted) return;
-  setState(() {
-    _messages.add(MessageController(surfaceId: surface.surfaceId));
-  });
-  _scrollToBottom();
-}
-
-// Render that UI.
-Widget build(BuildContext context) {
-   if (type == MessageType.genUi) {
-     return GenUiSurface(
-       host: _genUiConversation.genUiManager.host,
-       surfaceId: _surfaceId,
-       onEvent: _handleEvent,
-     );
-   }
-}
-```
 
 ## Look & Feel
 
