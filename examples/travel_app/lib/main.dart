@@ -2,27 +2,50 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Be sure to uncomment these Firebase initialization code and these imports
+// if using Firebase AI.
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
-import 'package:genui_firebase_ai/genui_firebase_ai.dart';
+import 'package:genui_firebase_ai/genui_firebase_ai.dart'
+    show FirebaseAiContentGenerator;
 import 'package:logging/logging.dart';
 
-import 'firebase_options.dart';
 import 'src/catalog.dart';
+import 'src/config/configuration.dart';
 import 'src/travel_planner_page.dart';
+
+// If you want to convert to using Firebase AI, run:
+//
+//   sh tool/refresh_firebase.sh <project_id>
+//
+// to refresh the Firebase configuration for a specific Firebase project.
+// and uncomment the Firebase initialization code and import below that is
+// marked with UNCOMMENT_FOR_FIREBASE, and set the value of `aiBackend` to
+// `AiBackend.firebase` in `lib/config/configuration.dart`.
+
+// import 'firebase_options.dart'; // UNCOMMENT_FOR_FIREBASE
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseAppCheck.instance.activate(
-    providerApple: const AppleDebugProvider(),
-    providerAndroid: const AndroidDebugProvider(),
-    providerWeb: ReCaptchaV3Provider('debug'),
-  );
+
+  // Only initialize Firebase if we are using the Firebase backend.
+  if (aiBackend == AiBackend.firebase) {
+    await Firebase.initializeApp(
+      // UNCOMMENT_FOR_FIREBASE (See top of file for details)
+      // options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await FirebaseAppCheck.instance.activate(
+      providerApple: const AppleDebugProvider(),
+      providerAndroid: const AndroidDebugProvider(),
+      providerWeb: ReCaptchaV3Provider('debug'),
+    );
+  }
+
   await loadImagesJson();
   configureGenUiLogging(level: Level.ALL);
+
   runApp(const TravelApp());
 }
 
@@ -50,13 +73,13 @@ class TravelApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: _TravelAppBody(contentGenerator),
+      home: _TravelAppBody(contentGenerator: contentGenerator),
     );
   }
 }
 
 class _TravelAppBody extends StatelessWidget {
-  _TravelAppBody(this.contentGenerator);
+  const _TravelAppBody({this.contentGenerator});
 
   /// The AI client to use for the application.
   ///
@@ -80,7 +103,7 @@ class _TravelAppBody extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Icon(Icons.local_airport),
-              SizedBox(width: 16.0), // Add spacing between icon and text
+              SizedBox(width: 16.0),
               Text(_title),
             ],
           ),
