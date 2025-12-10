@@ -7,11 +7,11 @@ import 'package:simple_chat/api_key/io_get_api_key.dart';
 import 'package:simple_chat/main.dart';
 
 void main() {
-  setUpAll(() {
+  setUp(() {
     debugApiKey = 'dummy_api_key';
   });
 
-  tearDownAll(() {
+  tearDown(() {
     debugApiKey = null;
   });
 
