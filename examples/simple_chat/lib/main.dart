@@ -26,7 +26,8 @@ import 'configuration.dart';
 
 // Conditionally import non-web version so we can read from shell env vars in
 // non-web version.
-import 'io_get_api_key.dart' if (dart.library.html) 'web_get_api_key.dart';
+import 'api_key/io_get_api_key.dart'
+    if (dart.library.html) 'web_get_api_key.dart';
 import 'message.dart';
 
 void main() async {

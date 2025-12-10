@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:simple_chat/io_get_api_key.dart';
+import 'package:simple_chat/api_key/io_get_api_key.dart';
 import 'package:simple_chat/main.dart';
 
 void main() {
