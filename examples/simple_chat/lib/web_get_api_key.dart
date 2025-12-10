@@ -6,7 +6,12 @@
 /// Get an API key from https://aistudio.google.com/app/apikey
 const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
 
+String? debugMockApiKey;
+
 String getApiKey() {
+  if (debugMockApiKey != null) {
+    return debugMockApiKey!;
+  }
   if (geminiApiKey.isEmpty) {
     throw Exception(
       '''Gemini API key is required when using google backend. Run the app with a GEMINI_API_KEY as a Dart environment variable. You can do this by running with -D GEMINI_API_KEY=\$GEMINI_API_KEY''',

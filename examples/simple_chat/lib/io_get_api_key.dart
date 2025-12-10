@@ -9,7 +9,12 @@ import 'dart:io';
 /// Specify this when running the app with "-D GEMINI_API_KEY=$GEMINI_API_KEY"
 const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
 
+String? debugApiKey;
+
 String getApiKey() {
+  if (debugApiKey != null) {
+    return debugApiKey!;
+  }
   String apiKey = geminiApiKey.isEmpty
       ? Platform.environment['GEMINI_API_KEY'] ?? ''
       : geminiApiKey;
