@@ -11,8 +11,6 @@ import 'package:genui_firebase_ai/genui_firebase_ai.dart';
 import 'package:genui_google_generative_ai/genui_google_generative_ai.dart';
 import 'package:logging/logging.dart';
 
-import 'configuration.dart';
-
 // If you want to convert to using Firebase AI, run:
 //
 //   sh tool/refresh_firebase.sh <project_id>
@@ -27,7 +25,8 @@ import 'configuration.dart';
 // Conditionally import non-web version so we can read from shell env vars in
 // non-web version.
 import 'api_key/io_get_api_key.dart'
-    if (dart.library.html) 'web_get_api_key.dart';
+    if (dart.library.html) 'api_key/web_get_api_key.dart';
+import 'configuration.dart';
 import 'message.dart';
 
 void main() async {
