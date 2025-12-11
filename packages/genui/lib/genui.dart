@@ -11,7 +11,7 @@ library;
 
 export 'src/catalog/core_catalog.dart';
 export 'src/content_generator.dart';
-export 'src/conversation/gen_ui_conversation.dart';
+export 'src/facade/gen_ui_conversation.dart';
 export 'src/core/a2ui_message_processor.dart';
 export 'src/core/genui_surface.dart';
 export 'src/core/prompt_fragments.dart';

@@ -103,6 +103,7 @@ graph TD
   examples/travel_app --> genui_google_generative_ai
   examples/travel_app --> genui_firebase_ai
   examples/verdure --> genui_a2ui
+  examples/custom_backend --> genui
   genui --> json_schema_builder
   genui_a2ui --> genui
   genui_firebase_ai --> genui
