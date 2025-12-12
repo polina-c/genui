@@ -1,46 +1,55 @@
-abstract class GenUiPromptBuilder {
-  static GenUiPromptBuilder custom(String prompt) =>
-      _CustomGenUiPromptBuilder(prompt);
+class ToolSet {}
 
-  static GenUiPromptBuilder basic(
+sealed class GenUiConfiguration {
+  static GenUiConfiguration custom(String prompt, ToolSet toolSet) =>
+      _CustomGenUiConfiguration(prompt, toolSet);
+
+  static GenUiConfiguration basic(
     String prompt, {
     bool allowSurfaceCreation = true,
     bool allowSurfaceUpdate = false,
     bool allowSurfaceDeletion = false,
-  }) => _BasicPromptBuilder(
+  }) => _BasicGenUiConfiguration(
     prompt,
     allowSurfaceCreation: allowSurfaceCreation,
     allowSurfaceUpdate: allowSurfaceUpdate,
     allowSurfaceDeletion: allowSurfaceDeletion,
   );
 
-  /// Returns the prompt to be sent to the model.
-  // It is not getter to allow parameters in future.
-  String build();
+  String prompt();
+
+  ToolSet toolSet();
 }
 
-class _CustomGenUiPromptBuilder implements GenUiPromptBuilder {
-  final String prompt;
+class _CustomGenUiConfiguration implements GenUiConfiguration {
+  final String _prompt;
+  final ToolSet _toolSet;
 
-  _CustomGenUiPromptBuilder(this.prompt);
+  _CustomGenUiConfiguration(this._prompt, this._toolSet);
 
   @override
-  String build() => prompt;
+  String prompt() => _prompt;
+
+  @override
+  ToolSet toolSet() => _toolSet;
 }
 
-class _BasicPromptBuilder implements GenUiPromptBuilder {
-  final String prompt;
+class _BasicGenUiConfiguration implements GenUiConfiguration {
+  final String _prompt;
   final bool allowSurfaceCreation;
   final bool allowSurfaceUpdate;
   final bool allowSurfaceDeletion;
 
-  _BasicPromptBuilder(
-    this.prompt, {
+  _BasicGenUiConfiguration(
+    this._prompt, {
     required this.allowSurfaceCreation,
     required this.allowSurfaceUpdate,
     required this.allowSurfaceDeletion,
   });
 
   @override
-  String build() => throw UnimplementedError();
+  String prompt() => throw UnimplementedError();
+
+  @override
+  ToolSet toolSet() => throw UnimplementedError();
 }
