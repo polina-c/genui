@@ -33,6 +33,16 @@ chatbots and next-generation agent-based user experiences.
   LLMs and Agents. Radically simplify the process of building UI-based agent interactions, by
   eliminating custom middleware between the agent and the UI layer.
 
+## Features
+
+* Multiple agent and LLM provider support
+* A2UI support
+* Standard UI catalog
+* Custom widgets
+* Data binding
+* Chat UX
+* Canvas UX
+
 ## Use cases
 
 - Incorporate graphical UI into chatbots: instead of describing a list of products in text,
