@@ -1,0 +1,14 @@
+# Copyright 2025 The Flutter Authors.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+name: genai_primitives
+description: TODO - add description
+version: 0.0.1-dev.1
+
+environment:
+  sdk: ">=3.9.2 <4.0.0"
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.2
