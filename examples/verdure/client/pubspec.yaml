@@ -18,8 +18,8 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^3.0.3
   flutter_svg: ^2.2.2
-  genui: ^0.5.1
-  genui_a2ui: ^0.5.1
+  genui: ^0.6.0
+  genui_a2ui: ^0.6.0
   go_router: ^17.0.0
   image_picker: ^1.2.0
   logging: ^1.3.0
@@ -27,7 +27,8 @@ dependencies:
   riverpod_annotation: ^3.0.3
 
 dev_dependencies:
-  a2a: ^3.1.0
+  # TODO: Unpin when fixed: https://github.com/flutter/genui/issues/614
+  a2a: 3.2.0
   build_runner: ^2.7.1
   dart_flutter_team_lints: ^3.5.2
   flutter_lints: ^6.0.0
