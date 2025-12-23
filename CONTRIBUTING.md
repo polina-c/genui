@@ -127,3 +127,7 @@ releasing a new version.
 
 If you include `pubspec.lock` file to your PR, make sure to run `flutter pub upgrade`,
 when your Flutter is latest at beta channel.
+
+## Internal information
+
+For Google-internal information see go/flutter-genui-internal.
