@@ -93,7 +93,7 @@ with the same version number, so when one is released, they are all released:
 * `genui_firebase_ai`
 * `genui_google_generative_ui`
 
-These packages are released independently on its own schedule, with its
+These packages are released independently on their own schedule, with their
 own version number:
 
 * `genai_primitives`
