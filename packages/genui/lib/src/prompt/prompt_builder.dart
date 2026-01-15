@@ -1,6 +1,4 @@
 import '../../genui.dart';
-import '../model/catalog.dart';
-import '../model/tools.dart';
 
 abstract class GenUiPrompt {}
 

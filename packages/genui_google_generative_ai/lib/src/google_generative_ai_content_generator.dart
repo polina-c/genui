@@ -30,6 +30,7 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
   /// Creates a [GoogleGenerativeAiContentGenerator] instance with specified
   /// configurations.
   GoogleGenerativeAiContentGenerator({
+    required this.promptBuilder,
     required this.catalog,
     this.systemInstruction,
     this.outputToolName = 'provideFinalOutput',
@@ -38,6 +39,8 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
     this.modelName = 'models/gemini-2.5-flash',
     this.apiKey,
   });
+
+  GenUiPromptBuilder promptBuilder;
 
   /// The catalog of UI components available to the AI.
   final Catalog catalog;
