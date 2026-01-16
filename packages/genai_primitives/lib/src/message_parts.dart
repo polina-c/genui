@@ -5,6 +5,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart' show XFile;
 import 'package:meta/meta.dart';
 import 'package:mime/mime.dart';
@@ -12,132 +13,124 @@ import 'package:mime/mime.dart';
 import 'package:mime/src/default_extension_map.dart';
 import 'package:path/path.dart' as p;
 
-import 'utils.dart';
+final class _Json {
+  static const type = 'type';
+  static const content = 'content';
+  static const mimeType = 'mimeType';
+  static const name = 'name';
+  static const bytes = 'bytes';
+  static const url = 'url';
+  static const id = 'id';
+  static const arguments = 'arguments';
+  static const result = 'result';
+}
+
+final class _Part {
+  static const text = 'Text';
+  static const data = 'Data';
+  static const link = 'Link';
+  static const tool = 'Tool';
+}
 
 /// Base class for message content parts.
+///
+/// To create a custom part implementation, extend this class and ensure the
+/// following requirements are met for a robust implementation:
+///
+/// * **Equality and Hashing**: Override [operator ==] and [hashCode] to
+///   ensure value-based equality.
+/// * **Serialization**: Implement a `toJson()` method that returns a
+///   JSON-encodable [Map]. The map must contain a `type` field with a unique
+///   string identifier for the custom part. See [defaultPartConverterRegistry]
+///   for the default registry and existing part types.
+/// * **Deserialization**: Implement a `JsonToPartConverter` that can recreate
+///   the part from its JSON representation.
+/// * Pass extended [defaultPartConverterRegistry] to all methods `fromJson`
+///   that accept a converter registry.
 @immutable
-abstract class Part {
+abstract base class Part {
   /// Creates a new part.
   const Part();
 
-  /// Creates a part from a JSON-compatible map.
-  factory Part.fromJson(Map<String, dynamic> json) => switch (json['type']) {
-    'TextPart' => TextPart(json['content'] as String),
-    'DataPart' => () {
-      final content = json['content'] as Map<String, dynamic>;
-      final dataUri = content['bytes'] as String;
-      final Uri uri = Uri.parse(dataUri);
-      return DataPart(
-        uri.data!.contentAsBytes(),
-        mimeType: content['mimeType'] as String,
-        name: content['name'] as String?,
-      );
-    }(),
-    'LinkPart' => () {
-      final content = json['content'] as Map<String, dynamic>;
-      return LinkPart(
-        Uri.parse(content['url'] as String),
-        mimeType: content['mimeType'] as String?,
-        name: content['name'] as String?,
-      );
-    }(),
-    'ToolPart' => () {
-      final content = json['content'] as Map<String, dynamic>;
-      // Check if it's a call or result based on presence of arguments or result
-      if (content.containsKey('arguments')) {
-        return ToolPart.call(
-          callId: content['id'] as String,
-          toolName: content['name'] as String,
-          arguments: content['arguments'] as Map<String, dynamic>? ?? {},
-        );
-      } else {
-        return ToolPart.result(
-          callId: content['id'] as String,
-          toolName: content['name'] as String,
-          result: content['result'],
-        );
-      }
-    }(),
-    _ => throw UnimplementedError('Unknown part type: ${json['type']}'),
-  };
-
-  /// The default MIME type for binary data.
-  static const defaultMimeType = 'application/octet-stream';
-
-  /// Gets the MIME type for a file.
-  static String mimeType(String path, {Uint8List? headerBytes}) =>
-      lookupMimeType(path, headerBytes: headerBytes) ?? defaultMimeType;
-
-  /// Gets the name for a MIME type.
-  static String nameFromMimeType(String mimeType) {
-    final String ext = extensionFromMimeType(mimeType) ?? '.bin';
-    return mimeType.startsWith('image/') ? 'image.$ext' : 'file.$ext';
-  }
-
-  /// Gets the extension for a MIME type.
-  static String? extensionFromMimeType(String mimeType) {
-    final String ext = defaultExtensionMap.entries
-        .firstWhere(
-          (e) => e.value == mimeType,
-          orElse: () => const MapEntry('', ''),
-        )
-        .key;
-    return ext.isNotEmpty ? ext : null;
-  }
-
-  /// Converts the part to a JSON-compatible map.
-  Map<String, dynamic> toJson() {
-    final String typeName;
-    final Object content;
-    switch (this) {
-      case final TextPart p:
-        typeName = 'TextPart';
-        content = p.text;
-        break;
-      case final DataPart p:
-        typeName = 'DataPart';
-        content = {
-          if (p.name != null) 'name': p.name,
-          'mimeType': p.mimeType,
-          'bytes': 'data:${p.mimeType};base64,${base64Encode(p.bytes)}',
-        };
-        break;
-      case final LinkPart p:
-        typeName = 'LinkPart';
-        content = {
-          if (p.name != null) 'name': p.name,
-          if (p.mimeType != null) 'mimeType': p.mimeType,
-          'url': p.url.toString(),
-        };
-        break;
-      case final ToolPart p:
-        typeName = 'ToolPart';
-        content = {
-          'id': p.callId,
-          'name': p.toolName,
-          if (p.arguments != null) 'arguments': p.arguments,
-          if (p.result != null) 'result': p.result,
-        };
-        break;
-      default:
-        throw UnimplementedError('Unknown part type: $runtimeType');
+  /// Deserializes a part from a JSON map.
+  ///
+  /// The [converterRegistry] parameter is a map of part types to converters.
+  /// If the registry is not provided, [defaultPartConverterRegistry] is used.
+  ///
+  /// If you need to deserialize a part that is not in the default registry,
+  /// extend [defaultPartConverterRegistry] and pass it to this method.
+  factory Part.fromJson(
+    Map<String, Object?> json, {
+    Map<String, JsonToPartConverter> converterRegistry =
+        defaultPartConverterRegistry,
+  }) {
+    final type = json[_Json.type] as String;
+    final JsonToPartConverter? converter = converterRegistry[type];
+    if (converter == null) {
+      throw UnimplementedError('Unknown part type: $type');
     }
-    return {'type': typeName, 'content': content};
+    return converter.convert(json);
+  }
+
+  /// Serializes the part to a JSON map.
+  ///
+  /// The returned map must contain a key `type` with a unique string
+  /// identifier for the custom part. See keys of [defaultPartConverterRegistry]
+  /// for existing part types.
+  Map<String, Object?> toJson();
+}
+
+typedef JsonToPartConverter = Converter<Map<String, Object?>, Part>;
+typedef _JsonToPartFunction = Part Function(Map<String, Object?> json);
+
+/// Converter registry.
+///
+/// The key of a map entry is the part type.
+/// The value is the converter that knows how to convert that part type.
+const defaultPartConverterRegistry = <String, JsonToPartConverter>{
+  _Part.text: PartConverter(TextPart.fromJson),
+  _Part.data: PartConverter(DataPart.fromJson),
+  _Part.link: PartConverter(LinkPart.fromJson),
+  _Part.tool: PartConverter(ToolPart.fromJson),
+};
+
+/// A converter that converts a JSON map to a [Part].
+@visibleForTesting
+class PartConverter extends JsonToPartConverter {
+  const PartConverter(this._function);
+
+  final _JsonToPartFunction _function;
+
+  @override
+  Part convert(Map<String, Object?> input) {
+    return _function(input);
   }
 }
 
 /// A text part of a message.
 @immutable
-class TextPart extends Part {
+final class TextPart extends Part {
   /// Creates a new text part.
   const TextPart(this.text);
 
   /// The text content.
   final String text;
 
+  /// Creates a text part from a JSON-compatible map.
+  factory TextPart.fromJson(Map<String, Object?> json) {
+    return TextPart(json[_Json.content] as String);
+  }
+
+  @override
+  Map<String, Object?> toJson() => {
+    _Json.type: _Part.text,
+    _Json.content: text,
+  };
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
     return other is TextPart && other.text == text;
   }
 
@@ -150,10 +143,22 @@ class TextPart extends Part {
 
 /// A data part containing binary data (e.g., images).
 @immutable
-class DataPart extends Part {
+final class DataPart extends Part {
   /// Creates a new data part.
   DataPart(this.bytes, {required this.mimeType, String? name})
-    : name = name ?? Part.nameFromMimeType(mimeType);
+    : name = name ?? nameFromMimeType(mimeType);
+
+  /// Creates a data part from a JSON-compatible map.
+  factory DataPart.fromJson(Map<String, Object?> json) {
+    final content = json[_Json.content] as Map<String, Object?>;
+    final dataUri = content[_Json.bytes] as String;
+    final Uri uri = Uri.parse(dataUri);
+    return DataPart(
+      uri.data!.contentAsBytes(),
+      mimeType: content[_Json.mimeType] as String,
+      name: content[_Json.name] as String?,
+    );
+  }
 
   /// Creates a data part from an [XFile].
   static Future<DataPart> fromFile(XFile file) async {
@@ -161,7 +166,7 @@ class DataPart extends Part {
     final String? name = _nameFromPath(file.path) ?? _emptyNull(file.name);
     final String mimeType =
         _emptyNull(file.mimeType) ??
-        Part.mimeType(
+        mimeTypeForFile(
           name ?? '',
           headerBytes: Uint8List.fromList(
             bytes.take(defaultMagicNumbersMaxLength).toList(),
@@ -193,10 +198,23 @@ class DataPart extends Part {
   final String? name;
 
   @override
+  Map<String, Object?> toJson() => {
+    _Json.type: _Part.data,
+    _Json.content: {
+      if (name != null) _Json.name: name,
+      _Json.mimeType: mimeType,
+      _Json.bytes: 'data:$mimeType;base64,${base64Encode(bytes)}',
+    },
+  };
+
+  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+
+    const deepEquality = DeepCollectionEquality();
     return other is DataPart &&
-        listEquals(other.bytes, bytes) &&
+        deepEquality.equals(other.bytes, bytes) &&
         other.mimeType == mimeType &&
         other.name == name;
   }
@@ -207,11 +225,38 @@ class DataPart extends Part {
   @override
   String toString() =>
       'DataPart(mimeType: $mimeType, name: $name, bytes: ${bytes.length})';
+
+  @visibleForTesting
+  static const defaultMimeType = 'application/octet-stream';
+
+  /// Gets the MIME type for a file.
+  @visibleForTesting
+  static String mimeTypeForFile(String path, {Uint8List? headerBytes}) =>
+      lookupMimeType(path, headerBytes: headerBytes) ?? defaultMimeType;
+
+  /// Gets the name for a MIME type.
+  @visibleForTesting
+  static String nameFromMimeType(String mimeType) {
+    final String ext = extensionFromMimeType(mimeType) ?? 'bin';
+    return mimeType.startsWith('image/') ? 'image.$ext' : 'file.$ext';
+  }
+
+  /// Gets the extension for a MIME type.
+  @visibleForTesting
+  static String? extensionFromMimeType(String mimeType) {
+    final String ext = defaultExtensionMap.entries
+        .firstWhere(
+          (e) => e.value == mimeType,
+          orElse: () => const MapEntry('', ''),
+        )
+        .key;
+    return ext.isNotEmpty ? ext : null;
+  }
 }
 
 /// A link part referencing external content.
 @immutable
-class LinkPart extends Part {
+final class LinkPart extends Part {
   /// Creates a new link part.
   const LinkPart(this.url, {this.mimeType, this.name});
 
@@ -224,9 +269,31 @@ class LinkPart extends Part {
   /// Optional name for the link.
   final String? name;
 
+  /// Creates a link part from a JSON-compatible map.
+  factory LinkPart.fromJson(Map<String, Object?> json) {
+    final content = json[_Json.content] as Map<String, Object?>;
+    return LinkPart(
+      Uri.parse(content[_Json.url] as String),
+      mimeType: content[_Json.mimeType] as String?,
+      name: content[_Json.name] as String?,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() => {
+    _Json.type: _Part.link,
+    _Json.content: {
+      if (name != null) _Json.name: name,
+      if (mimeType != null) _Json.mimeType: mimeType,
+      _Json.url: url.toString(),
+    },
+  };
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+
     return other is LinkPart &&
         other.url == url &&
         other.mimeType == mimeType &&
@@ -242,8 +309,7 @@ class LinkPart extends Part {
 
 /// A tool interaction part of a message.
 @immutable
-class ToolPart extends Part {
-  /// Creates a tool call part.
+final class ToolPart extends Part {
   /// Creates a tool call part.
   const ToolPart.call({
     required this.callId,
@@ -270,24 +336,54 @@ class ToolPart extends Part {
   final String toolName;
 
   /// The arguments for a tool call (null for results).
-  final Map<String, dynamic>? arguments;
+  final Map<String, Object?>? arguments;
 
   /// The result of a tool execution (null for calls).
-  final dynamic result;
+  final Object? result;
 
   /// The arguments as a JSON string.
-  String get argumentsRaw => arguments != null
-      ? (arguments!.isEmpty ? '{}' : jsonEncode(arguments))
-      : '';
+  String get argumentsRaw => arguments == null ? '' : jsonEncode(arguments);
+
+  /// Creates a tool part from a JSON-compatible map.
+  factory ToolPart.fromJson(Map<String, Object?> json) {
+    final content = json[_Json.content] as Map<String, Object?>;
+    if (content.containsKey(_Json.arguments)) {
+      return ToolPart.call(
+        callId: content[_Json.id] as String,
+        toolName: content[_Json.name] as String,
+        arguments: content[_Json.arguments] as Map<String, Object?>? ?? {},
+      );
+    } else {
+      return ToolPart.result(
+        callId: content[_Json.id] as String,
+        toolName: content[_Json.name] as String,
+        result: content[_Json.result],
+      );
+    }
+  }
+
+  @override
+  Map<String, Object?> toJson() => {
+    _Json.type: _Part.tool,
+    _Json.content: {
+      _Json.id: callId,
+      _Json.name: toolName,
+      if (arguments != null) _Json.arguments: arguments,
+      if (result != null) _Json.result: result,
+    },
+  };
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+
+    const deepEquality = DeepCollectionEquality();
     return other is ToolPart &&
         other.kind == kind &&
         other.callId == callId &&
         other.toolName == toolName &&
-        mapEquals(other.arguments, arguments) &&
+        deepEquality.equals(other.arguments, arguments) &&
         other.result == result;
   }
 
@@ -319,26 +415,4 @@ enum ToolPartKind {
 
   /// The result of a tool execution.
   result,
-}
-
-/// Static helper methods for extracting specific types of parts from a list.
-extension MessagePartHelpers on Iterable<Part> {
-  /// Extracts and concatenates all text content from TextPart instances.
-  ///
-  /// Returns a single string with all text content concatenated together
-  /// without any separators. Empty text parts are included in the result.
-  String get text => whereType<TextPart>().map((p) => p.text).join();
-
-  /// Extracts all tool call parts from the list.
-  ///
-  /// Returns only ToolPart instances where kind == ToolPartKind.call.
-  List<ToolPart> get toolCalls =>
-      whereType<ToolPart>().where((p) => p.kind == ToolPartKind.call).toList();
-
-  /// Extracts all tool result parts from the list.
-  ///
-  /// Returns only ToolPart instances where kind == ToolPartKind.result.
-  List<ToolPart> get toolResults => whereType<ToolPart>()
-      .where((p) => p.kind == ToolPartKind.result)
-      .toList();
 }
