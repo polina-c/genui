@@ -5,10 +5,9 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
-import 'parts/parts.dart';
-import 'parts/converter_registry.dart';
-import 'parts/items/message_parts.dart';
+import 'parts/items.dart';
 import 'parts/model.dart';
+import 'parts/parts.dart';
 
 final class _Json {
   static const parts = 'parts';
