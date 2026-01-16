@@ -5,7 +5,7 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
-import 'parts.dart';
+import 'parts/parts.dart';
 import 'parts/converter_registry.dart';
 import 'parts/message_parts.dart';
 import 'parts/model.dart';
