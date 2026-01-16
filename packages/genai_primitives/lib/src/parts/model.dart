@@ -50,8 +50,8 @@ abstract base class Part {
 
   /// Serializes the part to a JSON map.
   ///
-  /// The returned map must contain a key matching [typeKey] with a unique string
-  /// identifier for the part type. See [defaultPartConverterRegistry]
+  /// The returned map must contain a key matching [typeKey] with a unique
+  /// string identifier for the part type. See [defaultPartConverterRegistry]
   /// for default part types.
   Map<String, Object?> toJson();
 }
