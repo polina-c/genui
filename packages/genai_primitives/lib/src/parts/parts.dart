@@ -93,7 +93,7 @@ final class Parts extends ListBase<Part> {
   String toString() => _parts.toString();
 }
 
-/// Converter registry.
+/// Converter registry for parts in this package.
 ///
 /// The key of a map entry is the part type.
 /// The value is the converter that knows how to convert that part type.
