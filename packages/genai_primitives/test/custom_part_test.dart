@@ -77,7 +77,13 @@ void main() {
         'content': {'customField': 'val'},
       };
 
-      expect(() => Part.fromJson(json), throwsUnimplementedError);
+      expect(
+        () => Part.fromJson(
+          json,
+          converterRegistry: defaultPartConverterRegistry,
+        ),
+        throwsUnimplementedError,
+      );
     });
 
     test('Part.fromJson handles standard types even with custom converter', () {
