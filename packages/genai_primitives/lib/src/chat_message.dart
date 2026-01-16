@@ -6,7 +6,9 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
 import 'parts.dart';
+import 'parts/converter_registry.dart';
 import 'parts/message_parts.dart';
+import 'parts/model.dart';
 
 final class _Json {
   static const parts = 'parts';
@@ -86,6 +88,12 @@ final class ChatMessage {
   /// Deserializes a message.
   ///
   /// The message is compatible with [toJson].
+  ///
+  /// The [converterRegistry] parameter is a map of part types to converters.
+  /// If the registry is not provided, [defaultPartConverterRegistry] is used.
+  ///
+  /// If you do not need to deserialize custom part types, you can omit the
+  /// [converterRegistry] parameter.
   factory ChatMessage.fromJson(
     Map<String, Object?> json, {
     Map<String, JsonToPartConverter> converterRegistry =

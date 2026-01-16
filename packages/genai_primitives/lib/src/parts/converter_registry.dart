@@ -1,14 +1,17 @@
+import 'package:meta/meta.dart';
+
 import 'message_parts.dart';
+import 'model.dart';
 
 /// Converter registry.
 ///
 /// The key of a map entry is the part type.
 /// The value is the converter that knows how to convert that part type.
 const defaultPartConverterRegistry = <String, JsonToPartConverter>{
-  _Part.text: PartConverter(TextPart.fromJson),
-  _Part.data: PartConverter(DataPart.fromJson),
-  _Part.link: PartConverter(LinkPart.fromJson),
-  _Part.tool: PartConverter(ToolPart.fromJson),
+  TextPart.type: PartConverter(TextPart.fromJson),
+  DataPart.type: PartConverter(DataPart.fromJson),
+  LinkPart.type: PartConverter(LinkPart.fromJson),
+  ToolPart.type: PartConverter(ToolPart.fromJson),
 };
 
 typedef _JsonToPartFunction = Part Function(Map<String, Object?> json);

@@ -27,15 +27,12 @@ abstract base class Part {
   /// Creates a new part.
   const Part();
 
+  /// The key of the part type in the JSON representation.
   static const String typeKey = 'type';
 
   /// Deserializes a part from a JSON map.
   ///
   /// The [converterRegistry] parameter is a map of part types to converters.
-  /// If the registry is not provided, [defaultPartConverterRegistry] is used.
-  ///
-  /// If you do not need to deserialize custom part types, you can omit the
-  /// [converterRegistry] parameter.
   factory Part.fromJson(
     Map<String, Object?> json, {
     required Map<String, JsonToPartConverter> converterRegistry,
@@ -51,7 +48,6 @@ abstract base class Part {
   /// Serializes the part to a JSON map.
   ///
   /// The returned map must contain a key `type` with a unique string
-  /// identifier for the custom part. See keys of [defaultPartConverterRegistry]
   /// for existing part types.
   Map<String, Object?> toJson();
 }
