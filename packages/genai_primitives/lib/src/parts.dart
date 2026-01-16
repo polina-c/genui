@@ -7,7 +7,7 @@ import 'dart:collection';
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
-import 'message_parts.dart';
+import 'parts/message_parts.dart';
 
 /// A collection of message parts.
 @immutable

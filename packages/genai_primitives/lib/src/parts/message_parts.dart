@@ -13,8 +13,9 @@ import 'package:mime/mime.dart';
 import 'package:mime/src/default_extension_map.dart';
 import 'package:path/path.dart' as p;
 
+import 'model.dart';
+
 final class _Json {
-  static const type = 'type';
   static const content = 'content';
   static const mimeType = 'mimeType';
   static const name = 'name';
@@ -25,91 +26,11 @@ final class _Json {
   static const result = 'result';
 }
 
-final class _Part {
-  static const text = 'Text';
-  static const data = 'Data';
-  static const link = 'Link';
-  static const tool = 'Tool';
-}
-
-/// Base class for message content parts.
-///
-/// To create a custom part implementation, extend this class and ensure the
-/// following requirements are met for a robust implementation:
-///
-/// * **Equality and Hashing**: Override [operator ==] and [hashCode] to
-///   ensure value-based equality.
-/// * **Serialization**: Implement a `toJson()` method that returns a
-///   JSON-encodable [Map]. The map must contain a `type` field with a unique
-///   string identifier for the custom part. See [defaultPartConverterRegistry]
-///   for the default registry and existing part types.
-/// * **Deserialization**: Implement a `JsonToPartConverter` that can recreate
-///   the part from its JSON representation.
-/// * Pass extended [defaultPartConverterRegistry] to all methods `fromJson`
-///   that accept a converter registry.
-@immutable
-abstract base class Part {
-  /// Creates a new part.
-  const Part();
-
-  /// Deserializes a part from a JSON map.
-  ///
-  /// The [converterRegistry] parameter is a map of part types to converters.
-  /// If the registry is not provided, [defaultPartConverterRegistry] is used.
-  ///
-  /// If you need to deserialize a part that is not in the default registry,
-  /// extend [defaultPartConverterRegistry] and pass it to this method.
-  factory Part.fromJson(
-    Map<String, Object?> json, {
-    Map<String, JsonToPartConverter> converterRegistry =
-        defaultPartConverterRegistry,
-  }) {
-    final type = json[_Json.type] as String;
-    final JsonToPartConverter? converter = converterRegistry[type];
-    if (converter == null) {
-      throw UnimplementedError('Unknown part type: $type');
-    }
-    return converter.convert(json);
-  }
-
-  /// Serializes the part to a JSON map.
-  ///
-  /// The returned map must contain a key `type` with a unique string
-  /// identifier for the custom part. See keys of [defaultPartConverterRegistry]
-  /// for existing part types.
-  Map<String, Object?> toJson();
-}
-
-typedef JsonToPartConverter = Converter<Map<String, Object?>, Part>;
-typedef _JsonToPartFunction = Part Function(Map<String, Object?> json);
-
-/// Converter registry.
-///
-/// The key of a map entry is the part type.
-/// The value is the converter that knows how to convert that part type.
-const defaultPartConverterRegistry = <String, JsonToPartConverter>{
-  _Part.text: PartConverter(TextPart.fromJson),
-  _Part.data: PartConverter(DataPart.fromJson),
-  _Part.link: PartConverter(LinkPart.fromJson),
-  _Part.tool: PartConverter(ToolPart.fromJson),
-};
-
-/// A converter that converts a JSON map to a [Part].
-@visibleForTesting
-class PartConverter extends JsonToPartConverter {
-  const PartConverter(this._function);
-
-  final _JsonToPartFunction _function;
-
-  @override
-  Part convert(Map<String, Object?> input) {
-    return _function(input);
-  }
-}
-
 /// A text part of a message.
 @immutable
 final class TextPart extends Part {
+  static const type = 'Text';
+
   /// Creates a new text part.
   const TextPart(this.text);
 
@@ -122,10 +43,7 @@ final class TextPart extends Part {
   }
 
   @override
-  Map<String, Object?> toJson() => {
-    _Json.type: _Part.text,
-    _Json.content: text,
-  };
+  Map<String, Object?> toJson() => {Part.typeKey: type, _Json.content: text};
 
   @override
   bool operator ==(Object other) {
@@ -144,6 +62,8 @@ final class TextPart extends Part {
 /// A data part containing binary data (e.g., images).
 @immutable
 final class DataPart extends Part {
+  static const type = 'Data';
+
   /// Creates a new data part.
   DataPart(this.bytes, {required this.mimeType, String? name})
     : name = name ?? nameFromMimeType(mimeType);
@@ -199,7 +119,7 @@ final class DataPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    _Json.type: _Part.data,
+    Part.typeKey: type,
     _Json.content: {
       if (name != null) _Json.name: name,
       _Json.mimeType: mimeType,
@@ -257,6 +177,8 @@ final class DataPart extends Part {
 /// A link part referencing external content.
 @immutable
 final class LinkPart extends Part {
+  static const type = 'Link';
+
   /// Creates a new link part.
   const LinkPart(this.url, {this.mimeType, this.name});
 
@@ -281,7 +203,7 @@ final class LinkPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    _Json.type: _Part.link,
+    Part.typeKey: type,
     _Json.content: {
       if (name != null) _Json.name: name,
       if (mimeType != null) _Json.mimeType: mimeType,
@@ -310,6 +232,8 @@ final class LinkPart extends Part {
 /// A tool interaction part of a message.
 @immutable
 final class ToolPart extends Part {
+  static const type = 'Tool';
+
   /// Creates a tool call part.
   const ToolPart.call({
     required this.callId,
@@ -364,7 +288,7 @@ final class ToolPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    _Json.type: _Part.tool,
+    Part.typeKey: type,
     _Json.content: {
       _Json.id: callId,
       _Json.name: toolName,
