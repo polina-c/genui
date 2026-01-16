@@ -8,7 +8,7 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
 import 'converter_registry.dart';
-import 'message_parts.dart';
+import 'items/message_parts.dart';
 import 'model.dart';
 
 /// A collection of message parts.

@@ -8,6 +8,6 @@ library;
 export 'src/chat_message.dart';
 export 'src/parts/parts.dart';
 export 'src/parts/converter_registry.dart';
-export 'src/parts/message_parts.dart';
+export 'src/parts/items/message_parts.dart';
 export 'src/parts/model.dart';
 export 'src/tool_definition.dart';

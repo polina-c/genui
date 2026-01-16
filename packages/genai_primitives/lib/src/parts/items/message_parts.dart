@@ -13,7 +13,7 @@ import 'package:mime/mime.dart';
 import 'package:mime/src/default_extension_map.dart';
 import 'package:path/path.dart' as p;
 
-import 'model.dart';
+import '../model.dart';
 
 final class _Json {
   static const content = 'content';

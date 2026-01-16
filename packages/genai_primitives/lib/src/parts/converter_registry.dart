@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 
-import 'message_parts.dart';
+import 'items/message_parts.dart';
 import 'model.dart';
 
 /// Converter registry.
