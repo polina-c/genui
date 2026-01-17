@@ -84,20 +84,32 @@ class GenUiConversation {
       case SurfaceAdded():
         _conversation.value = [
           ..._conversation.value,
-          AiUiMessage(
-            definition: update.definition,
-            surfaceId: update.surfaceId,
+          ..._conversation.value,
+          ChatMessage.model(
+            '',
+            parts: [
+              UiPart(
+                definition: update.definition,
+                surfaceId: update.surfaceId,
+              ),
+            ],
           ),
         ];
         onSurfaceAdded?.call(update);
       case SurfaceUpdated():
         final newConversation = List<ChatMessage>.from(_conversation.value);
         final int index = newConversation.lastIndexWhere(
-          (m) => m is AiUiMessage && m.surfaceId == update.surfaceId,
+          (m) =>
+              m.role == ChatMessageRole.model &&
+              m.parts.any(
+                (p) => p is UiPart && p.surfaceId == update.surfaceId,
+              ),
         );
-        final newMessage = AiUiMessage(
-          definition: update.definition,
-          surfaceId: update.surfaceId,
+        final newMessage = ChatMessage.model(
+          '',
+          parts: [
+            UiPart(definition: update.definition, surfaceId: update.surfaceId),
+          ],
         );
         if (index != -1) {
           newConversation[index] = newMessage;
@@ -110,8 +122,13 @@ class GenUiConversation {
         onSurfaceUpdated?.call(update);
       case SurfaceRemoved():
         final newConversation = List<ChatMessage>.from(_conversation.value);
+
         newConversation.removeWhere(
-          (m) => m is AiUiMessage && m.surfaceId == update.surfaceId,
+          (m) =>
+              m.role == ChatMessageRole.model &&
+              m.parts.any(
+                (p) => p is UiPart && p.surfaceId == update.surfaceId,
+              ),
         );
         _conversation.value = newConversation;
         onSurfaceDeleted?.call(update);
@@ -147,7 +164,15 @@ class GenUiConversation {
   /// Sends a user message to the AI to generate a UI response.
   Future<void> sendRequest(ChatMessage message) async {
     final List<ChatMessage> history = _conversation.value;
-    if (message is! UserUiInteractionMessage) {
+    // If it's a UI event, we generally don't show it in the conversation history
+    // unless debugging. We assume here that messages with 'isUiInteraction'
+    // metadata are such messages.
+    final bool isUiInteraction =
+        message.metadata['isUiInteraction'] == true ||
+        message.role == ChatMessageRole.user &&
+            message.parts.any((p) => p is UiInteractionPart);
+
+    if (!isUiInteraction) {
       _conversation.value = [...history, message];
     }
     final clientCapabilities = A2UiClientCapabilities(
@@ -165,14 +190,14 @@ class GenUiConversation {
   }
 
   void _handleTextResponse(String text) {
-    _conversation.value = [..._conversation.value, AiTextMessage.text(text)];
+    _conversation.value = [..._conversation.value, ChatMessage.model(text)];
     onTextResponse?.call(text);
   }
 
   void _handleError(ContentGeneratorError error) {
     // Add an error representation to the conversation history so the AI can see
     // that something failed.
-    final errorResponseMessage = AiTextMessage.text(
+    final errorResponseMessage = ChatMessage.model(
       'An error occurred: ${error.error}',
     );
     _conversation.value = [..._conversation.value, errorResponseMessage];

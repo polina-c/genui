@@ -162,9 +162,7 @@ void main() {
       );
 
       expect(generator.isProcessing.value, isFalse);
-      final future = generator.sendRequest(
-        genui.UserMessage([const genui.TextPart('Hi')]),
-      );
+      final future = generator.sendRequest(genui.ChatMessage.user('Hi'));
       expect(generator.isProcessing.value, isTrue);
       await future;
       expect(generator.isProcessing.value, isFalse);
@@ -227,7 +225,7 @@ void main() {
         },
       );
 
-      final hi = genui.UserMessage([const genui.TextPart('Hi')]);
+      final hi = genui.ChatMessage.user('Hi');
       final completer = Completer<String>();
       unawaited(generator.textResponseStream.first.then(completer.complete));
       await generator.sendRequest(hi);
@@ -265,7 +263,7 @@ void main() {
         },
       );
 
-      final hi = genui.UserMessage([const genui.TextPart('Hi')]);
+      final hi = genui.ChatMessage.user('Hi');
       final completer = Completer<String>();
       unawaited(generator.textResponseStream.first.then(completer.complete));
       await generator.sendRequest(hi);

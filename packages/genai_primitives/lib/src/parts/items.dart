@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 export 'items/data.dart';
+export 'items/image.dart';
 export 'items/link.dart';
 export 'items/text.dart';
+export 'items/thinking.dart';
 export 'items/tool.dart';

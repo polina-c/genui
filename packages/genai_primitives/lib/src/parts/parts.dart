@@ -8,6 +8,7 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
 import 'items.dart';
+export 'items.dart'; // Export items for easier usage
 import 'model.dart';
 
 /// A collection of message parts.
@@ -104,6 +105,8 @@ const defaultPartConverterRegistry = <String, JsonToPartConverter>{
   DataPart.type: PartConverter(DataPart.fromJson),
   LinkPart.type: PartConverter(LinkPart.fromJson),
   ToolPart.type: PartConverter(ToolPart.fromJson),
+  ImagePart.type: PartConverter(ImagePart.fromJson),
+  ThinkingPart.type: PartConverter(ThinkingPart.fromJson),
 };
 
 typedef _JsonToPartFunction = Part Function(Map<String, Object?> json);
