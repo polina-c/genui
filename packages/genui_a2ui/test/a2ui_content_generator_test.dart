@@ -46,7 +46,10 @@ void main() {
     });
 
     test('sendRequest updates isProcessing', () async {
-      final userMessage = UserMessage([const TextPart('Hello')]);
+      final userMessage = ChatMessage.user(
+        '',
+        parts: [const TextPart('Hello')],
+      );
 
       expect(contentGenerator.isProcessing.value, isFalse);
       final Future<void> future = contentGenerator.sendRequest(
@@ -64,7 +67,7 @@ void main() {
     });
 
     test('sendRequest passes clientCapabilities to connector', () async {
-      final userMessage = UserMessage([const TextPart('Test')]);
+      final userMessage = ChatMessage.user('', parts: [const TextPart('Test')]);
       const capabilities = A2UiClientCapabilities(
         supportedCatalogIds: ['test_catalog'],
       );
@@ -78,7 +81,7 @@ void main() {
     });
 
     test('sendRequest adds response to textResponseStream', () async {
-      final userMessage = UserMessage([const TextPart('Test')]);
+      final userMessage = ChatMessage.user('', parts: [const TextPart('Test')]);
       final completer = Completer<String>();
       contentGenerator.textResponseStream.listen(completer.complete);
 

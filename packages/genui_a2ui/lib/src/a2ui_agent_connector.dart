@@ -85,10 +85,10 @@ class A2uiAgentConnector {
           case genui.TextPart():
             return Part.text(text: part.text);
           case genui.ImagePart():
-            if (part.uri != null) {
+            if (part.url != null) {
               return Part.file(
                 file: FileType.uri(
-                  uri: part.uri.toString(),
+                  uri: part.url.toString(),
                   mimeType: part.mimeType,
                 ),
               );
@@ -96,16 +96,33 @@ class A2uiAgentConnector {
               String base64Data;
               if (part.bytes != null) {
                 base64Data = base64Encode(part.bytes!);
-                return Part.file(
-                  file: FileType.bytes(
-                    bytes: base64Data,
-                    mimeType: part.mimeType,
-                  ),
-                );
+              } else if (part.base64 != null) {
+                base64Data = part.base64!;
               } else {
-                _log.warning('ImagePart has no data (uri or bytes)');
+                _log.warning('ImagePart has no data (url, bytes, or base64)');
                 return const Part.text(text: '[Empty Image]');
               }
+              return Part.file(
+                file: FileType.bytes(
+                  bytes: base64Data,
+                  mimeType: part.mimeType,
+                ),
+              );
+            }
+          case genui.UiInteractionPart():
+            try {
+              final data = jsonDecode(part.interaction);
+              if (data is Map<String, Object?>) {
+                return Part.data(data: data);
+              } else {
+                _log.warning(
+                  'UiInteractionPart interaction is not a JSON object',
+                );
+                return const Part.text(text: '[Invalid UI Interaction]');
+              }
+            } catch (e) {
+              _log.warning('Error parsing UiInteractionPart: $e');
+              return const Part.text(text: '[Invalid UI Interaction]');
             }
           default:
             _log.warning('Unknown message part type: ${part.runtimeType}');

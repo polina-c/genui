@@ -18,14 +18,19 @@ void main() {
     testWidgets('renders a list of messages', (WidgetTester tester) async {
       const surfaceId = 's1';
       final List<ChatMessage> messages = [
-        UserMessage.text('Hello'),
-        AiUiMessage(
-          surfaceId: surfaceId,
-          definition: UiDefinition(surfaceId: surfaceId),
+        ChatMessage.user('Hello'),
+        ChatMessage.model(
+          '',
+          parts: [
+            UiPart(
+              surfaceId: surfaceId,
+              definition: const UiDefinition(surfaceId: surfaceId),
+            ),
+          ],
         ),
       ];
       final components = [
-        const Component(
+        Component(
           id: 'r1',
           componentProperties: {
             'Text': {
@@ -55,7 +60,7 @@ void main() {
     });
     testWidgets('renders UserPrompt correctly', (WidgetTester tester) async {
       final messages = [
-        UserMessage([const TextPart('Hello')]),
+        ChatMessage.user('', parts: [const TextPart('Hello')]),
       ];
       await tester.pumpWidget(
         MaterialApp(
@@ -71,13 +76,18 @@ void main() {
     testWidgets('renders UiResponse correctly', (WidgetTester tester) async {
       const surfaceId = 's1';
       final messages = [
-        AiUiMessage(
-          surfaceId: surfaceId,
-          definition: UiDefinition(surfaceId: surfaceId),
+        ChatMessage.model(
+          '',
+          parts: [
+            UiPart(
+              surfaceId: surfaceId,
+              definition: const UiDefinition(surfaceId: surfaceId),
+            ),
+          ],
         ),
       ];
       final components = [
-        const Component(
+        Component(
           id: 'root',
           componentProperties: {
             'Text': {
@@ -106,7 +116,7 @@ void main() {
 
     testWidgets('uses custom userPromptBuilder', (WidgetTester tester) async {
       final messages = [
-        UserMessage(const [TextPart('Hello')]),
+        ChatMessage.user('', parts: [const TextPart('Hello')]),
       ];
       await tester.pumpWidget(
         MaterialApp(
