@@ -180,19 +180,19 @@ void main() {
 
     group('toHistory', () {
       test('returns empty list for null history', () {
-        final List<dartantic.ChatMessage> result = converter.toHistory(null);
+        final result = converter.toHistory(null);
 
         expect(result, isEmpty);
       });
 
       test('returns empty list for empty history', () {
-        final List<dartantic.ChatMessage> result = converter.toHistory([]);
+        final result = converter.toHistory([]);
 
         expect(result, isEmpty);
       });
 
       test('includes system instruction as first message', () {
-        final List<dartantic.ChatMessage> result = converter.toHistory(
+        final result = converter.toHistory(
           null,
           systemInstruction: 'You are a helpful assistant.',
         );
@@ -205,7 +205,7 @@ void main() {
       test('converts UserMessage to user role', () {
         final history = [genui.ChatMessage.user('Hello')];
 
-        final List<dartantic.ChatMessage> result = converter.toHistory(history);
+        final result = converter.toHistory(history);
 
         expect(result, hasLength(1));
         expect(result[0].role, dartantic.ChatMessageRole.user);
@@ -220,7 +220,7 @@ void main() {
           ),
         ];
 
-        final List<dartantic.ChatMessage> result = converter.toHistory(history);
+        final result = converter.toHistory(history);
 
         expect(result, hasLength(1));
         expect(result[0].role, dartantic.ChatMessageRole.user);
@@ -230,7 +230,7 @@ void main() {
       test('converts AiTextMessage to model role', () {
         final history = [genui.ChatMessage.model('AI response')];
 
-        final List<dartantic.ChatMessage> result = converter.toHistory(history);
+        final result = converter.toHistory(history);
 
         expect(result, hasLength(1));
         expect(result[0].role, dartantic.ChatMessageRole.model);
@@ -244,7 +244,7 @@ void main() {
           genui.ChatMessage.model('Response'),
         ];
 
-        final List<dartantic.ChatMessage> result = converter.toHistory(history);
+        final result = converter.toHistory(history);
 
         expect(result, hasLength(3));
         expect(result[0].role, dartantic.ChatMessageRole.user);
@@ -268,7 +268,7 @@ void main() {
           genui.ChatMessage.model('Response'),
         ];
 
-        final List<dartantic.ChatMessage> result = converter.toHistory(history);
+        final result = converter.toHistory(history);
 
         expect(result, hasLength(3));
         expect(result[0].role, dartantic.ChatMessageRole.user);
@@ -287,7 +287,7 @@ void main() {
           genui.ChatMessage.user('And 3+3?'),
         ];
 
-        final List<dartantic.ChatMessage> result = converter.toHistory(
+        final result = converter.toHistory(
           history,
           systemInstruction: 'You are a math tutor.',
         );
