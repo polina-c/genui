@@ -132,17 +132,6 @@ class DartanticContentConverter {
           converted.add(
             dartantic.LinkPart(part.url!, mimeType: part.mimeType, name: null),
           );
-        } else if (part.base64 != null) {
-          converted.add(
-            dartantic.DataPart(
-              base64Decode(part.base64!),
-              mimeType: part.mimeType,
-            ),
-          );
-        } else if (part.bytes != null) {
-          converted.add(
-            dartantic.DataPart(part.bytes!, mimeType: part.mimeType),
-          );
         } else {
           converted.add(const dartantic.TextPart('[Image data]'));
         }
@@ -186,7 +175,7 @@ class DartanticContentConverter {
   }
 
   /// Attempts to decode a JSON string or map; returns input/decoded.
-  dynamic _decodeMaybeJson(dynamic input) {
+  Object? _decodeMaybeJson(Object? input) {
     if (input is String) {
       try {
         return jsonDecode(input);
