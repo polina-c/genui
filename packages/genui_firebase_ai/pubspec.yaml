@@ -23,7 +23,8 @@ dependencies:
     sdk: flutter
   genui:
     path: ../genui
-  json_annotation: ^4.9.03
+  json_annotation: ^4.9.0
+  json_schema_builder: ^0.1.3
 
 dev_dependencies:
   flutter_test:

@@ -76,7 +76,7 @@ class GeminiContentConverter {
           // Tool Result
           result.add(
             firebase_ai.FunctionResponse(
-              part.callId,
+              part.toolName,
               // FunctionResponse expects a Map
               (part.result is String)
                   ? jsonDecode(part.result as String) as Map<String, Object?>
