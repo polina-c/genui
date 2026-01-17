@@ -24,7 +24,7 @@ void main() {
           parts: [
             UiPart(
               surfaceId: surfaceId,
-              definition: const UiDefinition(surfaceId: surfaceId),
+              definition: UiDefinition(surfaceId: surfaceId),
             ),
           ],
         ),
@@ -81,7 +81,7 @@ void main() {
           parts: [
             UiPart(
               surfaceId: surfaceId,
-              definition: const UiDefinition(surfaceId: surfaceId),
+              definition: UiDefinition(surfaceId: surfaceId),
             ),
           ],
         ),
