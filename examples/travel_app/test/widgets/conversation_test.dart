@@ -17,7 +17,7 @@ void main() {
 
     testWidgets('renders a list of messages', (WidgetTester tester) async {
       const surfaceId = 's1';
-      final List<ChatMessage> messages = [
+      final messages = <ChatMessage>[
         ChatMessage.user('Hello'),
         ChatMessage.model(
           '',
@@ -30,7 +30,7 @@ void main() {
         ),
       ];
       final components = [
-        Component(
+        const Component(
           id: 'r1',
           componentProperties: {
             'Text': {
@@ -87,7 +87,7 @@ void main() {
         ),
       ];
       final components = [
-        Component(
+        const Component(
           id: 'root',
           componentProperties: {
             'Text': {

@@ -77,7 +77,7 @@ class DartanticContentConverter {
               ),
             );
           case genui.ChatMessageRole.system:
-            final text = _extractText(message.parts);
+            final String text = _extractText(message.parts);
             if (text.isNotEmpty) {
               result.add(dartantic.ChatMessage.system(text));
             }

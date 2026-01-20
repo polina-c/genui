@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -34,18 +33,18 @@ void main() {
 
     test('fromBase64 creates correct instance with equality', () {
       const base64 = 'AQID';
-      final part = ImagePart.fromBase64(base64, mimeType: 'image/jpeg');
+      final part = const ImagePart.fromBase64(base64, mimeType: 'image/jpeg');
 
       expect(part.base64, base64);
       expect(part.mimeType, 'image/jpeg');
       expect(part.bytes, isNull);
       expect(part.url, isNull);
 
-      final samePart = ImagePart.fromBase64(base64, mimeType: 'image/jpeg');
+      final samePart = const ImagePart.fromBase64(base64, mimeType: 'image/jpeg');
       expect(part, equals(samePart));
       expect(part.hashCode, equals(samePart.hashCode));
 
-      final differentPart = ImagePart.fromBase64(
+      final differentPart = const ImagePart.fromBase64(
         'different',
         mimeType: 'image/jpeg',
       );
@@ -53,7 +52,7 @@ void main() {
     });
 
     test('fromUrl creates correct instance with equality', () {
-      final url = Uri.parse('https://example.com/image.png');
+      final Uri url = Uri.parse('https://example.com/image.png');
       final part = ImagePart.fromUrl(url, mimeType: 'image/png');
 
       expect(part.url, url);
@@ -65,7 +64,7 @@ void main() {
       expect(part, equals(samePart));
       expect(part.hashCode, equals(samePart.hashCode));
 
-      final differentUrl = Uri.parse('https://example.com/other.png');
+      final Uri differentUrl = Uri.parse('https://example.com/other.png');
       final differentPart = ImagePart.fromUrl(
         differentUrl,
         mimeType: 'image/png',
@@ -76,7 +75,7 @@ void main() {
     test('toJson and fromJson for bytes', () {
       final bytes = Uint8List.fromList([10, 20, 30]);
       final part = ImagePart.fromBytes(bytes, mimeType: 'image/png');
-      final json = part.toJson();
+      final Map<String, Object?> json = part.toJson();
 
       expect(json, {'type': 'Image', 'mimeType': 'image/png', 'bytes': bytes});
 
@@ -86,8 +85,8 @@ void main() {
 
     test('toJson and fromJson for base64', () {
       const base64 = 'SGVsbG8=';
-      final part = ImagePart.fromBase64(base64, mimeType: 'image/webp');
-      final json = part.toJson();
+      final part = const ImagePart.fromBase64(base64, mimeType: 'image/webp');
+      final Map<String, Object?> json = part.toJson();
 
       expect(json, {
         'type': 'Image',
@@ -100,9 +99,9 @@ void main() {
     });
 
     test('toJson and fromJson for url', () {
-      final url = Uri.parse('https://example.com/pic.jpg');
+      final Uri url = Uri.parse('https://example.com/pic.jpg');
       final part = ImagePart.fromUrl(url, mimeType: 'image/jpeg');
-      final json = part.toJson();
+      final Map<String, Object?> json = part.toJson();
 
       expect(json, {
         'type': 'Image',
@@ -119,12 +118,12 @@ void main() {
       // Since ImagePart is in genui, not genai_primitives, it won't be in the default registry.
       // We need to provide a custom registry.
 
-      final url = Uri.parse('https://example.com/pic.jpg');
+      final Uri url = Uri.parse('https://example.com/pic.jpg');
       final part = ImagePart.fromUrl(url, mimeType: 'image/jpeg');
-      final json = part.toJson();
+      final Map<String, Object?> json = part.toJson();
 
-      final registry = {
-        'Image': PartConverter(ImagePart.fromJson),
+      final Map<String, JsonToPartConverter> registry = {
+        'Image': const PartConverter(ImagePart.fromJson),
         ...defaultPartConverterRegistry,
       };
 

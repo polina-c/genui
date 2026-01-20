@@ -111,7 +111,7 @@ class A2uiAgentConnector {
             }
           case genui.UiInteractionPart():
             try {
-              final dynamic data = jsonDecode(part.interaction);
+              final Object? data = jsonDecode(part.interaction);
               if (data is Map<String, Object?>) {
                 return Part.data(data: data);
               } else {

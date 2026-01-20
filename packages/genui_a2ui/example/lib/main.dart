@@ -215,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessage(ChatMessage message) {
     final isUserMessage = message.role == ChatMessageRole.user;
-    var text = message.text;
+    String text = message.text;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10.0),

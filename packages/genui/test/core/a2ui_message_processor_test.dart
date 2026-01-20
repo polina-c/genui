@@ -183,7 +183,7 @@ void main() {
       expect(message, isA<ChatMessage>());
       expect(message.role, ChatMessageRole.user);
       expect(message.parts.length, 1);
-      final part = message.parts.first;
+      final Part part = message.parts.first;
       expect(part, isA<UiInteractionPart>());
 
       final String expectedJson = jsonEncode({

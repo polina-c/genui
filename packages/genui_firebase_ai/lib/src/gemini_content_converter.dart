@@ -37,13 +37,13 @@ class GeminiContentConverter {
     for (final message in messages) {
       if (message.parts.isEmpty) continue;
 
-      final role = switch (message.role) {
+      final String role = switch (message.role) {
         ChatMessageRole.user => 'user',
         ChatMessageRole.model => 'model',
         ChatMessageRole.system => 'user',
       };
 
-      final parts = _convertParts(message.parts);
+      final List<firebase_ai.Part> parts = _convertParts(message.parts);
       if (parts.isNotEmpty) {
         result.add(firebase_ai.Content(role, parts));
       }

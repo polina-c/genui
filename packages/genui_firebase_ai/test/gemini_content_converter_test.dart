@@ -101,7 +101,7 @@ void main() {
       // Or 1 part if empty text filtering logic exists elsewhere?
       // Based on my assumption: Index 0 is TextPart(''), Index 1 is ImagePart.
       // Wait, let's just find the InlineDataPart.
-      final part = result.first.parts
+      final firebase_ai.InlineDataPart part = result.first.parts
           .whereType<firebase_ai.InlineDataPart>()
           .first;
       expect(part.mimeType, 'image/jpeg');
@@ -121,7 +121,7 @@ void main() {
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
-      final part = result.first.parts
+      final firebase_ai.InlineDataPart part = result.first.parts
           .whereType<firebase_ai.InlineDataPart>()
           .first;
       expect(part.mimeType, 'image/png');
@@ -140,7 +140,7 @@ void main() {
         messages,
       );
       // Should find a TextPart with "Image at ..."
-      final parts = result.first.parts.whereType<firebase_ai.TextPart>();
+      final Iterable<firebase_ai.TextPart> parts = result.first.parts.whereType<firebase_ai.TextPart>();
       // One empty text part (from ''), one from image URL.
       expect(parts.any((p) => p.text == 'Image at $url'), isTrue);
     });
@@ -162,7 +162,7 @@ void main() {
         messages,
       );
       // Might have empty TextPart first.
-      final part = result.first.parts
+      final firebase_ai.FunctionCall part = result.first.parts
           .whereType<firebase_ai.FunctionCall>()
           .first;
       expect(part.name, 'doSomething');
@@ -189,7 +189,7 @@ void main() {
         messages,
       );
       expect(result.first.role, 'user');
-      final part = result.first.parts
+      final firebase_ai.FunctionResponse part = result.first.parts
           .whereType<firebase_ai.FunctionResponse>()
           .first;
       expect(
@@ -206,14 +206,14 @@ void main() {
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
-      final parts = result.first.parts.whereType<firebase_ai.TextPart>();
+      final Iterable<firebase_ai.TextPart> parts = result.first.parts.whereType<firebase_ai.TextPart>();
       expect(parts.any((p) => p.text == 'Thinking: working on it'), isTrue);
     });
 
     test(
       'toFirebaseAiContent handles multiple messages of different types',
       () {
-        final List<ChatMessage> messages = [
+        final messages = <ChatMessage>[
           ChatMessage.user('First message'),
           ChatMessage.model('Second message'),
           ChatMessage.user('Third message'),

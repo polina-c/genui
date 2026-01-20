@@ -60,7 +60,7 @@ class Conversation extends StatelessWidget {
                   );
           }
         } else if (message.role == ChatMessageRole.model) {
-          final uiPart = message.parts.whereType<UiPart>().firstOrNull;
+          final UiPart? uiPart = message.parts.whereType<UiPart>().firstOrNull;
           if (uiPart != null) {
             return Padding(
               padding: const EdgeInsets.all(16.0),

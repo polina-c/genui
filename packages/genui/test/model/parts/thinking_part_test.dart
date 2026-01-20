@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:genai_primitives/genai_primitives.dart';
 import 'package:genui/src/model/parts/thinking.dart';
 import 'package:test/test.dart';
 
@@ -31,7 +30,7 @@ void main() {
 
     test('round trip serialization', () {
       const original = ThinkingPart('reasoning');
-      final json = original.toJson();
+      final Map<String, Object?> json = original.toJson();
       final reconstructed = ThinkingPart.fromJson(json);
       expect(reconstructed, equals(original));
     });
