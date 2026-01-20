@@ -98,11 +98,11 @@ final class Parts extends ListBase<Part> {
 /// The key of a map entry is the part type.
 /// The value is the converter that knows how to convert that part type.
 ///
-/// Extend this map to add support for additional part types.
+/// To add support for additional part types, extend this map.
 ///
-/// Reduce this map to limit the set of the part types.
+/// To limit supported part types, create a new map with a subset of converters.
 ///
-/// Redefine this map, if you do not want to support any future part types.
+/// To remove support for part types in future versions, redefine this map.
 const defaultPartConverterRegistry = <String, JsonToPartConverter>{
   TextPart.type: PartConverter(TextPart.fromJson),
   DataPart.type: PartConverter(DataPart.fromJson),
