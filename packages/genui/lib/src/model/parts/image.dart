@@ -110,52 +110,11 @@ final class ImagePart extends Part {
 
   @override
   int get hashCode => Object.hash(
-        mimeType,
-        base64,
-        url,
-        const DeepCollectionEquality().hash(bytes),
-      );
-   
-
-    // Simpler approach: check if content matches.
-    if (other is! ImagePart) return false;
-
-    // For bytes, we need list equality.
-    // Since we don't have `update` to add imports easily in this single step without checking,
-    // I will use a simple list comparison helper if needed or assume standard usage.
-    // But wait, `Part` might not be providing equality utils.
-    // Let's rely on `genai_primitives` being available.
-    // `genui` imports `genai_primitives`.
-
-    return other.mimeType == mimeType &&
-        other.base64 == base64 &&
-        other.url == url &&
-        _bytesEqual(other.bytes, bytes);
-  }
-
-  static bool _bytesEqual(Uint8List? a, Uint8List? b) {
-    if (a == null) return b == null;
-    if (b == null) return false;
-    if (a.length != b.length) return false;
-    for (int i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hash(
     mimeType,
     base64,
     url,
-    // Simple hash for bytes to avoid dragging in complex util if not needed
-    bytes == null ? null : Object.hashAll(bytes!),
+    const DeepCollectionEquality().hash(bytes),
   );
-
-  @override
-  String toString() =>
-      'ImagePart(mimeType: $mimeType, '
-      'bytes: ${bytes?.length}, base64: ${base64?.length}, url: $url)';
 }
 
 // Private implementation classes for ImagePart factories
