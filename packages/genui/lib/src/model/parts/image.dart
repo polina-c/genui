@@ -4,11 +4,9 @@
 
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:genai_primitives/genai_primitives.dart';
 
-/// An image part of a message.
-///
-/// Use the factory constructors to create an instance from different sources.
 final class _Json {
   static const mimeType = 'mimeType';
   static const bytes = 'bytes';
@@ -73,7 +71,7 @@ final class ImagePart extends Part {
       );
     } else if (json.containsKey(_Json.url)) {
       // Check if url is just a string, as it might be serialized as a string
-      final urlValue = json[_Json.url];
+      final Object? urlValue = json[_Json.url];
       final Uri uri;
       if (urlValue is String) {
         uri = Uri.parse(urlValue);
@@ -103,15 +101,21 @@ final class ImagePart extends Part {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other.runtimeType != runtimeType) return false;
-    // We don't have deep equality here yet, using basic comparison matching genai_primitives roughly
-    // BUT genai_primitives uses DeepCollectionEquality from collection.
-    // I need to check if collection is available or if I should use it.
-    // `genui` pubspec imports `genai_primitives` which exports `collection` (maybe?)
-    // Actually `genui` likely depends on `collection` or `genai_primitives` does.
-    // Let's implement manually for now to avoid extra imports if not present,
-    // or assume we can use what's available.
-    // Since `genai_primitives` is imported, let's see if we can use its utility or just standard dart logic.
-    // For bytes comparison we need list equality.
+    return other is ImagePart &&
+        other.mimeType == mimeType &&
+        other.base64 == base64 &&
+        other.url == url &&
+        const DeepCollectionEquality().equals(other.bytes, bytes);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        mimeType,
+        base64,
+        url,
+        const DeepCollectionEquality().hash(bytes),
+      );
+   
 
     // Simpler approach: check if content matches.
     if (other is! ImagePart) return false;
