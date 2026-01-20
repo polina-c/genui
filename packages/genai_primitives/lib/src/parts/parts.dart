@@ -100,9 +100,8 @@ final class Parts extends ListBase<Part> {
 ///
 /// To add support for additional part types, extend this map.
 ///
-/// To limit supported part types, create a new map with a subset of converters.
-///
-/// To remove support for part types in future versions, redefine this map.
+/// To limit supported part types, or to remove support for part types
+/// in future versions of `genai_primitives`, define a new map.
 const defaultPartConverterRegistry = <String, JsonToPartConverter>{
   TextPart.type: PartConverter(TextPart.fromJson),
   DataPart.type: PartConverter(DataPart.fromJson),
