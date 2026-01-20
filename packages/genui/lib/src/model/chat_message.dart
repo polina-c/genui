@@ -11,6 +11,8 @@ import 'package:genai_primitives/genai_primitives.dart';
 export 'package:genai_primitives/genai_primitives.dart';
 
 // Export local parts
+export 'parts/image.dart';
+export 'parts/thinking.dart';
 export 'parts/ui.dart';
 
 /// Legacy alias for [Part].
