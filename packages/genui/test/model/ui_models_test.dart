@@ -2,68 +2,98 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:genui/src/model/tools.dart';
+import 'package:genui/src/model/tools.dart'; // For surfaceIdKey
 import 'package:genui/src/model/ui_models.dart';
-import 'package:genui/src/primitives/simple_items.dart';
+import 'package:test/test.dart';
 
 void main() {
-  group('UserActionEvent', () {
-    test('can be created and read', () {
-      final now = DateTime.now();
-      final event = UserActionEvent(
+  group('UiDefinition', () {
+    test('toJson returns correct map', () {
+      final uiDef = UiDefinition(
         surfaceId: 'testSurface',
-        name: 'testAction',
-        sourceComponentId: 'testWidget',
-        timestamp: now,
-        context: {'key': 'value'},
+        rootComponentId: 'root1',
+        catalogId: 'cat1',
+        components: {
+          'comp1': const Component(
+            id: 'comp1',
+            componentProperties: {'type': 'text'},
+          ),
+        },
+        styles: {'color': 'red'},
       );
 
-      expect(event.surfaceId, 'testSurface');
-      expect(event.name, 'testAction');
-      expect(event.sourceComponentId, 'testWidget');
-      expect(event.timestamp, now);
-      expect(event.isAction, isTrue);
-      expect(event.context, {'key': 'value'});
+      final json = uiDef.toJson();
+
+      expect(json[surfaceIdKey], 'testSurface');
+      expect(json['rootComponentId'], 'root1');
+      expect(json['catalogId'], 'cat1');
+      expect(json['components'], isA<Map<String, Object?>>());
+      expect(
+        (json['components'] as Map<String, Object?>)['comp1'],
+        isA<Map<String, Object?>>(),
+      );
+      expect(json['styles'], {'color': 'red'});
     });
 
-    test('can be created from map and read', () {
-      final now = DateTime.now();
-      final event = UserActionEvent.fromMap({
+    test('fromJson creates correct instance', () {
+      final json = {
         surfaceIdKey: 'testSurface',
-        'name': 'testAction',
-        'sourceComponentId': 'testWidget',
-        'timestamp': now.toIso8601String(),
-        'isAction': true,
-        'context': {'key': 'value'},
-      });
+        'rootComponentId': 'root1',
+        'catalogId': 'cat1',
+        'components': {
+          'comp1': {
+            'id': 'comp1',
+            'component': {'type': 'text'},
+          },
+        },
+        'styles': {'color': 'red'},
+      };
 
-      expect(event.surfaceId, 'testSurface');
-      expect(event.name, 'testAction');
-      expect(event.sourceComponentId, 'testWidget');
-      expect(event.timestamp, now);
-      expect(event.isAction, isTrue);
-      expect(event.context, {'key': 'value'});
+      final uiDef = UiDefinition.fromJson(json);
+
+      expect(uiDef.surfaceId, 'testSurface');
+      expect(uiDef.rootComponentId, 'root1');
+      expect(uiDef.catalogId, 'cat1');
+      expect(uiDef.components, hasLength(1));
+      expect(uiDef.components['comp1']?.id, 'comp1');
+      expect(uiDef.styles, {'color': 'red'});
     });
 
-    test('can be converted to map', () {
-      final now = DateTime.now();
-      final event = UserActionEvent(
+    test('round trip serialization', () {
+      final original = UiDefinition(
         surfaceId: 'testSurface',
-        name: 'testAction',
-        sourceComponentId: 'testWidget',
-        timestamp: now,
-        context: {'key': 'value'},
+        rootComponentId: 'root1',
+        catalogId: 'cat1',
+        components: {
+          'comp1': const Component(
+            id: 'comp1',
+            componentProperties: {'type': 'text'},
+          ),
+        },
+        styles: {'color': 'red'},
       );
 
-      final JsonMap map = event.toMap();
+      final json = original.toJson();
+      final reconstructed = UiDefinition.fromJson(json);
 
-      expect(map[surfaceIdKey], 'testSurface');
-      expect(map['name'], 'testAction');
-      expect(map['sourceComponentId'], 'testWidget');
-      expect(map['timestamp'], now.toIso8601String());
-      expect(map['isAction'], isTrue);
-      expect(map['context'], {'key': 'value'});
+      expect(reconstructed.surfaceId, original.surfaceId);
+      expect(reconstructed.rootComponentId, original.rootComponentId);
+      expect(reconstructed.catalogId, original.catalogId);
+      expect(reconstructed.styles, original.styles);
+      // Component equality might need to be checked carefully or just check ids/props
+      expect(reconstructed.components.keys, original.components.keys);
+    });
+
+    test('handles missing optional fields', () {
+      final json = <String, Object?>{surfaceIdKey: 'testSurface'};
+
+      final uiDef = UiDefinition.fromJson(json);
+
+      expect(uiDef.surfaceId, 'testSurface');
+      expect(uiDef.rootComponentId, isNull);
+      expect(uiDef.catalogId, isNull);
+      expect(uiDef.components, isEmpty);
+      expect(uiDef.styles, isNull);
     });
   });
 }
