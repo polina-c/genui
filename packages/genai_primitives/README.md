@@ -6,4 +6,8 @@ It includes core definitions such as `ChatMessage`, `Parts`, `ToolDefinition` an
 
 ## Aliasing
 
-If you need to resolve name conflicts with other packages, alias the package as `genai`.
+If you need to resolve name conflicts with other packages, alias the package as `genai`:
+
+```dart
+import 'package:genai_primitives/genai_primitives.dart' as genai;
+```
