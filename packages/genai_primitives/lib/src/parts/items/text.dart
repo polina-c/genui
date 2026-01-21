@@ -6,7 +6,9 @@ import 'package:meta/meta.dart';
 
 import '../model.dart';
 
-sealed class LlmPart extends Part {}
+sealed class LlmPart extends Part {
+  const LlmPart();
+}
 
 final class _Json {
   static const content = 'content';
