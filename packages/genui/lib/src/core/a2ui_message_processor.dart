@@ -9,7 +9,6 @@ import 'package:flutter/foundation.dart';
 
 import '../model/a2ui_message.dart';
 import '../model/catalog.dart';
-import '../model/chat_message.dart';
 import '../model/data_model.dart';
 import '../model/ui_models.dart';
 import '../primitives/logging.dart';
