@@ -6,13 +6,15 @@ import 'package:meta/meta.dart';
 
 import '../model.dart';
 
+sealed class LlmPart extends Part {}
+
 final class _Json {
   static const content = 'content';
 }
 
 /// A text part of a message.
 @immutable
-final class TextPart extends Part {
+final class TextPart extends LlmPart {
   static const type = 'Text';
 
   /// Creates a new text part.
