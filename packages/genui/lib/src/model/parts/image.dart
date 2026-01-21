@@ -70,19 +70,9 @@ final class ImagePart extends Part {
         mimeType: json[_Json.mimeType] as String,
       );
     } else if (json.containsKey(_Json.url)) {
-      // Check if url is just a string, as it might be serialized as a string
       final Object? urlValue = json[_Json.url];
       final Uri uri;
-      if (urlValue is String) {
-        uri = Uri.parse(urlValue);
-      } else {
-        // Assume it might be an object that we need to handle or it's
-        // incorrectly typed, but for now let's assume standard string
-        // serialization for URLs in JSON.
-        // If it's something else, let it throw or handle as needed.
-        // Based on genai_primitives it casts to String.
-        uri = Uri.parse(urlValue as String);
-      }
+      uri = Uri.parse(urlValue as String);
 
       return ImagePart.fromUrl(uri, mimeType: json[_Json.mimeType] as String);
     }
