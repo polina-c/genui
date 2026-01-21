@@ -60,9 +60,11 @@ void main() {
       // Actually, if ChatMessage.model('') assumes empty text, it might add it.
       // And converter converts TextPart('') -> firebase_ai.TextPart('').
       // And UiPart -> firebase_ai.TextPart(json).
-      // If we used Parts.fromText('', parts: [UiPart]), it creates TextPart('') + UiPart.
+      // If we used Parts.fromText('', parts: [UiPart]),
+      // it creates TextPart('') + UiPart.
       // So checks need to be aware.
-      // Or we can construct ChatMessage manually to avoid TextPart if we wanted.
+      // Or we can construct ChatMessage manually
+      // to avoid TextPart if we wanted.
       // But typically empty text part is fine.
     });
 
@@ -140,7 +142,8 @@ void main() {
         messages,
       );
       // Should find a TextPart with "Image at ..."
-      final Iterable<firebase_ai.TextPart> parts = result.first.parts.whereType<firebase_ai.TextPart>();
+      final Iterable<firebase_ai.TextPart> parts = result.first.parts
+          .whereType<firebase_ai.TextPart>();
       // One empty text part (from ''), one from image URL.
       expect(parts.any((p) => p.text == 'Image at $url'), isTrue);
     });
@@ -206,7 +209,8 @@ void main() {
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
-      final Iterable<firebase_ai.TextPart> parts = result.first.parts.whereType<firebase_ai.TextPart>();
+      final Iterable<firebase_ai.TextPart> parts = result.first.parts
+          .whereType<firebase_ai.TextPart>();
       expect(parts.any((p) => p.text == 'Thinking: working on it'), isTrue);
     });
 

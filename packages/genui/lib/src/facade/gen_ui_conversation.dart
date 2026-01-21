@@ -164,13 +164,13 @@ class GenUiConversation {
   /// Sends a user message to the AI to generate a UI response.
   Future<void> sendRequest(ChatMessage message) async {
     final List<ChatMessage> history = _conversation.value;
-    // If it's a UI event, we generally don't show it in the conversation history
-    // unless debugging. We assume here that messages with 'isUiInteraction'
-    // metadata are such messages.
+    // If it's a UI event, we generally don't show it in the conversation
+    // history unless debugging. We assume here that messages with
+    // 'isUiInteraction' metadata are such messages.
     final bool isUiInteraction =
         message.metadata['isUiInteraction'] == true ||
-        message.role == ChatMessageRole.user &&
-            message.parts.any((p) => p is UiInteractionPart);
+        (message.role == ChatMessageRole.user &&
+            message.parts.any((p) => p is UiInteractionPart));
 
     if (!isUiInteraction) {
       _conversation.value = [...history, message];

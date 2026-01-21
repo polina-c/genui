@@ -7,7 +7,8 @@ library;
 
 import 'package:genai_primitives/genai_primitives.dart';
 
-// Export the primitives so that users of genui don't need to import genai_primitives directly
+// Export the primitives so that users of genui don't need to import
+// genai_primitives directly
 export 'package:genai_primitives/genai_primitives.dart';
 
 // Export local parts
@@ -21,7 +22,7 @@ typedef MessagePart = Part;
 
 /// Legacy alias for [ChatMessage].
 ///
-/// Note: The hierarchy has changed. [UserMessage], [AiTextMessage], etc. are
+/// Note: The hierarchy has changed. `UserMessage`, `AiTextMessage`, etc. are
 /// now factories or just [ChatMessage] with specific roles.
 @Deprecated('Use ChatMessage instead')
 typedef BaseChatMessage = ChatMessage;

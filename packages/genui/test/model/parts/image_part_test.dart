@@ -40,7 +40,10 @@ void main() {
       expect(part.bytes, isNull);
       expect(part.url, isNull);
 
-      final samePart = const ImagePart.fromBase64(base64, mimeType: 'image/jpeg');
+      final samePart = const ImagePart.fromBase64(
+        base64,
+        mimeType: 'image/jpeg',
+      );
       expect(part, equals(samePart));
       expect(part.hashCode, equals(samePart.hashCode));
 
@@ -114,9 +117,9 @@ void main() {
     });
 
     test('Part.fromJson polymorphism works via Part.fromJson', () {
-      // NOTE: For Part.fromJson to work, the registry needs to know about ImagePart.
-      // Since ImagePart is in genui, not genai_primitives, it won't be in the default registry.
-      // We need to provide a custom registry.
+      // NOTE: For Part.fromJson to work, the registry needs to know about
+      // ImagePart. Since ImagePart is in genui, not genai_primitives, it won't
+      // be in the default registry. We need to provide a custom registry.
 
       final Uri url = Uri.parse('https://example.com/pic.jpg');
       final part = ImagePart.fromUrl(url, mimeType: 'image/jpeg');

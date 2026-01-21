@@ -76,8 +76,9 @@ final class ImagePart extends Part {
       if (urlValue is String) {
         uri = Uri.parse(urlValue);
       } else {
-        // Assume it might be an object that we need to handle or it's incorrectly typed,
-        // but for now let's assume standard string serialization for URLs in JSON.
+        // Assume it might be an object that we need to handle or it's
+        // incorrectly typed, but for now let's assume standard string
+        // serialization for URLs in JSON.
         // If it's something else, let it throw or handle as needed.
         // Based on genai_primitives it casts to String.
         uri = Uri.parse(urlValue as String);
