@@ -15,7 +15,7 @@ final class _Json {
   static const metadata = 'metadata';
 }
 
-/// A message between participants of the interaction.
+/// A chat message.
 @immutable
 final class ChatMessage {
   /// Creates a new message.
