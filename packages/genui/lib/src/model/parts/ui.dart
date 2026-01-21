@@ -4,6 +4,7 @@
 
 import 'package:flutter/widgets.dart';
 import 'package:genai_primitives/genai_primitives.dart';
+import '../../primitives/simple_items.dart';
 import '../ui_models.dart';
 
 final class _Json {
@@ -19,9 +20,7 @@ final class UiPart extends Part {
 
   /// Creates a UI part.
   UiPart({required this.definition, String? surfaceId})
-    : surfaceId =
-          surfaceId ??
-          ValueKey(DateTime.now().toIso8601String()).hashCode.toString(),
+    : surfaceId = surfaceId ?? generateId(),
       uiKey = UniqueKey();
 
   /// The JSON definition of the UI.
