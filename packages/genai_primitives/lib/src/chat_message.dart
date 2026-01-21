@@ -5,7 +5,6 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
-import 'parts/items.dart';
 import 'parts/model.dart';
 import 'parts/parts.dart';
 
