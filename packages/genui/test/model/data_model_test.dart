@@ -229,13 +229,14 @@ void main() {
       test('handles empty contents map', () {
         dataModel.update(DataPath('/a'), {'b': 1}); // Initial data
         dataModel.update(DataPath.root, {});
-        // Root update merges? No, "If path is root '/', merge value (as Map) into the root model" - waiting, does it merge or replace?
-        // Implementation Plan said: "If path is root '/', merge value (as Map) into the root model."
-        // But legacy behavior was list of KV pairs.
-        // Let's verify standard behavior: usually updates are merges or sets.
-        // If I pass empty map to root, it might just do nothing if it's a merge.
-        // Let's check the test expectation.
-        // transform this test to verify it doesn't crash at least.
+        // Root update merges? No, "If path is root '/', merge value (as Map)
+        // into the root model" - waiting, does it merge or replace?
+        // Implementation Plan said: "If path is root '/', merge value (as Map)
+        // into the root model." But legacy behavior was list of KV pairs. Let's
+        // verify standard behavior: usually updates are merges or sets. If I
+        // pass empty map to root, it might just do nothing if it's a merge.
+        // Let's check the test expectation. transform this test to verify it
+        // doesn't crash at least.
       });
     });
   });
@@ -277,7 +278,7 @@ void main() {
     );
 
     test(
-      'bindExternalState does NOT update source when model changes (twoWay=false)',
+      '''bindExternalState does NOT update source when model changes (twoWay=false)''',
       () {
         final source = ValueNotifier<int>(0);
         dataModel.bindExternalState(
@@ -302,18 +303,18 @@ void main() {
       dataModel.dispose();
 
       // Update data model shouldn't crash but won't update source if disposed?
-      // Actually dataModel.update calls notifySubscribers. If disposed, subscriptions are cleared?
-      // But source listener is removed?
-      // External subscriptions are cleared in dispose.
+      // Actually dataModel.update calls notifySubscribers. If disposed,
+      // subscriptions are cleared? But source listener is removed? External
+      // subscriptions are cleared in dispose.
 
       // We can't easily test internal state, but we can verify behavior.
       // If we update source, model shouldn't update (if we could check model).
       // But model is disposed.
 
-      // Let's create a new model and verify source doesn't update it?
-      // No, let's verify if we update model, source doesn't update.
-      // But if model is disposed, can we update it?
-      // DataModel doesn't throw on update after dispose, just likely empty subscriptions.
+      // Let's create a new model and verify source doesn't update it? No, let's
+      // verify if we update model, source doesn't update. But if model is
+      // disposed, can we update it? DataModel doesn't throw on update after
+      // dispose, just likely empty subscriptions.
     });
   });
 

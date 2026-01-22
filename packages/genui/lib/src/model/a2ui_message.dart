@@ -40,7 +40,8 @@ sealed class A2uiMessage {
         S.object(
           title: 'A2UI Message Schema',
           description:
-              'Describes a JSON payload for an A2UI (Agent to UI) message. A message MUST contain exactly ONE of the action properties.',
+              'Describes a JSON payload for an A2UI (Agent to UI) message. '
+              'A message MUST contain exactly ONE of the action properties.',
           properties: {
             'createSurface': A2uiSchemas.createSurfaceSchema(),
             'updateComponents': A2uiSchemas.updateComponentsSchema(catalog),
@@ -156,11 +157,11 @@ final class UpdateDataModel extends A2uiMessage {
   /// The path in the data model to update. Defaults to root '/'.
   final String path;
 
-  /// The new value to write to the data model.
-  /// If null (and key is present in JSON), it implies deletion of the key at path.
-  /// However, dart `fromJson` might not distinguish absent vs null easily without helper.
-  /// In v0.9 spec: "If omitted, the key at 'path' is removed."
-  /// Here we assume `value` is the value from JSON.
+  /// The new value to write to the data model. If null (and key is present in
+  /// JSON), it implies deletion of the key at path. However, dart `fromJson`
+  /// might not distinguish absent vs null easily without helper. In v0.9 spec:
+  /// "If omitted, the key at 'path' is removed." Here we assume `value` is the
+  /// value from JSON.
   final Object? value;
 
   /// Converts this message to a JSON map.

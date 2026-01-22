@@ -146,8 +146,8 @@ class DataModel {
         genUiLogger.warning(
           'DataModel.update: contents for root path is not a Map: $contents',
         );
-        // If it's not a map, we can't replace the root object (which must be a JsonMap).
-        // Check if it's null, implying clear?
+        // If it's not a map, we can't replace the root object (which must be a
+        // JsonMap). Check if it's null, implying clear?
         if (contents == null) {
           _data = {};
         }
@@ -190,8 +190,6 @@ class DataModel {
     return notifier;
   }
 
-
-
   final List<VoidCallback> _externalSubscriptions = [];
 
   /// Binds an external state [source] to a [path] in the DataModel.
@@ -230,7 +228,8 @@ class DataModel {
     if (twoWay) {
       if (source is! ValueNotifier<T>) {
         genUiLogger.warning(
-          'bindExternalState: twoWay is true but source is not a ValueNotifier.',
+          'bindExternalState: twoWay is true but source is not a '
+          'ValueNotifier.',
         );
       } else {
         final ValueNotifier<T> notifier = source;
@@ -239,17 +238,17 @@ class DataModel {
 
         void onModelChanged() {
           final T? modelValue = subscription.value;
-          // Null safety: if modelValue is null but T is not nullable, what do we do?
-          // Assuming source.value accepts the type from the model.
+          // Null safety: if modelValue is null but T is not nullable, what do
+          // we do? Assuming source.value accepts the type from the model.
           if (modelValue != null && modelValue != notifier.value) {
             notifier.value = modelValue;
           }
         }
 
         subscription.addListener(onModelChanged);
-        // Clean up the listener on the subscription
-        // Note: We don't dispose the subscription itself here as it's managed by DataModel cache,
-        // but we must remove our listener.
+        // Clean up the listener on the subscription Note: We don't dispose the
+        // subscription itself here as it's managed by DataModel cache, but we
+        // must remove our listener.
         _externalSubscriptions.add(
           () => subscription.removeListener(onModelChanged),
         );
@@ -349,17 +348,14 @@ class DataModel {
         if (remaining.isEmpty) {
           if (index < current.length) {
             if (value == null) {
-              // Removing from list?
-              // If we remove, indices shift.
-              // v0.9 spec: "If the value is null, the key is removed."
-              // For lists, this might be ambiguous. Usually setting null in list
-              // just sets it to null or removes it?
-              // Providing valid JSON Patch semantics (remove) might be better,
-              // but here we just replace with null or remove?
+              // Removing from list? If we remove, indices shift. v0.9 spec: "If
+              // the value is null, the key is removed." For lists, this might
+              // be ambiguous. Usually setting null in list just sets it to null
+              // or removes it? Providing valid JSON Patch semantics (remove)
+              // might be better, but here we just replace with null or remove?
               // Let's assume replace with null to preserve indices, or actually
-              // remove?
-              // Typically `updateDataModel` with path to list item implies
-              // replacement.
+              // remove? Typically `updateDataModel` with path to list item
+              // implies replacement.
               current[index] = value; // allows nulls in list
             } else {
               current[index] = value;

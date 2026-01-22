@@ -107,10 +107,10 @@ class A2uiSchemas {
 
     final idList = S.list(items: S.string(description: 'Component ID'));
 
-    // We can add template support if needed, matching common_types.json
-    // For Phase 1 implementation plan, it mostly talks about flattening components.
-    // We'll stick to List<String> for now as per `common_types.json` "simple" list.
-    // A2ui v0.9 allows ChildList to be a template too.
+    // We can add template support if needed, matching common_types.json For
+    // Phase 1 implementation plan, it mostly talks about flattening components.
+    // We'll stick to List<String> for now as per `common_types.json` "simple"
+    // list. A2ui v0.9 allows ChildList to be a template too.
     return idList;
   }
 
@@ -202,11 +202,14 @@ class A2uiSchemas {
         'components': S.list(
           description: 'A flat list of component definitions.',
           minItems: 1,
-          items: S.combined(
-            oneOf: componentSchemas,
-            description:
-                'Must match one of the component definitions in the catalog.',
-          ),
+          items: componentSchemas.isEmpty
+              ? S.object(description: 'No components in catalog.')
+              : S.combined(
+                  oneOf: componentSchemas,
+                  description:
+                      'Must match one of the component definitions in the '
+                      'catalog.',
+                ),
         ),
       },
       required: [surfaceIdKey, 'components'],

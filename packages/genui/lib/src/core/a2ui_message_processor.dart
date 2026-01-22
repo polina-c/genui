@@ -17,7 +17,7 @@ import '../primitives/logging.dart';
 /// A sealed class representing an update to the UI managed by
 /// [A2uiMessageProcessor].
 ///
-/// This class has three subclasses: [SurfaceAdded], [UpdateComponentsd], and
+/// This class has three subclasses: [SurfaceAdded], [UpdateComponents], and
 /// [SurfaceRemoved].
 sealed class GenUiUpdate {
   /// Creates a [GenUiUpdate] for the given [surfaceId].
@@ -173,11 +173,11 @@ class A2uiMessageProcessor implements GenUiHost {
         uiDefinition = uiDefinition.copyWith(components: newComponents);
         notifier.value = uiDefinition;
 
-        // In v0.9, we assume if we have components, we might be ready to update.
-        // We check if "root" component exists or if the definition previously had a root-like structure.
-        // For now, we notify update.
+        // In v0.9, we assume if we have components, we might be ready to
+        // update. We check if "root" component exists or if the definition
+        // previously had a root-like structure. For now, we notify update.
         genUiLogger.info(
-          'Updating surface $surfaceId with ${message.components.length} components',
+          '''Updating surface $surfaceId with ${message.components.length} components''',
         );
         _surfaceUpdates.add(ComponentsUpdated(surfaceId, uiDefinition));
 
@@ -218,7 +218,8 @@ class A2uiMessageProcessor implements GenUiHost {
         );
         final UiDefinition? uiDefinition = notifier.value;
         if (uiDefinition != null) {
-          // Check if we have components to render, otherwise it's just data update
+          // Check if we have components to render, otherwise it's just data
+          // update
           _surfaceUpdates.add(
             ComponentsUpdated(message.surfaceId, uiDefinition),
           );

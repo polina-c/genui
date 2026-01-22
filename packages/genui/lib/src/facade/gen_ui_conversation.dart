@@ -25,8 +25,9 @@ import '../model/ui_models.dart';
 class GenUiConversation {
   /// Creates a new [GenUiConversation].
   ///
-  /// Callbacks like [onSurfaceAdded], [onUpdateComponentsd] and [onSurfaceDeleted]
-  /// can be provided to react to UI changes initiated by the AI.
+  /// Callbacks like [onSurfaceAdded], [onComponentsUpdated] and
+  /// [onSurfaceDeleted] can be provided to react to UI changes initiated by the
+  /// AI.
   GenUiConversation({
     this.onSurfaceAdded,
     this.onComponentsUpdated,

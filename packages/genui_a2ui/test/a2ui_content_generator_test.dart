@@ -111,10 +111,7 @@ void main() {
         'updateComponents': {
           'surfaceId': 's1',
           'components': [
-            {
-              'id': 'c1',
-              'component': 'Column', 'children': <Object?>[],
-            },
+            {'id': 'c1', 'component': 'Column', 'children': <Object?>[]},
           ],
         },
       });
