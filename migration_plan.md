@@ -575,7 +575,17 @@ Add schema generation for the functions supported by the client (v0.9 feature).
 
 These should be added to a new section in the Catalog definition schema (`functions` array).
 
+### 3.5. Phase 1 Success Criteria
+
+- [ ] `A2uiMessage` subclasses (`CreateSurface`, `UpdateComponents`, `UpdateDataModel`, `DeleteSurface`) are implemented and strictly typed to v0.9 spec.
+- [ ] `Component` and `UiDefinition` classes are refactored to support the flattened structure (discriminator + properties).
+- [ ] `DataModel` supports storing and retrieving native JSON types (Map, List, primitives) without "valueString" wrappers.
+- [ ] `DataModel` `bindExternalState` API is defined and unit tested (mock listeners).
+- [ ] `A2uiSchemas` generates schemas matching `server_to_client.json` and `standard_catalog.json` identically.
+- [ ] Unit tests for JSON serialization/deserialization of all new message types pass.
+
 ## 4. Phase 2: Widget Catalog & Rendering (Package: `genui`)
+
 
 This phase updates how JSON is converted into Flutter Widgets.
 
@@ -852,7 +862,17 @@ Implement a robust recursive descent parser for the `${...}` syntax.
 
 Ensure `A2uiSchemas` generates the schema for function calls so the LLM knows how to structure them.
 
+### 4.3. Phase 2 Success Criteria
+
+- [ ] All standard catalog widgets (`Text`, `Button`, `Row`, `Column`, `List`, `Card`, `Tabs`, `Modal`, `Divider`, `TextField`, `CheckBox`, `Slider`, `ChoicePicker`, `DateTimeInput`) are updated to read flattened properties.
+- [ ] New widget properties (`variant`, `justify`, `align`, `checks`) are fully implemented and visible in rendered UI.
+- [ ] `FunctionRegistry` is implemented and accessible to `ContentGenerator` / `DataContext`.
+- [ ] All Standard Functions (`required`, `regex`, `length`, `numeric`, `email`, `formatString`, `openUrl`, `formatNumber`, `formatCurrency`, `formatDate`, `pluralize`) are implemented and unit tested.
+- [ ] `ExpressionParser` correctly handles nested interpolations (`${func(${path})}`) and escaped characters, with cycle detection and recursion limits verified by tests.
+- [ ] "Golden" widget tests are updated to v0.9 JSON and pass.
+
 ## 5. Phase 3: The Engine & Logic (Package: `genui`)
+
 
 This phase manages the lifecycle and communication flow.
 
@@ -1199,7 +1219,18 @@ generator.addInterceptor((name, args) async {
 });
 ```
 
+### 5.4. Phase 3 Success Criteria
+
+- [ ] `A2uiMessageProcessor` throws an exception if `UpdateComponents` is received for a non-existent surface (strict ordering).
+- [ ] Out-of-order `UpdateComponents` messages (arriving before `CreateSurface`) are buffered and applied correctly once the surface is created.
+- [ ] `SurfaceCleanupPolicy` (manual, keepLatest, keepLastN) is implemented and verified with tests.
+- [ ] `GenUiValidationException` from the parser is caught and transformed into a valid `validation_failed` error message payload.
+- [ ] `ContentGenerator` emits `ToolStart`, `ToolEnd`, `TokenUsage`, and `Thinking` events via `eventStream`.
+- [ ] Tool Interceptors (mock, cancel, proceed) function correctly and are covered by tests.
+- [ ] `attachDataModel` accurately serializes the client state into transport metadata.
+
 ## 6. Phase 4: Provider Packages Update
+
 
 Each provider package must be updated to support the "Prompt-First" nature of v0.9 and the new schema.
 
@@ -1333,7 +1364,17 @@ GoogleGenerativeAiContentGenerator({
 
 - **Schema Adapter:** Ensure the `DartanticSchemaAdapter` correctly converts the v0.9 specific schema constructs (like `oneOf` at top level) to schemas supported by OpenAI/Anthropic.
 
+### 6.4. Phase 4 Success Criteria
+
+- [ ] `genui_google_generative_ai` and `genui_firebase_ai` inject `standard_catalog.json` into the system prompt (verifiable via debug logs or inspection).
+- [ ] `CreateSurfaceTool` and `UpdateComponentsTool` definitions match v0.9 `server_to_client.json` schema.
+- [ ] Provider implementations support the new `ToolInterceptor` interface.
+- [ ] Developers can access the underlying `GenerativeModel` / `GenerativeService` via the new `client` accessor.
+- [ ] `genui_a2ui` correctly places client metadata (capabilities, data model) in the A2A metadata envelope.
+- [ ] `genui_dartantic` schema adapter outputs valid v0.9 schemas for OpenAI/Anthropic models.
+
 ## 7. Phase 5: Friction Log Cleanup (Remaining Items)
+
 
 These are P1/P2 items that don't fit strictly into the architectural phases but should be addressed before release.
 
@@ -1716,7 +1757,15 @@ void _handleCreateSurface(CreateSurface message) {
 - Caller (`sendRequest`): `try { await _generate(...) } catch (e) { _errorController.add(e); }`
 - **Correction:** Remove the `try/catch` block inside `_generate` completely (letting it throw), OR remove the add-to-stream logic in `_generate` and let `sendRequest` handle it exclusively.
 
+### 7.5. Phase 5 Success Criteria
+
+- [ ] `CancellationSignal` is implemented in `ContentGenerator` and creates a functional abort path in all provider packages.
+- [ ] `GenUiSurfaceManager` widget is available and correctly updates the UI in response to surface events.
+- [ ] `GenUiFallback` widget appears in Debug mode for rendering errors and is invisible in Release mode.
+- [ ] All targeted Friction Log items (ENH-008, ENH-010, ENH-014, ENH-015) are marked as resolved.
+
 ## 8. Migration Checklist & Parallelization
+
 
 **Parallel Track A (Core Data):**
 
