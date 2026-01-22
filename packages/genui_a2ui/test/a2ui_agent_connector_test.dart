@@ -81,14 +81,13 @@ void main() {
               parts: [
                 a2a.Part.data(
                   data: {
-                    'surfaceUpdate': {
+                    'updateComponents': {
                       'surfaceId': 's1',
                       'components': [
                         {
                           'id': 'c1',
-                          'component': {
-                            'Column': {'children': <Object?>[]},
-                          },
+                          'component': 'Column',
+                          'children': <Object?>[],
                         },
                       ],
                     },
@@ -122,7 +121,7 @@ void main() {
       expect(connector.contextId, 'context1');
       expect(fakeClient.messageStreamCalled, 1);
       expect(messages.length, 1);
-      expect(messages.first, isA<genui.SurfaceUpdate>());
+      expect(messages.first, isA<genui.UpdateComponents>());
     });
 
     test('connectAndSend sends multiple text parts', () async {

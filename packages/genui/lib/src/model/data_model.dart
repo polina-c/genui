@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 import '../primitives/logging.dart';
@@ -12,6 +13,7 @@ import '../primitives/simple_items.dart';
 @immutable
 class DataPath {
   factory DataPath(String path) {
+    if (path == _separator) return root;
     final List<String> segments = path
         .split(_separator)
         .where((s) => s.isNotEmpty)
@@ -66,7 +68,8 @@ class DataPath {
           listEquals(segments, other.segments);
 
   @override
-  int get hashCode => Object.hash(isAbsolute, Object.hashAll(segments));
+  int get hashCode =>
+      Object.hash(isAbsolute, const DeepCollectionEquality().hash(segments));
 }
 
 /// A contextual view of the main DataModel, used by widgets to resolve
@@ -118,50 +121,54 @@ class DataModel {
   JsonMap _data = {};
   final Map<DataPath, ValueNotifier<Object?>> _subscriptions = {};
   final Map<DataPath, ValueNotifier<Object?>> _valueSubscriptions = {};
+  final List<VoidCallback> _cleanupCallbacks = [];
 
   /// The full contents of the data model.
   JsonMap get data => _data;
 
   /// Updates the data model at a specific absolute path and notifies all
   /// relevant subscribers.
+  ///
+  /// If [absolutePath] is null or root, the entire data model is replaced
+  /// (if contents is a Map).
   void update(DataPath? absolutePath, Object? contents) {
     genUiLogger.info(
       'DataModel.update: path=$absolutePath, contents='
       '${const JsonEncoder.withIndent('  ').convert(contents)}',
     );
-    if (absolutePath == null || absolutePath.segments.isEmpty) {
-      if (contents is List) {
-        _data = _parseDataModelContents(contents);
-      } else if (contents is Map) {
-        // Permissive: Allow a map to be sent for the root, even though the
-        // schema expects a list.
-        genUiLogger.info(
-          'DataModel.update: contents for root path is a Map, not a '
-          'List: $contents',
-        );
+
+    if (absolutePath == null ||
+        absolutePath.segments.isEmpty ||
+        absolutePath == DataPath.root) {
+      if (contents is Map) {
         _data = Map<String, Object?>.from(contents);
       } else {
         genUiLogger.warning(
-          'DataModel.update: contents for root path is not a List or '
-          'Map: $contents',
+          'DataModel.update: contents for root path is not a Map: $contents',
         );
-        _data = <String, Object?>{}; // Fallback
+        // If it's not a map, we can't replace the root object (which must be a JsonMap).
+        // Check if it's null, implying clear?
+        if (contents == null) {
+          _data = {};
+        }
       }
       _notifySubscribers(DataPath.root);
       return;
     }
 
+    // contents can be primitive, Map, List, or null (deletion/reset)
     _updateValue(_data, absolutePath.segments, contents);
     _notifySubscribers(absolutePath);
   }
 
   /// Subscribes to a specific absolute path in the data model.
   ValueNotifier<T?> subscribe<T>(DataPath absolutePath) {
-    genUiLogger.info('DataModel.subscribe: path=$absolutePath');
+    // genUiLogger.info('DataModel.subscribe: path=$absolutePath');
     final T? initialValue = getValue<T>(absolutePath);
     if (_subscriptions.containsKey(absolutePath)) {
       final notifier = _subscriptions[absolutePath]! as ValueNotifier<T?>;
-      notifier.value = initialValue;
+      // Update value just in case? Usually logic should flow from model.
+      // notifier.value = initialValue;
       return notifier;
     }
     final notifier = ValueNotifier<T?>(initialValue);
@@ -172,11 +179,10 @@ class DataModel {
   /// Subscribes to a specific absolute path in the data model, only notifying
   /// when the value at that exact path changes.
   ValueNotifier<T?> subscribeToValue<T>(DataPath absolutePath) {
-    genUiLogger.info('DataModel.subscribeToValue: path=$absolutePath');
+    // genUiLogger.info('DataModel.subscribeToValue: path=$absolutePath');
     final T? initialValue = getValue<T>(absolutePath);
     if (_valueSubscriptions.containsKey(absolutePath)) {
       final notifier = _valueSubscriptions[absolutePath]! as ValueNotifier<T?>;
-      notifier.value = initialValue;
       return notifier;
     }
     final notifier = ValueNotifier<T?>(initialValue);
@@ -184,78 +190,87 @@ class DataModel {
     return notifier;
   }
 
+  /// Binds an external state [source] to a [path] in the DataModel.
+  ///
+  /// If [twoWay] is true, changes in the DataModel at [path] will also
+  /// update the [source] (assuming [source] is a [ValueNotifier]).
+  void bindExternalState<T>({
+    required DataPath path,
+    required ValueListenable<T> source,
+    bool twoWay = false,
+  }) {
+    // 1. Initial sync: External -> DataModel
+    update(path, source.value);
+
+    // 2. Listen to External changes
+    void onSourceChanged() {
+      final T newValue = source.value;
+      // Avoid infinite loop if values are equal
+      if (getValue<T>(path) != newValue) {
+        update(path, newValue);
+      }
+    }
+
+    source.addListener(onSourceChanged);
+    _cleanupCallbacks.add(() => source.removeListener(onSourceChanged));
+
+    // 3. (Optional) Listen to DataModel changes -> External
+    if (twoWay) {
+      if (source is! ValueNotifier<T>) {
+        genUiLogger.warning(
+          'bindExternalState: twoWay is true but source is not a ValueNotifier.',
+        );
+      } else {
+        final ValueNotifier<T> notifier = source;
+        final ValueNotifier<T?> subscription = subscribe<T>(path);
+
+        void onModelChanged() {
+          final T? modelValue = subscription.value;
+          if (modelValue != null && modelValue != notifier.value) {
+            notifier.value = modelValue;
+          }
+        }
+
+        subscription.addListener(onModelChanged);
+        // We don't remove subscription listener on dispose because the subscription itself lives on DataModel?
+        // Actually, we should clean up this listener too.
+        _cleanupCallbacks.add(
+          () => subscription.removeListener(onModelChanged),
+        );
+      }
+    }
+  }
+
+  /// Disposes resources and bindings.
+  void dispose() {
+    for (final VoidCallback callback in _cleanupCallbacks) {
+      callback();
+    }
+    _cleanupCallbacks.clear();
+    // We do NOT dispose the ValueNotifiers in _subscriptions because widgets might still be holding them?
+    // Actually, usually DataModel lifecycle is tied to the Surface.
+    // If DataModel is disposed, we can dispose the notifiers.
+    for (final ValueNotifier<Object?> notifier in _subscriptions.values) {
+      notifier.dispose();
+    }
+    _subscriptions.clear();
+    for (final ValueNotifier<Object?> notifier in _valueSubscriptions.values) {
+      notifier.dispose();
+    }
+    _valueSubscriptions.clear();
+  }
+
   /// Retrieves a static, one-time value from the data model at the
   /// specified absolute path without creating a subscription.
   T? getValue<T>(DataPath absolutePath) {
-    return _getValue(_data, absolutePath.segments) as T?;
-  }
-
-  /// Parses a list of content objects into a [JsonMap].
-  ///
-  /// Each item in [contents] is expected to be a `Map<String, Object?>`
-  /// with a 'key' and a single 'valueString', 'valueNumber', 'valueBoolean',
-  /// or 'valueMap' entry.
-  JsonMap _parseDataModelContents(List<Object?> contents) {
-    final newData = <String, Object?>{};
-    for (final item in contents) {
-      if (item is! Map<String, Object?> || !item.containsKey('key')) {
-        genUiLogger.warning('Invalid item in dataModelUpdate contents: $item');
-        continue;
-      }
-
-      final key = item['key'] as String;
-      Object? value;
-      var valueCount = 0;
-
-      const valueKeys = [
-        'valueString',
-        'valueNumber',
-        'valueBoolean',
-        'valueMap',
-      ];
-      for (final valueKey in valueKeys) {
-        if (item.containsKey(valueKey)) {
-          if (valueCount == 0) {
-            if (valueKey == 'valueMap') {
-              if (item[valueKey] is List) {
-                value = _parseDataModelContents(
-                  (item[valueKey] as List).cast<Object?>(),
-                );
-              } else {
-                genUiLogger.warning(
-                  'valueMap for key "$key" is not a List: ${item[valueKey]}',
-                );
-              }
-            } else {
-              value = item[valueKey];
-            }
-          }
-          valueCount++;
-        }
-      }
-
-      if (valueCount == 0) {
-        genUiLogger.warning(
-          'No value field found for key "$key" in contents: $item',
-        );
-      } else if (valueCount > 1) {
-        genUiLogger.warning(
-          'Multiple value fields found for key "$key" in contents: $item. '
-          'Using the first one found.',
-        );
-      }
-      newData[key] = value;
+    if (absolutePath == DataPath.root) {
+      return _data as T?;
     }
-    return newData;
+    return _getValue(_data, absolutePath.segments) as T?;
   }
 
   /// Retrieves a static, one-time value from the data model at the
   /// specified path segments without creating a subscription.
-  ///
-  /// The [current] parameter is the current node in the data model being
-  /// traversed.
-  /// The [segments] parameter is the list of remaining path segments to
-  /// traverse.
   Object? _getValue(Object? current, List<String> segments) {
     if (segments.isEmpty) {
       return current;
@@ -276,12 +291,6 @@ class DataModel {
   }
 
   /// Updates the given path with a new value without creating a subscription.
-  ///
-  /// The [current] parameter is the current node in the data model being
-  /// traversed.
-  /// The [segments] parameter is the list of remaining path segments to
-  /// traverse.
-  /// The [value] parameter is the new value to set at the specified path.
   void _updateValue(Object? current, List<String> segments, Object? value) {
     if (segments.isEmpty) {
       return;
@@ -292,19 +301,25 @@ class DataModel {
 
     if (current is Map) {
       if (remaining.isEmpty) {
-        current[segment] = value;
+        if (value == null) {
+          current.remove(segment);
+        } else {
+          current[segment] =
+              value; // Direct assignment, supports Primitives, Maps, Lists
+        }
         return;
       }
 
-      // If we are here, remaining is not empty.
+      // Recursive step
       Object? nextNode = current[segment];
       if (nextNode == null) {
-        // Create the node if it doesn't exist, so the recursive call can
-        // populate it.
+        if (value == null) {
+          return; // Nothing to update/remove if path doesn't exist
+        }
+
+        // Auto-vivify
         final String nextSegment = remaining.first;
-        final bool isNextSegmentListIndex = nextSegment.startsWith(
-          RegExp(r'^\d+$'),
-        );
+        final isNextSegmentListIndex = int.tryParse(nextSegment) != null;
         nextNode = isNextSegmentListIndex ? <dynamic>[] : <String, dynamic>{};
         current[segment] = nextNode;
       }
@@ -314,59 +329,81 @@ class DataModel {
       if (index != null && index >= 0) {
         if (remaining.isEmpty) {
           if (index < current.length) {
-            current[index] = value;
+            if (value == null) {
+              // Removing from list?
+              // If we remove, indices shift.
+              // v0.9 spec: "If the value is null, the key is removed."
+              // For lists, this might be ambiguous. Usually setting null in list just sets it to null or removes it?
+              // Providing valid JSON Patch semantics (remove) might be better,
+              // but here we just replace with null or remove?
+              // Let's assume replace with null to preserve indices, or actually
+              // remove?
+              // Typically `updateDataModel` with path to list item implies
+              // replacement.
+              current[index] = value; // allows nulls in list
+            } else {
+              current[index] = value;
+            }
           } else if (index == current.length) {
-            current.add(value);
-          } else {
-            throw ArgumentError(
-              'Index out of bounds for list update: index ($index) is greater '
-              'than list length (${current.length}).',
-            );
+            if (value != null) current.add(value);
           }
         } else {
           if (index < current.length) {
             _updateValue(current[index], remaining, value);
           } else if (index == current.length) {
-            // If the index is the length, we're adding a new item which
-            // should be a map or list based on the next segment.
-            if (remaining.first.startsWith(RegExp(r'^\d+$'))) {
-              current.add(<dynamic>[]);
-            } else {
-              current.add(<String, dynamic>{});
-            }
-            _updateValue(current[index], remaining, value);
-          } else {
-            throw ArgumentError(
-              'Index out of bounds for nested update: index ($index) is '
-              'greater than list length (${current.length}).',
-            );
+            // Auto-vivify new item
+            final String nextSegment = remaining.first;
+            final isNextSegmentListIndex = int.tryParse(nextSegment) != null;
+            final Object newItem = isNextSegmentListIndex
+                ? <dynamic>[]
+                : <String, dynamic>{};
+            current.add(newItem);
+            _updateValue(newItem, remaining, value);
           }
         }
-      } else {
-        genUiLogger.warning('Invalid list index segment: $segment');
       }
     }
   }
 
   void _notifySubscribers(DataPath path) {
-    genUiLogger.info(
-      'DataModel._notifySubscribers: notifying '
-      '${_subscriptions.length} subscribers for path=$path',
-    );
-    for (final DataPath p in _subscriptions.keys) {
-      if (p.startsWith(path) || path.startsWith(p)) {
-        genUiLogger.info('  - Notifying subscriber for path=$p');
-        final ValueNotifier<Object?>? subscriber = _subscriptions[p];
-        if (subscriber != null) {
-          subscriber.value = getValue<Object?>(p);
-        }
-      }
+    // Notify exact matches and ancestors for broad subscriptions
+    // And descendants? No, usually ancestors care (like root), and descendants
+    // care if their path changed.
+
+    // 1. Notify listeners of this path directly
+    if (_subscriptions.containsKey(path)) {
+      _subscriptions[path]!.value = getValue(path);
     }
     if (_valueSubscriptions.containsKey(path)) {
-      genUiLogger.info('  - Notifying value subscriber for path=$path');
-      final ValueNotifier<Object?>? subscriber = _valueSubscriptions[path];
-      if (subscriber != null) {
-        subscriber.value = getValue<Object?>(path);
+      _valueSubscriptions[path]!.value = getValue(path);
+    }
+
+    // 2. Notify ancestors (bubble up) as they technically changed too
+    var parent = path;
+    while (!parent.isAbsolute || parent.segments.isNotEmpty) {
+      if (parent == DataPath.root) break; // Handled at end
+      parent = parent.dirname;
+      if (_subscriptions.containsKey(parent)) {
+        _subscriptions[parent]!.value = getValue(parent);
+      }
+    }
+    // Check root
+    if (path != DataPath.root && _subscriptions.containsKey(DataPath.root)) {
+      _subscriptions[DataPath.root]!.value = getValue(DataPath.root);
+    }
+
+    // 3. Notify descendants (drill down) - EXPENSIVE but correct?
+    // If I update /user, then /user/name also changed.
+    for (final DataPath p in _subscriptions.keys) {
+      if (p.startsWith(path) && p != path) {
+        _subscriptions[p]!.value = getValue(p);
+      }
+    }
+    // Note: _valueSubscriptions implies "only when value at exact path changes",
+    // but if parent replaced, value DID change.
+    for (final DataPath p in _valueSubscriptions.keys) {
+      if (p.startsWith(path) && p != path) {
+        _valueSubscriptions[p]!.value = getValue(p);
       }
     }
   }

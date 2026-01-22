@@ -14,6 +14,7 @@ import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Row']),
     'children': A2uiSchemas.componentArrayReference(
       description:
           'Either an explicit list of widget IDs for the children, or a '
@@ -33,7 +34,7 @@ final _schema = S.object(
       enumValues: ['start', 'center', 'end', 'stretch', 'baseline'],
     ),
   },
-  required: ['children'],
+  required: ['component', 'children'],
 );
 
 extension type _RowData.fromMap(JsonMap _json) {
@@ -125,7 +126,7 @@ final row = CatalogItem(
                   dataContext: dataContext,
                   buildChild: buildChild,
                   weight:
-                      getComponent(componentId)?.weight ??
+                      getComponent(componentId)?.properties['weight'] as int? ??
                       (getComponent(componentId)?.type == 'TextField'
                           ? 1
                           : null),
@@ -137,7 +138,8 @@ final row = CatalogItem(
       templateListWidgetBuilder: (context, list, componentId, dataBinding) {
         final Component? component = itemContext.getComponent(componentId);
         final int? weight =
-            component?.weight ?? (component?.type == 'TextField' ? 1 : null);
+            component?.properties['weight'] as int? ??
+            (component?.type == 'TextField' ? 1 : null);
 
         return Row(
           mainAxisAlignment: _parseMainAxisAlignment(rowData.distribution),
@@ -164,36 +166,21 @@ final row = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "text1",
-                  "text2"
-                ]
-              }
-            }
-          }
+          "component": "Row",
+          "children": [
+            "text1",
+            "text2"
+          ]
         },
         {
           "id": "text1",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "First"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "First"
         },
         {
           "id": "text2",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Second"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Second"
         }
       ]
     ''',

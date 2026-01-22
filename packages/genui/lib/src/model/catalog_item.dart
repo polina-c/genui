@@ -29,6 +29,7 @@ class CatalogItemContext {
   CatalogItemContext({
     required this.data,
     required this.id,
+    required this.type,
     required this.buildChild,
     required this.dispatchEvent,
     required this.buildContext,
@@ -39,6 +40,7 @@ class CatalogItemContext {
 
   final Object data;
   final String id;
+  final String type;
   final ChildBuilderCallback buildChild;
   final DispatchEventCallback dispatchEvent;
   final BuildContext buildContext;

@@ -8,6 +8,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Trailhead']),
     'topics': S.list(
       description: 'A list of topics to display as chips.',
       items: A2uiSchemas.stringReference(description: 'A topic to explore.'),
@@ -18,7 +19,7 @@ final _schema = S.object(
           'will be added to the context with the key "topic".',
     ),
   },
-  required: ['topics', 'action'],
+  required: ['component', 'topics', 'action'],
 );
 
 extension type _TrailheadData.fromMap(Map<String, Object?> _json) {
@@ -27,7 +28,7 @@ extension type _TrailheadData.fromMap(Map<String, Object?> _json) {
     required JsonMap action,
   }) => _TrailheadData.fromMap({'topics': topics, 'action': action});
 
-  List<JsonMap> get topics => (_json['topics'] as List).cast<JsonMap>();
+  List<Object> get topics => (_json['topics'] as List).cast<Object>();
   JsonMap get action => _json['action'] as JsonMap;
 }
 
@@ -48,23 +49,20 @@ final trailhead = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Trailhead": {
-              "topics": [
-                {
-                  "literalString": "Topic 1"
-                },
-                {
-                  "literalString": "Topic 2"
-                },
-                {
-                  "literalString": "Topic 3"
-                }
-              ],
-              "action": {
-                "name": "select_topic"
-              }
+          "component": "Trailhead",
+          "topics": [
+            {
+              "literalString": "Topic 1"
+            },
+            {
+              "literalString": "Topic 2"
+            },
+            {
+              "literalString": "Topic 3"
             }
+          ],
+          "action": {
+            "name": "select_topic"
           }
         }
       ]
@@ -93,7 +91,7 @@ class _Trailhead extends StatelessWidget {
     required this.dataContext,
   });
 
-  final List<JsonMap> topics;
+  final List<Object> topics;
   final JsonMap action;
   final String widgetId;
   final DispatchEventCallback dispatchEvent;
@@ -121,8 +119,7 @@ class _Trailhead extends StatelessWidget {
                 label: Text(topic),
                 onPressed: () {
                   final name = action['name'] as String;
-                  final List<Object?> contextDefinition =
-                      (action['context'] as List<Object?>?) ?? <Object?>[];
+                  final contextDefinition = action['context'] as JsonMap?;
                   final JsonMap resolvedContext = resolveContext(
                     dataContext,
                     contextDefinition,

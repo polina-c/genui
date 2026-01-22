@@ -15,6 +15,7 @@ import '../../primitives/simple_items.dart';
 final _schema = S.object(
   description: 'A text input field.',
   properties: {
+    'component': S.string(enumValues: ['TextField']),
     'text': A2uiSchemas.stringReference(
       description: 'The initial value of the text field.',
     ),
@@ -29,8 +30,8 @@ final _schema = S.object(
 
 extension type _TextFieldData.fromMap(JsonMap _json) {
   factory _TextFieldData({
-    JsonMap? text,
-    JsonMap? label,
+    Object? text,
+    Object? label,
     String? textFieldType,
     String? validationRegexp,
     JsonMap? onSubmittedAction,
@@ -42,8 +43,8 @@ extension type _TextFieldData.fromMap(JsonMap _json) {
     'onSubmittedAction': onSubmittedAction,
   });
 
-  JsonMap? get text => _json['text'] as JsonMap?;
-  JsonMap? get label => _json['label'] as JsonMap?;
+  Object? get text => _json['text'];
+  Object? get label => _json['label'];
   String? get textFieldType => _json['textFieldType'] as String?;
   String? get validationRegexp => _json['validationRegexp'] as String?;
   JsonMap? get onSubmittedAction => _json['onSubmittedAction'] as JsonMap?;
@@ -134,16 +135,9 @@ final textField = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "TextField": {
-              "text": {
-                "literalString": "Hello World"
-              },
-              "label": {
-                "literalString": "Greeting"
-              }
-            }
-          }
+          "component": "TextField",
+          "text": "Hello World",
+          "label": "Greeting"
         }
       ]
     ''',
@@ -151,25 +145,20 @@ final textField = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "TextField": {
-              "text": {
-                "literalString": "password123"
-              },
-              "label": {
-                "literalString": "Password"
-              },
-              "textFieldType": "obscured"
-            }
-          }
+          "component": "TextField",
+          "text": "password123",
+          "label": "Password",
+          "textFieldType": "obscured"
         }
       ]
     ''',
   ],
   widgetBuilder: (itemContext) {
     final textFieldData = _TextFieldData.fromMap(itemContext.data as JsonMap);
-    final JsonMap? valueRef = textFieldData.text;
-    final path = valueRef?['path'] as String?;
+    final Object? valueRef = textFieldData.text;
+    final String? path = (valueRef is Map && valueRef.containsKey('path'))
+        ? valueRef['path'] as String?
+        : null;
     final ValueNotifier<String?> notifier = itemContext.dataContext
         .subscribeToString(valueRef);
     final ValueNotifier<String?> labelNotifier = itemContext.dataContext
@@ -197,8 +186,7 @@ final textField = CatalogItem(
                   return;
                 }
                 final actionName = actionData['name'] as String;
-                final List<Object?> contextDefinition =
-                    (actionData['context'] as List<Object?>?) ?? <Object?>[];
+                final contextDefinition = actionData['context'] as JsonMap?;
                 final JsonMap resolvedContext = resolveContext(
                   itemContext.dataContext,
                   contextDefinition,

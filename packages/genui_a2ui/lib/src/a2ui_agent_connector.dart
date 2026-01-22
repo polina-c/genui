@@ -280,8 +280,11 @@ class A2uiAgentConnector {
       '${const JsonEncoder.withIndent('  ').convert(data)}',
     );
     if (data.containsKey('surfaceUpdate') ||
+        data.containsKey('updateComponents') ||
         data.containsKey('dataModelUpdate') ||
+        data.containsKey('updateDataModel') ||
         data.containsKey('beginRendering') ||
+        data.containsKey('createSurface') ||
         data.containsKey('deleteSurface')) {
       if (!_controller.isClosed) {
         _log.finest(

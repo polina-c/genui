@@ -29,6 +29,7 @@ void main() {
                   CatalogItemContext(
                     data: data,
                     id: 'testId',
+                    type: 'OptionsFilterChipInput',
                     buildChild: (_, [_]) => const SizedBox.shrink(),
                     dispatchEvent: (event) {},
                     buildContext: context,
@@ -91,6 +92,7 @@ void main() {
                   CatalogItemContext(
                     data: data,
                     id: 'testId',
+                    type: 'OptionsFilterChipInput',
                     buildChild: (_, [_]) => const SizedBox.shrink(),
                     dispatchEvent: (event) {},
                     buildContext: context,

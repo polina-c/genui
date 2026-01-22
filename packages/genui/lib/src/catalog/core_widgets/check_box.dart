@@ -13,18 +13,19 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['CheckBox']),
     'label': A2uiSchemas.stringReference(),
     'value': A2uiSchemas.booleanReference(),
   },
-  required: ['label', 'value'],
+  required: ['component', 'label', 'value'],
 );
 
 extension type _CheckBoxData.fromMap(JsonMap _json) {
   factory _CheckBoxData({required JsonMap label, required JsonMap value}) =>
       _CheckBoxData.fromMap({'label': label, 'value': value});
 
-  JsonMap get label => _json['label'] as JsonMap;
-  JsonMap get value => _json['value'] as JsonMap;
+  Object get label => _json['label'] as Object;
+  Object get value => _json['value'] as Object;
 }
 
 /// A catalog item representing a Material Design checkbox with a label.
@@ -60,8 +61,9 @@ final checkBox = CatalogItem(
               ),
               value: value ?? false,
               onChanged: (newValue) {
-                final path = checkBoxData.value['path'] as String?;
-                if (path != null) {
+                final Object val = checkBoxData.value;
+                if (val is Map && val.containsKey('path')) {
+                  final path = val['path'] as String;
                   itemContext.dataContext.update(DataPath(path), newValue);
                 }
               },
@@ -76,16 +78,10 @@ final checkBox = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "CheckBox": {
-              "label": {
-                "literalString": "Check me"
-              },
-              "value": {
-                "path": "/myValue",
-                "literalBoolean": true
-              }
-            }
+          "component": "CheckBox",
+          "label": "Check me",
+          "value": {
+            "path": "/myValue"
           }
         }
       ]

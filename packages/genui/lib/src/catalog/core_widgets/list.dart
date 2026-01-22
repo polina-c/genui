@@ -13,11 +13,12 @@ import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['List']),
     'children': A2uiSchemas.componentArrayReference(),
     'direction': S.string(enumValues: ['vertical', 'horizontal']),
     'alignment': S.string(enumValues: ['start', 'center', 'end', 'stretch']),
   },
-  required: ['children'],
+  required: ['component', 'children'],
 );
 
 extension type _ListData.fromMap(JsonMap _json) {
@@ -90,36 +91,21 @@ final list = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "List": {
-              "children": {
-                "explicitList": [
-                  "text1",
-                  "text2"
-                ]
-              }
-            }
-          }
+          "component": "List",
+          "children": [
+            "text1",
+            "text2"
+          ]
         },
         {
           "id": "text1",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "First"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "First"
         },
         {
           "id": "text2",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Second"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Second"
         }
       ]
     ''',

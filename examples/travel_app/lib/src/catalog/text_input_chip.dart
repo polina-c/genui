@@ -11,6 +11,7 @@ final _schema = S.object(
       'An input chip used to ask the user to enter free text, e.g. to '
       'select a destination. This should only be used inside an InputGroup.',
   properties: {
+    'component': S.string(enumValues: ['TextInputChip']),
     'label': S.string(description: 'The label for the text input chip.'),
     'value': A2uiSchemas.stringReference(
       description: 'The initial value for the text input.',
@@ -19,7 +20,7 @@ final _schema = S.object(
       description: 'Whether the text should be obscured (e.g., for passwords).',
     ),
   },
-  required: ['label'],
+  required: ['component', 'label'],
 );
 
 extension type _TextInputChipData.fromMap(Map<String, Object?> _json) {
@@ -46,14 +47,11 @@ final textInputChip = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "TextInputChip": {
-              "value": {
-                "literalString": "John Doe"
-              },
-              "label": "Enter your name"
-            }
-          }
+          "component": "TextInputChip",
+          "value": {
+            "literalString": "John Doe"
+          },
+          "label": "Enter your name"
         }
       ]
     ''',
@@ -61,12 +59,9 @@ final textInputChip = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "TextInputChip": {
-              "label": "Enter your password",
-              "obscured": true
-            }
-          }
+          "component": "TextInputChip",
+          "label": "Enter your password",
+          "obscured": true
         }
       ]
     ''',

@@ -13,11 +13,12 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Slider']),
     'value': A2uiSchemas.numberReference(),
     'minValue': S.number(),
     'maxValue': S.number(),
   },
-  required: ['value'],
+  required: ['component', 'value'],
 );
 
 extension type _SliderData.fromMap(JsonMap _json) {
@@ -31,7 +32,7 @@ extension type _SliderData.fromMap(JsonMap _json) {
     'maxValue': maxValue,
   });
 
-  JsonMap get value => _json['value'] as JsonMap;
+  Object get value => _json['value'] as Object;
   double get minValue => (_json['minValue'] as num?)?.toDouble() ?? 0.0;
   double get maxValue => (_json['maxValue'] as num?)?.toDouble() ?? 1.0;
 }
@@ -53,7 +54,7 @@ final slider = CatalogItem(
   widgetBuilder: (CatalogItemContext itemContext) {
     final sliderData = _SliderData.fromMap(itemContext.data as JsonMap);
     final ValueNotifier<num?> valueNotifier = itemContext.dataContext
-        .subscribeToValue<num>(sliderData.value, 'literalNumber');
+        .subscribeToValue<num>(sliderData.value);
 
     return ValueListenableBuilder<num?>(
       valueListenable: valueNotifier,
@@ -71,8 +72,9 @@ final slider = CatalogItem(
                   divisions: (sliderData.maxValue - sliderData.minValue)
                       .toInt(),
                   onChanged: (newValue) {
-                    final path = sliderData.value['path'] as String?;
-                    if (path != null) {
+                    final Object val = sliderData.value;
+                    if (val is Map && val.containsKey('path')) {
+                      final path = val['path'] as String;
                       itemContext.dataContext.update(DataPath(path), newValue);
                     }
                   },
@@ -93,15 +95,11 @@ final slider = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Slider": {
-              "minValue": 0,
-              "maxValue": 10,
-              "value": {
-                "path": "/myValue",
-                "literalNumber": 5
-              }
-            }
+          "component": "Slider",
+          "minValue": 0,
+          "maxValue": 10,
+          "value": {
+            "path": "/myValue"
           }
         }
       ]

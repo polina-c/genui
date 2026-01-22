@@ -25,11 +25,11 @@ import '../model/ui_models.dart';
 class GenUiConversation {
   /// Creates a new [GenUiConversation].
   ///
-  /// Callbacks like [onSurfaceAdded], [onSurfaceUpdated] and [onSurfaceDeleted]
+  /// Callbacks like [onSurfaceAdded], [onUpdateComponentsd] and [onSurfaceDeleted]
   /// can be provided to react to UI changes initiated by the AI.
   GenUiConversation({
     this.onSurfaceAdded,
-    this.onSurfaceUpdated,
+    this.onComponentsUpdated,
     this.onSurfaceDeleted,
     this.onTextResponse,
     this.onError,
@@ -41,7 +41,7 @@ class GenUiConversation {
     );
     _userEventSubscription = a2uiMessageProcessor.onSubmit.listen(sendRequest);
     _surfaceUpdateSubscription = a2uiMessageProcessor.surfaceUpdates.listen(
-      _handleSurfaceUpdate,
+      _handleUpdateComponents,
     );
     _textResponseSubscription = contentGenerator.textResponseStream.listen(
       _handleTextResponse,
@@ -62,7 +62,7 @@ class GenUiConversation {
   final ValueChanged<SurfaceRemoved>? onSurfaceDeleted;
 
   /// A callback for when a surface is updated by the AI.
-  final ValueChanged<SurfaceUpdated>? onSurfaceUpdated;
+  final ValueChanged<ComponentsUpdated>? onComponentsUpdated;
 
   /// A callback for when a text response is received from the AI.
   final ValueChanged<String>? onTextResponse;
@@ -79,7 +79,7 @@ class GenUiConversation {
   final ValueNotifier<List<ChatMessage>> _conversation =
       ValueNotifier<List<ChatMessage>>([]);
 
-  void _handleSurfaceUpdate(GenUiUpdate update) {
+  void _handleUpdateComponents(GenUiUpdate update) {
     switch (update) {
       case SurfaceAdded():
         _conversation.value = [
@@ -90,7 +90,7 @@ class GenUiConversation {
           ),
         ];
         onSurfaceAdded?.call(update);
-      case SurfaceUpdated():
+      case ComponentsUpdated():
         final newConversation = List<ChatMessage>.from(_conversation.value);
         final int index = newConversation.lastIndexWhere(
           (m) => m is AiUiMessage && m.surfaceId == update.surfaceId,
@@ -107,7 +107,7 @@ class GenUiConversation {
           newConversation.add(newMessage);
         }
         _conversation.value = newConversation;
-        onSurfaceUpdated?.call(update);
+        onComponentsUpdated?.call(update);
       case SurfaceRemoved():
         final newConversation = List<ChatMessage>.from(_conversation.value);
         newConversation.removeWhere(

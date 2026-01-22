@@ -16,6 +16,7 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Button']),
     'child': A2uiSchemas.componentReference(
       description:
           'The ID of a child widget. This should always be set, e.g. to the ID '
@@ -26,7 +27,7 @@ final _schema = S.object(
       description: 'Whether the button invokes a primary action.',
     ),
   },
-  required: ['child', 'action'],
+  required: ['component', 'child', 'action'],
 );
 
 extension type _ButtonData.fromMap(JsonMap _json) {
@@ -40,7 +41,15 @@ extension type _ButtonData.fromMap(JsonMap _json) {
     'primary': primary,
   });
 
-  String get child => _json['child'] as String;
+  String get child {
+    final Object? val = _json['child'];
+    if (val is String) return val;
+    if (val is JsonMap && val.containsKey('literalString')) {
+      return val['literalString'] as String;
+    }
+    throw ArgumentError('Invalid child: $val');
+  }
+
   JsonMap get action => _json['action'] as JsonMap;
   bool get primary => (_json['primary'] as bool?) ?? false;
 }
@@ -65,8 +74,7 @@ final button = CatalogItem(
     final Widget child = itemContext.buildChild(buttonData.child);
     final JsonMap actionData = buttonData.action;
     final actionName = actionData['name'] as String;
-    final List<Object?> contextDefinition =
-        (actionData['context'] as List<Object?>?) ?? <Object?>[];
+    final contextDefinition = actionData['context'] as JsonMap?;
 
     genUiLogger.info('Building Button with child: ${buttonData.child}');
     final ColorScheme colorScheme = Theme.of(
@@ -109,24 +117,16 @@ final button = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Button": {
-              "child": "text",
-              "action": {
-                "name": "button_pressed"
-              }
-            }
+          "component": "Button",
+          "child": "text",
+          "action": {
+            "name": "button_pressed"
           }
         },
         {
           "id": "text",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Hello World"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Hello World"
         }
       ]
     ''',
@@ -134,56 +134,35 @@ final button = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": ["primaryButton", "secondaryButton"]
-              }
-            }
-          }
+          "component": "Column",
+          "children": ["primaryButton", "secondaryButton"]
         },
         {
           "id": "primaryButton",
-          "component": {
-            "Button": {
-              "child": "primaryText",
-              "primary": true,
-              "action": {
-                "name": "primary_pressed"
-              }
-            }
+          "component": "Button",
+          "child": "primaryText",
+          "primary": true,
+          "action": {
+            "name": "primary_pressed"
           }
         },
         {
           "id": "secondaryButton",
-          "component": {
-            "Button": {
-              "child": "secondaryText",
-              "action": {
-                "name": "secondary_pressed"
-              }
-            }
+          "component": "Button",
+          "child": "secondaryText",
+          "action": {
+            "name": "secondary_pressed"
           }
         },
         {
           "id": "primaryText",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Primary Button"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Primary Button"
         },
         {
           "id": "secondaryText",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Secondary Button"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Secondary Button"
         }
       ]
     ''',

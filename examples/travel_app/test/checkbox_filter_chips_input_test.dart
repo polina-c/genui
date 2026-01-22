@@ -22,12 +22,11 @@ void main() {
                     data: {
                       'chipLabel': 'Amenities',
                       'options': ['Wifi', 'Pool', 'Gym'],
-                      'selectedOptions': {
-                        'literalArray': ['Wifi', 'Gym'],
-                      },
+                      'selectedOptions': ['Wifi', 'Gym'],
                       'iconName': 'hotel',
                     },
                     id: 'test',
+                    type: 'CheckboxFilterChipsInput',
                     buildChild: (_, [_]) => const SizedBox(),
                     dispatchEvent: (_) {},
                     buildContext: context,

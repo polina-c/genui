@@ -30,6 +30,7 @@ void main() {
                     CatalogItemContext(
                       data: data,
                       id: 'testId',
+                      type: 'InputGroup',
                       buildChild: buildChild,
                       dispatchEvent: (event) {
                         dispatchedEvent = event;
@@ -79,6 +80,7 @@ void main() {
                   CatalogItemContext(
                     data: data,
                     id: 'testId',
+                    type: 'InputGroup',
                     buildChild: (_, [_]) => const SizedBox.shrink(),
                     dispatchEvent: (UiEvent _) {},
                     buildContext: context,

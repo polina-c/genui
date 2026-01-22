@@ -37,24 +37,19 @@ void main() {
       final components = [
         const Component(
           id: 'root',
-          componentProperties: {
-            'Text': {'text': 'Hello'},
-          },
+          type: 'Text',
+          properties: {'text': 'Hello'},
         ),
       ];
 
       messageProcessor.handleMessage(
-        SurfaceUpdate(surfaceId: surfaceId, components: components),
+        UpdateComponents(surfaceId: surfaceId, components: components),
       );
 
       final Future<GenUiUpdate> futureUpdate =
           messageProcessor.surfaceUpdates.first;
       messageProcessor.handleMessage(
-        const BeginRendering(
-          surfaceId: surfaceId,
-          root: 'root',
-          catalogId: 'test_catalog',
-        ),
+        const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
       );
       final GenUiUpdate update = await futureUpdate;
 
@@ -62,13 +57,12 @@ void main() {
       expect(update.surfaceId, surfaceId);
       final UiDefinition definition = (update as SurfaceAdded).definition;
       expect(definition, isNotNull);
-      expect(definition.rootComponentId, 'root');
+      expect(
+        definition.components['root'],
+        isNotNull,
+      ); // Check if root (or any component) exists
       expect(definition.catalogId, 'test_catalog');
       expect(messageProcessor.surfaces[surfaceId]!.value, isNotNull);
-      expect(
-        messageProcessor.surfaces[surfaceId]!.value!.rootComponentId,
-        'root',
-      );
       expect(
         messageProcessor.surfaces[surfaceId]!.value!.catalogId,
         'test_catalog',
@@ -76,39 +70,41 @@ void main() {
     });
 
     test(
-      'handleMessage updates an existing surface and fires SurfaceUpdated',
+      'handleMessage updates an existing surface and fires ComponentsUpdated',
       () async {
         const surfaceId = 's1';
         final oldComponents = [
           const Component(
             id: 'root',
-            componentProperties: {
-              'Text': {'text': 'Old'},
-            },
+            type: 'Text',
+            properties: {'text': 'Old'},
           ),
         ];
         final newComponents = [
           const Component(
             id: 'root',
-            componentProperties: {
-              'Text': {'text': 'New'},
-            },
+            type: 'Text',
+            properties: {'text': 'New'},
           ),
         ];
 
         final Future<void> expectation = expectLater(
           messageProcessor.surfaceUpdates,
-          emitsInOrder([isA<SurfaceAdded>(), isA<SurfaceUpdated>()]),
+          emitsInOrder([
+            isA<SurfaceAdded>(),
+            isA<ComponentsUpdated>(),
+            isA<ComponentsUpdated>(),
+          ]),
         );
 
         messageProcessor.handleMessage(
-          SurfaceUpdate(surfaceId: surfaceId, components: oldComponents),
+          const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
         );
         messageProcessor.handleMessage(
-          const BeginRendering(surfaceId: surfaceId, root: 'root'),
+          UpdateComponents(surfaceId: surfaceId, components: oldComponents),
         );
         messageProcessor.handleMessage(
-          SurfaceUpdate(surfaceId: surfaceId, components: newComponents),
+          UpdateComponents(surfaceId: surfaceId, components: newComponents),
         );
 
         await expectation;
@@ -120,20 +116,17 @@ void main() {
       final components = [
         const Component(
           id: 'root',
-          componentProperties: {
-            'Text': {'text': 'Hello'},
-          },
+          type: 'Text',
+          properties: {'text': 'Hello'},
         ),
       ];
       messageProcessor.handleMessage(
-        SurfaceUpdate(surfaceId: surfaceId, components: components),
+        UpdateComponents(surfaceId: surfaceId, components: components),
       );
 
       final Future<GenUiUpdate> futureUpdate =
           messageProcessor.surfaceUpdates.first;
-      messageProcessor.handleMessage(
-        const SurfaceDeletion(surfaceId: surfaceId),
-      );
+      messageProcessor.handleMessage(const DeleteSurface(surfaceId: surfaceId));
       final GenUiUpdate update = await futureUpdate;
 
       expect(update, isA<SurfaceRemoved>());

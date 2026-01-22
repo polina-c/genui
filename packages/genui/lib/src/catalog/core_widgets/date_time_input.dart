@@ -13,6 +13,7 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['DateTimeInput']),
     'value': A2uiSchemas.stringReference(
       description: 'The selected date and/or time.',
     ),
@@ -27,7 +28,7 @@ final _schema = S.object(
           'The latest selectable date (YYYY-MM-DD). Defaults to 9999-12-31.',
     ),
   },
-  required: ['value'],
+  required: ['component', 'value'],
 );
 
 extension type _DateTimeInputData.fromMap(JsonMap _json) {
@@ -45,7 +46,7 @@ extension type _DateTimeInputData.fromMap(JsonMap _json) {
     'lastDate': lastDate,
   });
 
-  JsonMap get value => _json['value'] as JsonMap;
+  Object get value => _json['value'] as Object;
   bool get enableDate => (_json['enableDate'] as bool?) ?? true;
   bool get enableTime => (_json['enableTime'] as bool?) ?? true;
   DateTime get firstDate =>
@@ -109,12 +110,9 @@ final dateTimeInput = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "DateTimeInput": {
-              "value": {
-                "path": "/myDateTime"
-              }
-            }
+          "component": "DateTimeInput",
+          "value": {
+            "path": "/myDateTime"
           }
         }
       ]
@@ -123,14 +121,11 @@ final dateTimeInput = CatalogItem(
        [
         {
           "id": "root",
-          "component": {
-            "DateTimeInput": {
-              "value": {
-                "path": "/myDate"
-              },
-              "enableTime": false
-            }
-          }
+          "component": "DateTimeInput",
+          "value": {
+            "path": "/myDate"
+          },
+          "enableTime": false
         }
       ]
     ''',
@@ -138,14 +133,11 @@ final dateTimeInput = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "DateTimeInput": {
-              "value": {
-                "path": "/myTime"
-              },
-              "enableDate": false
-            }
-          }
+          "component": "DateTimeInput",
+          "value": {
+            "path": "/myTime"
+          },
+          "enableDate": false
         }
       ]
     ''',
@@ -158,7 +150,11 @@ Future<void> _handleTap({
   required _DateTimeInputData data,
   required String? value,
 }) async {
-  final path = data.value['path'] as String?;
+  final Object val = data.value;
+  final String? path = (val is Map && val.containsKey('path'))
+      ? val['path'] as String?
+      : null;
+
   if (path == null) {
     return;
   }

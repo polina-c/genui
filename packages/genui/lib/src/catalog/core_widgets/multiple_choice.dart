@@ -13,6 +13,7 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['MultipleChoice']),
     'selections': A2uiSchemas.stringArrayReference(),
     'options': S.list(
       items: S.object(
@@ -25,7 +26,7 @@ final _schema = S.object(
     ),
     'maxAllowedSelections': S.integer(),
   },
-  required: ['selections', 'options'],
+  required: ['component', 'selections', 'options'],
 );
 
 extension type _MultipleChoiceData.fromMap(JsonMap _json) {
@@ -39,7 +40,7 @@ extension type _MultipleChoiceData.fromMap(JsonMap _json) {
     'maxAllowedSelections': maxAllowedSelections,
   });
 
-  JsonMap get selections => _json['selections'] as JsonMap;
+  Object get selections => _json['selections'] as Object;
   List<JsonMap> get options => (_json['options'] as List).cast<JsonMap>();
   int? get maxAllowedSelections =>
       (_json['maxAllowedSelections'] as num?)?.toInt();
@@ -75,7 +76,7 @@ final multipleChoice = CatalogItem(
         return Column(
           children: multipleChoiceData.options.map((option) {
             final ValueNotifier<String?> labelNotifier = itemContext.dataContext
-                .subscribeToString(option['label'] as JsonMap);
+                .subscribeToString(option['label']);
             final value = option['value'] as String;
             return ValueListenableBuilder<String?>(
               valueListenable: labelNotifier,
@@ -96,8 +97,11 @@ final multipleChoice = CatalogItem(
                     groupValue: groupValue is String ? groupValue : null,
                     // ignore: deprecated_member_use
                     onChanged: (newValue) {
-                      final path =
-                          multipleChoiceData.selections['path'] as String?;
+                      final Object val = multipleChoiceData.selections;
+                      final String? path =
+                          (val is Map && val.containsKey('path'))
+                          ? val['path'] as String?
+                          : null;
                       if (path == null || newValue == null) {
                         return;
                       }
@@ -113,8 +117,11 @@ final multipleChoice = CatalogItem(
                     controlAffinity: ListTileControlAffinity.leading,
                     value: selections?.contains(value) ?? false,
                     onChanged: (newValue) {
-                      final path =
-                          multipleChoiceData.selections['path'] as String?;
+                      final Object val = multipleChoiceData.selections;
+                      final String? path =
+                          (val is Map && val.containsKey('path'))
+                          ? val['path'] as String?
+                          : null;
                       if (path == null) {
                         return;
                       }
@@ -149,93 +156,62 @@ final multipleChoice = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "heading1",
-                  "singleChoice",
-                  "heading2",
-                  "multiChoice"
-                ]
-              }
-            }
-          }
+          "component": "Column",
+          "children": [
+            "heading1",
+            "singleChoice",
+            "heading2",
+            "multiChoice"
+          ]
         },
         {
           "id": "heading1",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Single Selection (maxAllowedSelections: 1)"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Single Selection (maxAllowedSelections: 1)"
         },
         {
           "id": "singleChoice",
-          "component": {
-            "MultipleChoice": {
-              "selections": {
-                "path": "/singleSelection"
-              },
-              "maxAllowedSelections": 1,
-              "options": [
-                {
-                  "label": {
-                    "literalString": "Option A"
-                  },
-                  "value": "A"
-                },
-                {
-                  "label": {
-                    "literalString": "Option B"
-                  },
-                  "value": "B"
-                }
-              ]
+          "component": "MultipleChoice",
+          "selections": {
+            "path": "/singleSelection"
+          },
+          "maxAllowedSelections": 1,
+          "options": [
+            {
+              "label": "Option A",
+              "value": "A"
+            },
+            {
+              "label": "Option B",
+              "value": "B"
             }
-          }
+          ]
         },
         {
           "id": "heading2",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Multiple Selections (unlimited)"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Multiple Selections (unlimited)"
         },
         {
           "id": "multiChoice",
-          "component": {
-            "MultipleChoice": {
-              "selections": {
-                "path": "/multiSelection"
-              },
-              "options": [
-                {
-                  "label": {
-                    "literalString": "Option X"
-                  },
-                  "value": "X"
-                },
-                {
-                  "label": {
-                    "literalString": "Option Y"
-                  },
-                  "value": "Y"
-                },
-                {
-                  "label": {
-                    "literalString": "Option Z"
-                  },
-                  "value": "Z"
-                }
-              ]
+          "component": "MultipleChoice",
+          "selections": {
+            "path": "/multiSelection"
+          },
+          "options": [
+            {
+              "label": "Option X",
+              "value": "X"
+            },
+            {
+              "label": "Option Y",
+              "value": "Y"
+            },
+            {
+              "label": "Option Z",
+              "value": "Z"
             }
-          }
+          ]
         }
       ]
     ''',

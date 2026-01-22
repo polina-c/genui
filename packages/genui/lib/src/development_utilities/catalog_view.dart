@@ -88,14 +88,10 @@ class _DebugCatalogViewState extends State<DebugCatalogView> {
           }
 
           _a2uiMessageProcessor.handleMessage(
-            SurfaceUpdate(surfaceId: surfaceId, components: components),
+            UpdateComponents(surfaceId: surfaceId, components: components),
           );
           _a2uiMessageProcessor.handleMessage(
-            BeginRendering(
-              surfaceId: surfaceId,
-              root: rootComponent.id,
-              catalogId: catalog.catalogId,
-            ),
+            CreateSurface(surfaceId: surfaceId, catalogId: catalog.catalogId!),
           );
           surfaceIds.add(surfaceId);
         } catch (e, s) {

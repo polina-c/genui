@@ -43,6 +43,7 @@ void main() {
                     CatalogItemContext(
                       data: data,
                       id: 'testId',
+                      type: 'TravelCarousel',
                       buildChild: buildChild,
                       dispatchEvent: (event) {
                         dispatchedEvent = event;
@@ -108,6 +109,7 @@ void main() {
                     CatalogItemContext(
                       data: data,
                       id: 'testId',
+                      type: 'TravelCarousel',
                       buildChild: buildChild,
                       dispatchEvent: (event) {
                         dispatchedEvent = event;
@@ -148,6 +150,7 @@ void main() {
                     CatalogItemContext(
                       data: data,
                       id: 'testId',
+                      type: 'TravelCarousel',
                       buildChild: (data, [_]) => Text(data),
                       dispatchEvent: (event) {},
                       buildContext: context,

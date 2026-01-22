@@ -26,19 +26,19 @@ void main() {
       ];
       final components = [
         const Component(
-          id: 'r1',
-          componentProperties: {
-            'Text': {
-              'text': {'literalString': 'Hi there!'},
-            },
-          },
+          id: 'root',
+          type: 'Text',
+          properties: {'text': 'Hi there!'},
         ),
       ];
       manager.handleMessage(
-        SurfaceUpdate(surfaceId: surfaceId, components: components),
+        UpdateComponents(surfaceId: surfaceId, components: components),
       );
       manager.handleMessage(
-        const BeginRendering(surfaceId: surfaceId, root: 'r1'),
+        const CreateSurface(
+          surfaceId: surfaceId,
+          catalogId: 'a2ui.org:standard_catalog_0_8_0',
+        ),
       );
 
       await tester.pumpWidget(
@@ -79,18 +79,18 @@ void main() {
       final components = [
         const Component(
           id: 'root',
-          componentProperties: {
-            'Text': {
-              'text': {'literalString': 'UI Content'},
-            },
-          },
+          type: 'Text',
+          properties: {'text': 'UI Content'},
         ),
       ];
       manager.handleMessage(
-        SurfaceUpdate(surfaceId: surfaceId, components: components),
+        UpdateComponents(surfaceId: surfaceId, components: components),
       );
       manager.handleMessage(
-        const BeginRendering(surfaceId: surfaceId, root: 'root'),
+        const CreateSurface(
+          surfaceId: surfaceId,
+          catalogId: 'a2ui.org:standard_catalog_0_8_0',
+        ),
       );
       await tester.pumpWidget(
         MaterialApp(

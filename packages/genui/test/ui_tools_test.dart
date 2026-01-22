@@ -15,8 +15,8 @@ void main() {
       a2uiMessageProcessor = A2uiMessageProcessor(catalogs: [catalog]);
     });
 
-    test('SurfaceUpdateTool sends SurfaceUpdate message', () async {
-      final tool = SurfaceUpdateTool(
+    test('UpdateComponentsTool sends UpdateComponents message', () async {
+      final tool = UpdateComponentsTool(
         handleMessage: a2uiMessageProcessor.handleMessage,
         catalog: catalog,
       );
@@ -24,20 +24,13 @@ void main() {
       final Map<String, Object> args = {
         surfaceIdKey: 'testSurface',
         'components': [
-          {
-            'id': 'root',
-            'component': {
-              'Text': {
-                'text': {'literalString': 'Hello'},
-              },
-            },
-          },
+          {'id': 'root', 'component': 'Text', 'text': 'Hello'},
         ],
       };
 
       final Future<void> future = expectLater(
         a2uiMessageProcessor.surfaceUpdates,
-        emits(
+        emitsThrough(
           isA<SurfaceAdded>()
               .having((e) => e.surfaceId, surfaceIdKey, 'testSurface')
               .having(
@@ -55,36 +48,32 @@ void main() {
 
       await tool.invoke(args);
       a2uiMessageProcessor.handleMessage(
-        const BeginRendering(surfaceId: 'testSurface', root: 'root'),
+        const CreateSurface(
+          surfaceId: 'testSurface',
+          catalogId: 'genui_catalog',
+        ),
       );
 
       await future;
     });
 
-    test('BeginRenderingTool sends BeginRendering message', () async {
-      final tool = BeginRenderingTool(
+    test('CreateSurfaceTool sends CreateSurface message', () async {
+      final tool = CreateSurfaceTool(
         handleMessage: a2uiMessageProcessor.handleMessage,
-        catalogId: 'test_catalog',
       );
 
-      final Map<String, String> args = {
+      final Map<String, dynamic> args = {
         surfaceIdKey: 'testSurface',
-        'root': 'root',
+        'catalogId': 'test_catalog',
+        'theme': <String, dynamic>{},
       };
 
       // First, add a component to the surface so that the root can be set.
       a2uiMessageProcessor.handleMessage(
-        const SurfaceUpdate(
+        const UpdateComponents(
           surfaceId: 'testSurface',
           components: [
-            Component(
-              id: 'root',
-              componentProperties: {
-                'Text': {
-                  'text': {'literalString': 'Hello'},
-                },
-              },
-            ),
+            Component(id: 'root', type: 'Text', properties: {'text': 'Hello'}),
           ],
         ),
       );
@@ -95,11 +84,6 @@ void main() {
         emits(
           isA<SurfaceAdded>()
               .having((e) => e.surfaceId, surfaceIdKey, 'testSurface')
-              .having(
-                (e) => e.definition.rootComponentId,
-                'rootComponentId',
-                'root',
-              )
               .having(
                 (e) => e.definition.catalogId,
                 'catalogId',

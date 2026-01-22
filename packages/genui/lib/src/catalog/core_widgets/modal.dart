@@ -13,6 +13,7 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Modal']),
     'entryPointChild': A2uiSchemas.componentReference(
       description: 'The widget that opens the modal.',
     ),
@@ -20,7 +21,7 @@ final _schema = S.object(
       description: 'The widget to display in the modal.',
     ),
   },
-  required: ['entryPointChild', 'contentChild'],
+  required: ['component', 'entryPointChild', 'contentChild'],
 );
 
 extension type _ModalData.fromMap(JsonMap _json) {
@@ -32,8 +33,23 @@ extension type _ModalData.fromMap(JsonMap _json) {
     'contentChild': contentChild,
   });
 
-  String get entryPointChild => _json['entryPointChild'] as String;
-  String get contentChild => _json['contentChild'] as String;
+  String get entryPointChild {
+    final Object? val = _json['entryPointChild'];
+    if (val is String) return val;
+    if (val is JsonMap && val.containsKey('literalString')) {
+      return val['literalString'] as String;
+    }
+    throw ArgumentError('Invalid entryPointChild: $val');
+  }
+
+  String get contentChild {
+    final Object? val = _json['contentChild'];
+    if (val is String) return val;
+    if (val is JsonMap && val.containsKey('literalString')) {
+      return val['literalString'] as String;
+    }
+    throw ArgumentError('Invalid contentChild: $val');
+  }
 }
 
 /// A catalog item representing a modal bottom sheet.
@@ -59,51 +75,30 @@ final modal = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Modal": {
-              "entryPointChild": "button",
-              "contentChild": "text"
-            }
-          }
+          "component": "Modal",
+          "entryPointChild": "button",
+          "contentChild": "text"
         },
         {
           "id": "button",
-          "component": {
-            "Button": {
-              "child": "button_text",
-              "action": {
-                "name": "showModal",
-                "context": [
-                  {
-                    "key": "modalId",
-                    "value": {
-                      "literalString": "root"
-                    }
-                  }
-                ]
-              }
+          "component": "Button",
+          "child": "button_text",
+          "action": {
+            "name": "showModal",
+            "context": {
+              "modalId": "root"
             }
           }
         },
         {
           "id": "button_text",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Open Modal"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Open Modal"
         },
         {
           "id": "text",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "This is a modal."
-              }
-            }
-          }
+          "component": "Text",
+          "text": "This is a modal."
         }
       ]
     ''',

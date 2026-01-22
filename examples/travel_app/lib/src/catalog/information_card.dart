@@ -10,6 +10,7 @@ import '../utils.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['InformationCard']),
     'imageChildId': S.string(
       description:
           'The ID of the Image widget to display at the top of the '
@@ -24,7 +25,7 @@ final _schema = S.object(
       description: 'The body text of the card. This supports markdown.',
     ),
   },
-  required: ['title', 'body'],
+  required: ['component', 'title', 'body'],
 );
 
 extension type _InformationCardData.fromMap(Map<String, Object?> _json) {
@@ -54,29 +55,23 @@ final informationCard = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "InformationCard": {
-              "title": {
-                "literalString": "Beautiful Scenery"
-              },
-              "subtitle": {
-                "literalString": "A stunning view"
-              },
-              "body": {
-                "literalString": "This is a beautiful place to visit in the summer."
-              },
-              "imageChildId": "image1"
-            }
-          }
+          "component": "InformationCard",
+          "title": {
+            "literalString": "Beautiful Scenery"
+          },
+          "subtitle": {
+            "literalString": "A stunning view"
+          },
+          "body": {
+            "literalString": "This is a beautiful place to visit in the summer."
+          },
+          "imageChildId": "image1"
         },
         {
           "id": "image1",
-          "component": {
-            "Image": {
-              "url": {
-                "literalString": "assets/travel_images/canyonlands_national_park_utah.jpg"
-              }
-            }
+          "component": "Image",
+          "url": {
+            "literalString": "assets/travel_images/canyonlands_national_park_utah.jpg"
           }
         }
       ]

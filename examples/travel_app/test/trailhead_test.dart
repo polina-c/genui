@@ -13,10 +13,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final Map<String, Object> data = {
-        'topics': [
-          {'literalString': 'Topic A'},
-          {'literalString': 'Topic B'},
-        ],
+        'topics': ['Topic A', 'Topic B'],
         'action': {'name': 'selectTopic'},
       };
       UiEvent? dispatchedEvent;
@@ -30,6 +27,7 @@ void main() {
                   CatalogItemContext(
                     data: data,
                     id: 'testId',
+                    type: 'Trailhead',
                     buildChild: (_, [_]) => const SizedBox.shrink(),
                     dispatchEvent: (event) {
                       dispatchedEvent = event;
@@ -76,6 +74,7 @@ void main() {
                   CatalogItemContext(
                     data: data,
                     id: 'testId',
+                    type: 'Trailhead',
                     buildChild: (_, [_]) => const SizedBox.shrink(),
                     dispatchEvent: (event) {},
                     buildContext: context,

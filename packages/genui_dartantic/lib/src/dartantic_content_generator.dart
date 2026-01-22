@@ -46,11 +46,11 @@ class DartanticContentGenerator implements ContentGenerator {
   }) {
     // Build GenUI tools
     final genUiTools = <AiTool<JsonMap>>[
-      SurfaceUpdateTool(
+      UpdateComponentsTool(
         handleMessage: _a2uiMessageController.add,
         catalog: catalog,
       ),
-      BeginRenderingTool(handleMessage: _a2uiMessageController.add),
+      CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
       DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
       ...additionalTools,
     ];

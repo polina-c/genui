@@ -15,33 +15,26 @@ void main() {
     const surfaceId = 'testSurface';
     final components = [
       const Component(
-        id: 'row',
-        componentProperties: {
-          'Row': {
-            'children': {
-              'explicitList': ['text_field'],
-            },
-          },
+        id: 'root',
+        type: 'Row',
+        properties: {
+          'children': ['text_field'],
         },
       ),
       const Component(
         id: 'text_field',
-        componentProperties: {
-          'TextField': {
-            'label': {'literalString': 'Input'},
-          },
-        },
+        type: 'TextField',
+        properties: {'label': 'Input'},
         // "weight" property is left unset.
       ),
     ];
 
     a2uiProcessor.handleMessage(
-      SurfaceUpdate(surfaceId: surfaceId, components: components),
+      UpdateComponents(surfaceId: surfaceId, components: components),
     );
     a2uiProcessor.handleMessage(
-      const BeginRendering(
+      const CreateSurface(
         surfaceId: surfaceId,
-        root: 'row',
         catalogId: 'a2ui.org:standard_catalog_0_8_0',
       ),
     );
@@ -78,33 +71,25 @@ void main() {
     const surfaceId = 'testSurface';
     final components = [
       const Component(
-        id: 'row',
-        componentProperties: {
-          'Row': {
-            'children': {
-              'explicitList': ['text_field'],
-            },
-          },
+        id: 'root',
+        type: 'Row',
+        properties: {
+          'children': ['text_field'],
         },
       ),
       const Component(
         id: 'text_field',
-        componentProperties: {
-          'TextField': {
-            'label': {'literalString': 'Input'},
-          },
-        },
-        weight: 1,
+        type: 'TextField',
+        properties: {'label': 'Input', 'weight': 1},
       ),
     ];
 
     manager.handleMessage(
-      SurfaceUpdate(surfaceId: surfaceId, components: components),
+      UpdateComponents(surfaceId: surfaceId, components: components),
     );
     manager.handleMessage(
-      const BeginRendering(
+      const CreateSurface(
         surfaceId: surfaceId,
-        root: 'row',
         catalogId: 'a2ui.org:standard_catalog_0_8_0',
       ),
     );

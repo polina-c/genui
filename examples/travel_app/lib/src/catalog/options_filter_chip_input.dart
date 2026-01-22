@@ -16,6 +16,7 @@ final _schema = S.object(
       'A chip used to choose from a set of mutually exclusive '
       'options. This *must* be placed inside an InputGroup.',
   properties: {
+    'component': S.string(enumValues: ['OptionsFilterChipInput']),
     'chipLabel': S.string(
       description:
           'The title of the filter chip e.g. "budget" or "activity type" '
@@ -36,7 +37,7 @@ final _schema = S.object(
           'option must exist in the "options" list.',
     ),
   },
-  required: ['chipLabel', 'options'],
+  required: ['component', 'chipLabel', 'options'],
 );
 
 extension type _OptionsFilterChipInputData.fromMap(Map<String, Object?> _json) {
@@ -76,18 +77,15 @@ final optionsFilterChipInput = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "OptionsFilterChipInput": {
-              "chipLabel": "Budget",
-              "options": [
-                "\$",
-                "\$\$",
-                "\$\$\$"
-              ],
-              "value": {
-                "literalString": "\$\$"
-              }
-            }
+          "component": "OptionsFilterChipInput",
+          "chipLabel": "Budget",
+          "options": [
+            "\$",
+            "\$\$",
+            "\$\$\$"
+          ],
+          "value": {
+            "literalString": "\$\$"
           }
         }
       ]

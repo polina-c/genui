@@ -341,14 +341,11 @@ class FirebaseAiContentGenerator implements ContentGenerator {
     final adapter = GeminiSchemaAdapter();
 
     final List<AiTool<JsonMap>> availableTools = [
-      SurfaceUpdateTool(
+      UpdateComponentsTool(
         handleMessage: _a2uiMessageController.add,
         catalog: catalog,
       ),
-      BeginRenderingTool(
-        handleMessage: _a2uiMessageController.add,
-        catalogId: catalog.catalogId,
-      ),
+      CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
       DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
       ...additionalTools,
     ];

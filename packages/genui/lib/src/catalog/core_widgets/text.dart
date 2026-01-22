@@ -12,10 +12,10 @@ import '../../model/catalog_item.dart';
 import '../../primitives/simple_items.dart';
 
 extension type _TextData.fromMap(JsonMap _json) {
-  factory _TextData({required JsonMap text, String? usageHint}) =>
+  factory _TextData({required Object text, String? usageHint}) =>
       _TextData.fromMap({'text': text, 'usageHint': usageHint});
 
-  JsonMap get text => _json['text'] as JsonMap;
+  Object get text => _json['text'] as Object;
   String? get usageHint => _json['usageHint'] as String?;
 }
 
@@ -34,6 +34,7 @@ final text = CatalogItem(
   name: 'Text',
   dataSchema: S.object(
     properties: {
+      'component': S.string(enumValues: ['Text']),
       'text': A2uiSchemas.stringReference(
         description:
             '''While simple Markdown is supported (without HTML or image references), utilizing dedicated UI components is generally preferred for a richer and more structured presentation.''',
@@ -43,21 +44,16 @@ final text = CatalogItem(
         enumValues: ['h1', 'h2', 'h3', 'h4', 'h5', 'caption', 'body'],
       ),
     },
-    required: ['text'],
+    required: ['component', 'text'],
   ),
   exampleData: [
     () => '''
       [
         {
           "id": "root",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Hello World"
-              },
-              "usageHint": "h1"
-            }
-          }
+          "component": "Text",
+          "text": "Hello World",
+          "usageHint": "h1"
         }
       ]
     ''',

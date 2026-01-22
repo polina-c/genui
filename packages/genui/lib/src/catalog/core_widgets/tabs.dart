@@ -12,6 +12,7 @@ import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Tabs']),
     'tabItems': S.list(
       items: S.object(
         properties: {
@@ -22,7 +23,7 @@ final _schema = S.object(
       ),
     ),
   },
-  required: ['tabItems'],
+  required: ['component', 'tabItems'],
 );
 
 extension type _TabsData.fromMap(JsonMap _json) {
@@ -55,7 +56,7 @@ final tabs = CatalogItem(
             tabs: tabsData.tabItems.map((tabItem) {
               final ValueNotifier<String?> titleNotifier = itemContext
                   .dataContext
-                  .subscribeToString(tabItem['title'] as JsonMap);
+                  .subscribeToString(tabItem['title']);
               return ValueListenableBuilder<String?>(
                 valueListenable: titleNotifier,
                 builder: (context, title, child) {
@@ -88,44 +89,27 @@ final tabs = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Tabs": {
-              "tabItems": [
-                {
-                  "title": {
-                    "literalString": "Overview"
-                  },
-                  "child": "text1"
-                },
-                {
-                  "title": {
-                    "literalString": "Details"
-                  },
-                  "child": "text2"
-                }
-              ]
+          "component": "Tabs",
+          "tabItems": [
+            {
+              "title": "Overview",
+              "child": "text1"
+            },
+            {
+              "title": "Details",
+              "child": "text2"
             }
-          }
+          ]
         },
         {
           "id": "text1",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "This is a short summary of the item."
-              }
-            }
-          }
+          "component": "Text",
+          "text": "This is a short summary of the item."
         },
         {
           "id": "text2",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "This is a much longer, more detailed description of the item, providing in-depth information and context. It can span multiple lines and include rich formatting if needed."
-              }
-            }
-          }
+          "component": "Text",
+          "text": "This is a much longer, more detailed description of the item, providing in-depth information and context. It can span multiple lines and include rich formatting if needed."
         }
       ]
     ''',

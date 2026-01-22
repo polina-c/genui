@@ -14,6 +14,7 @@ import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['Column']),
     'distribution': S.string(
       description: 'How children are aligned on the main axis. ',
       enumValues: [
@@ -35,6 +36,7 @@ final _schema = S.object(
           'template with a data binding to the list of children.',
     ),
   },
+  required: ['component', 'children'],
 );
 
 extension type _ColumnData.fromMap(JsonMap _json) {
@@ -123,7 +125,8 @@ final column = CatalogItem(
                   componentId: componentId,
                   dataContext: dataContext,
                   buildChild: buildChild,
-                  weight: getComponent(componentId)?.weight,
+                  weight:
+                      getComponent(componentId)?.properties['weight'] as int?,
                 ),
               )
               .toList(),
@@ -142,7 +145,9 @@ final column = CatalogItem(
                   DataPath('$dataBinding/$i'),
                 ),
                 buildChild: itemContext.buildChild,
-                weight: itemContext.getComponent(componentId)?.weight,
+                weight:
+                    itemContext.getComponent(componentId)?.properties['weight']
+                        as int?,
               ),
             ],
           ],
@@ -155,58 +160,35 @@ final column = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "advice_text",
-                  "advice_options",
-                  "submit_button"
-                ]
-              }
-            }
-          }
+          "component": "Column",
+          "children": [
+            "advice_text",
+            "advice_options",
+            "submit_button"
+          ]
         },
         {
           "id": "advice_text",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "What kind of advice are you looking for?"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "What kind of advice are you looking for?"
         },
         {
           "id": "advice_options",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Some advice options."
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Some advice options."
         },
         {
           "id": "submit_button",
-          "component": {
-            "Button": {
-              "child": "submit_button_text",
-              "action": {
-                "name": "submit"
-              }
-            }
+          "component": "Button",
+          "child": "submit_button_text",
+          "action": {
+            "name": "submit"
           }
         },
         {
           "id": "submit_button_text",
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Submit"
-              }
-            }
-          }
+          "component": "Text",
+          "text": "Submit"
         }
       ]
     ''',

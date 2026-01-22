@@ -81,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _currentSurfaceIndex = _surfaceIds.length - 1;
           });
         }
-      } else if (update is SurfaceUpdated) {
+      } else if (update is ComponentsUpdated) {
         genUiLogger.info('Surface updated: ${update.surfaceId}');
         // The surface will redraw itself, but we call setState here to ensure
         // that any other dependent widgets are also updated.

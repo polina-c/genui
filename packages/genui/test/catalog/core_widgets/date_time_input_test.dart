@@ -197,18 +197,14 @@ void main() {
   const surfaceId = 'testSurface';
 
   final components = [
-    Component(id: componentId, componentProperties: {'DateTimeInput': props}),
+    Component(id: 'root', type: 'DateTimeInput', properties: props),
   ];
 
   manager.handleMessage(
-    SurfaceUpdate(surfaceId: surfaceId, components: components),
+    UpdateComponents(surfaceId: surfaceId, components: components),
   );
   manager.handleMessage(
-    BeginRendering(
-      surfaceId: surfaceId,
-      root: componentId,
-      catalogId: 'test_catalog',
-    ),
+    const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
   );
 
   return (manager, surfaceId);
@@ -231,7 +227,7 @@ class DateTimeInputRobot {
   }
 
   Future<void> openPicker(String componentId) async {
-    await tester.tap(find.byKey(Key(componentId)));
+    await tester.tap(find.byKey(const Key('root')));
     await tester.pumpAndSettle();
   }
 
@@ -247,7 +243,7 @@ class DateTimeInputRobot {
   }
 
   void expectInputText(String componentId, String text) {
-    final Finder finder = find.byKey(Key('${componentId}_text'));
+    final Finder finder = find.byKey(const Key('root_text'));
     expect(finder, findsOneWidget);
     final String actualText = tester.widget<Text>(finder).data!;
     if (actualText != text) {

@@ -98,7 +98,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
     _uiConversation = GenUiConversation(
       a2uiMessageProcessor: a2uiMessageProcessor,
       contentGenerator: contentGenerator,
-      onSurfaceUpdated: (update) {
+      onComponentsUpdated: (update) {
         _scrollToBottom();
       },
       onSurfaceAdded: (update) {

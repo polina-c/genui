@@ -21,33 +21,22 @@ void main() {
     const surfaceId = 'testSurface';
     final components = [
       const Component(
-        id: 'multiple_choice',
-        componentProperties: {
-          'MultipleChoice': {
-            'selections': {'path': '/mySelections'},
-            'options': [
-              {
-                'label': {'literalString': 'Option 1'},
-                'value': '1',
-              },
-              {
-                'label': {'literalString': 'Option 2'},
-                'value': '2',
-              },
-            ],
-          },
+        id: 'root',
+        type: 'MultipleChoice',
+        properties: {
+          'selections': {'path': '/mySelections'},
+          'options': [
+            {'label': 'Option 1', 'value': '1'},
+            {'label': 'Option 2', 'value': '2'},
+          ],
         },
       ),
     ];
     processor.handleMessage(
-      SurfaceUpdate(surfaceId: surfaceId, components: components),
+      UpdateComponents(surfaceId: surfaceId, components: components),
     );
     processor.handleMessage(
-      const BeginRendering(
-        surfaceId: surfaceId,
-        root: 'multiple_choice',
-        catalogId: 'test_catalog',
-      ),
+      const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
     processor.dataModelForSurface(surfaceId).update(DataPath('/mySelections'), [
       '1',
@@ -96,35 +85,24 @@ void main() {
 
       final components = [
         const Component(
-          id: 'multiple_choice',
-          componentProperties: {
-            'MultipleChoice': {
-              'selections': {'path': '/mySelections'},
-              'maxAllowedSelections': 3.0,
-              'options': [
-                {
-                  'label': {'literalString': 'Option 1'},
-                  'value': '1',
-                },
-                {
-                  'label': {'literalString': 'Option 2'},
-                  'value': '2',
-                },
-              ],
-            },
+          id: 'root',
+          type: 'MultipleChoice',
+          properties: {
+            'selections': {'path': '/mySelections'},
+            'maxAllowedSelections': 3.0,
+            'options': [
+              {'label': 'Option 1', 'value': '1'},
+              {'label': 'Option 2', 'value': '2'},
+            ],
           },
         ),
       ];
 
       processor.handleMessage(
-        SurfaceUpdate(surfaceId: surfaceId, components: components),
+        UpdateComponents(surfaceId: surfaceId, components: components),
       );
       processor.handleMessage(
-        const BeginRendering(
-          surfaceId: surfaceId,
-          root: 'multiple_choice',
-          catalogId: 'test_catalog',
-        ),
+        const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
       );
 
       processor

@@ -11,18 +11,20 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 final _schema = S.object(
   properties: {
+    'component': S.string(enumValues: ['DateInputChip']),
     'value': A2uiSchemas.stringReference(
       description: 'The initial date of the date picker in yyyy-mm-dd format.',
     ),
     'label': S.string(description: 'Label for the date picker.'),
   },
+  required: ['component'],
 );
 
 extension type _DatePickerData.fromMap(JsonMap _json) {
   factory _DatePickerData({JsonMap? value, String? label}) =>
       _DatePickerData.fromMap({'value': value, 'label': label});
 
-  JsonMap? get value => _json['value'] as JsonMap?;
+  Object? get value => _json['value'];
   String? get label => _json['label'] as String?;
 }
 
@@ -116,14 +118,11 @@ final dateInputChip = CatalogItem(
       [
         {
           "id": "root",
-          "component": {
-            "DateInputChip": {
-              "value": {
-                "literalString": "1871-07-22"
-              },
-              "label": "Your birth date"
-            }
-          }
+          "component": "DateInputChip",
+          "value": {
+            "literalString": "1871-07-22"
+          },
+          "label": "Your birth date"
         }
       ]
     ''',
@@ -132,7 +131,10 @@ final dateInputChip = CatalogItem(
     final datePickerData = _DatePickerData.fromMap(context.data as JsonMap);
     final ValueNotifier<String?> notifier = context.dataContext
         .subscribeToString(datePickerData.value);
-    final path = datePickerData.value?['path'] as String?;
+    final Object? value = datePickerData.value;
+    final String? path = value is Map && value.containsKey('path')
+        ? value['path'] as String
+        : null;
 
     return ValueListenableBuilder<String?>(
       valueListenable: notifier,

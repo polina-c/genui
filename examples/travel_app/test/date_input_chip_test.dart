@@ -20,11 +20,9 @@ void main() {
             builder: (context) {
               return dateInputChip.widgetBuilder(
                 CatalogItemContext(
-                  data: {
-                    'value': {'literalString': '2025-09-20'},
-                    'label': 'Test Date',
-                  },
+                  data: {'value': '2025-09-20', 'label': 'Test Date'},
                   id: 'test_chip',
+                  type: 'DateInputChip',
                   buildChild: (data, [_]) => const SizedBox(),
                   dispatchEvent: (event) {},
                   buildContext: context,
@@ -60,6 +58,7 @@ void main() {
                     'label': 'Test Date',
                   },
                   id: 'test_chip',
+                  type: 'DateInputChip',
                   buildChild: (data, [_]) => const SizedBox(),
                   dispatchEvent: (event) {},
                   buildContext: context,
@@ -100,6 +99,7 @@ void main() {
                     'label': 'Test Date',
                   },
                   id: 'test_chip',
+                  type: 'DateInputChip',
                   buildChild: (data, [_]) => const SizedBox(),
                   dispatchEvent: (event) {},
                   buildContext: context,
@@ -141,6 +141,7 @@ void main() {
                     'label': 'Test Date',
                   },
                   id: 'test_chip',
+                  type: 'DateInputChip',
                   buildChild: (data, [_]) => const SizedBox(),
                   dispatchEvent: (event) {},
                   buildContext: context,
