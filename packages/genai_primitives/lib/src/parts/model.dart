@@ -8,7 +8,6 @@ library;
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-export 'part.dart';
 
 /// Base class for message content parts.
 ///
