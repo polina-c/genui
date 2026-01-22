@@ -7,12 +7,12 @@ import 'dart:collection';
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
-import 'items.dart';
 import 'model.dart';
+import 'part.dart';
 
-/// A collection of message parts.
+/// A collection of parts.
 @immutable
-final class Parts extends ListBase<Part> {
+final class Parts extends ListBase<BasePart> {
   /// Creates a new collection of parts.
   const Parts(this._parts);
 
@@ -20,7 +20,7 @@ final class Parts extends ListBase<Part> {
   ///
   /// If [text] is not empty, converts it to a [TextPart] and puts it as a
   /// first member of the [parts] list.
-  factory Parts.fromText(String text, {Iterable<Part> parts = const []}) =>
+  factory Parts.fromText(String text, {Iterable<BasePart> parts = const []}) =>
       text.isEmpty ? Parts(parts.toList()) : Parts([TextPart(text), ...parts]);
 
   /// Deserializes parts from a JSON list.
@@ -32,7 +32,7 @@ final class Parts extends ListBase<Part> {
     return Parts(
       json
           .map(
-            (e) => Part.fromJson(
+            (e) => BasePart.fromJson(
               e as Map<String, Object?>,
               converterRegistry: converterRegistry,
             ),
@@ -41,7 +41,7 @@ final class Parts extends ListBase<Part> {
     );
   }
 
-  final List<Part> _parts;
+  final List<BasePart> _parts;
 
   @override
   int get length => _parts.length;
@@ -50,10 +50,10 @@ final class Parts extends ListBase<Part> {
   set length(int newLength) => throw UnsupportedError('Parts is immutable');
 
   @override
-  Part operator [](int index) => _parts[index];
+  BasePart operator [](int index) => _parts[index];
 
   @override
-  void operator []=(int index, Part value) =>
+  void operator []=(int index, BasePart value) =>
       throw UnsupportedError('Parts is immutable');
 
   /// Serializes parts to a JSON list.
@@ -91,35 +91,4 @@ final class Parts extends ListBase<Part> {
 
   @override
   String toString() => _parts.toString();
-}
-
-/// Converter registry for parts in this package.
-///
-/// The key of a map entry is the part type.
-/// The value is the converter that knows how to convert that part type.
-///
-/// To add support for additional part types, extend this map.
-///
-/// To limit supported part types, or to remove support for part types
-/// in future versions of `genai_primitives`, define a new map.
-const defaultPartConverterRegistry = <String, JsonToPartConverter>{
-  TextPart.type: PartConverter(TextPart.fromJson),
-  DataPart.type: PartConverter(DataPart.fromJson),
-  LinkPart.type: PartConverter(LinkPart.fromJson),
-  ToolPart.type: PartConverter(ToolPart.fromJson),
-};
-
-typedef _JsonToPartFunction = Part Function(Map<String, Object?> json);
-
-/// A converter that converts a JSON map to a [Part].
-@visibleForTesting
-class PartConverter extends JsonToPartConverter {
-  const PartConverter(this._function);
-
-  final _JsonToPartFunction _function;
-
-  @override
-  Part convert(Map<String, Object?> input) {
-    return _function(input);
-  }
 }
