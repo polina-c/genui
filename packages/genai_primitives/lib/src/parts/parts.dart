@@ -92,20 +92,3 @@ final class Parts extends ListBase<BasePart> {
   @override
   String toString() => _parts.toString();
 }
-
-/// Converter registry for parts in this package.
-///
-/// The key of a map entry is the part type.
-/// The value is the converter that knows how to convert that part type.
-///
-/// To add support for additional part types, extend this map.
-///
-/// To limit supported part types, or to remove support for part types
-/// in future versions of `genai_primitives`, define a new map.
-const defaultPartConverterRegistry = <String, JsonToPartConverter>{
-  TextPart.type: PartConverter(TextPart.fromJson),
-  DataPart.type: PartConverter(DataPart.fromJson),
-  LinkPart.type: PartConverter(LinkPart.fromJson),
-  ToolPart.type: PartConverter(ToolPart.fromJson),
-  ThinkingPart.type: PartConverter(ThinkingPart.fromJson),
-};

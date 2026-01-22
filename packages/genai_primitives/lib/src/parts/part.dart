@@ -15,11 +15,24 @@ import 'package:path/path.dart' as p;
 
 import 'model.dart';
 
-const _partConverterRegistry = <String, JsonToPartConverter<Part>>{
+/// Converter registry for parts in this package.
+///
+/// The key of a map entry is the part type.
+/// The value is the converter that knows how to convert that part type.
+///
+/// To add support for additional part types, extend this map.
+///
+/// To limit supported part types, or to remove support for part types
+/// in future versions of `genai_primitives`, define a new map.
+const Map<String, JsonToPartConverter<BasePart>> defaultPartConverterRegistry =
+    _sealedPartConverterRegistry;
+
+const _sealedPartConverterRegistry = <String, JsonToPartConverter<Part>>{
   TextPart.type: PartConverter(TextPart.fromJson),
   DataPart.type: PartConverter(DataPart.fromJson),
   LinkPart.type: PartConverter(LinkPart.fromJson),
   ToolPart.type: PartConverter(ToolPart.fromJson),
+  ThinkingPart.type: PartConverter(ThinkingPart.fromJson),
 };
 
 /// Base class for parts of a message allowed by model.
@@ -31,7 +44,8 @@ sealed class Part extends BasePart {
   /// Deserializes a part from a JSON map.
   factory Part.fromJson(Map<String, Object?> json) {
     final type = json[BasePart.typeKey] as String;
-    final JsonToPartConverter<Part> converter = _partConverterRegistry[type]!;
+    final JsonToPartConverter<Part> converter =
+        _sealedPartConverterRegistry[type]!;
     return converter.convert(json);
   }
 }
@@ -368,7 +382,7 @@ enum ToolPartKind {
 
 /// A "thinking" part of a message, used by some models to show reasoning.
 @immutable
-final class ThinkingPart extends BasePart {
+final class ThinkingPart extends Part {
   static const type = 'Thinking';
 
   /// Creates a thinking part.
