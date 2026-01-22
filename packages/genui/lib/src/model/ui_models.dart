@@ -154,8 +154,176 @@ class UiDefinition {
   /// Validates the UI definition against a schema.
   /// Throws [GenUiValidationException] if validation fails.
   void validate(Schema schema) {
-    // TODO(gspencer): Implement validation against schema in Phase 1 or 2.
-    // This requires strict checking of all components properties.
+    // schema is from json_schema_builder. Convert to Map for inspection.
+    final String jsonOutput = schema.toJson();
+    final schemaMap = jsonDecode(jsonOutput) as Map<String, dynamic>;
+
+    List<Map<String, dynamic>> allowedSchemas = [];
+    if (schemaMap.containsKey('oneOf')) {
+      allowedSchemas = (schemaMap['oneOf'] as List)
+          .cast<Map<String, dynamic>>();
+    } else if (schemaMap.containsKey('properties') &&
+        (schemaMap['properties'] as Map).containsKey('components')) {
+      final componentsProp =
+          (schemaMap['properties'] as Map)['components']
+              as Map<String, dynamic>;
+      if (componentsProp.containsKey('items')) {
+        final items = componentsProp['items'] as Map<String, dynamic>;
+        if (items.containsKey('oneOf')) {
+          allowedSchemas = (items['oneOf'] as List)
+              .cast<Map<String, dynamic>>();
+        } else {
+          allowedSchemas = [items];
+        }
+      }
+    }
+
+    if (allowedSchemas.isEmpty) {
+      return;
+    }
+
+    for (final Component component in components.values) {
+      var matched = false;
+      List<String> errors = [];
+      final JsonMap instanceJson = component.toJson();
+
+      for (final s in allowedSchemas) {
+        if (_schemaMatchesType(s, component.type)) {
+          try {
+            _validateInstance(instanceJson, s, '/components/${component.id}');
+            matched = true;
+            break;
+          } catch (e) {
+            errors.add(e.toString());
+          }
+        }
+      }
+
+      if (!matched) {
+        if (errors.isNotEmpty) {
+          throw GenUiValidationException(
+            surfaceId: surfaceId,
+            message:
+                'Validation failed for component ${component.id} '
+                '(${component.type}): ${errors.join("; ")}',
+            path: '/components/${component.id}',
+          );
+        }
+        throw GenUiValidationException(
+          surfaceId: surfaceId,
+          message: 'Unknown component type: ${component.type}',
+          path: '/components/${component.id}',
+        );
+      }
+    }
+  }
+
+  bool _schemaMatchesType(Map<String, dynamic> schema, String type) {
+    if (schema.containsKey('properties')) {
+      final props = schema['properties'] as Map;
+      if (props.containsKey('component')) {
+        final compProp = props['component'] as Map<String, dynamic>;
+        if (compProp.containsKey('const') && compProp['const'] == type) {
+          return true;
+        }
+        if (compProp.containsKey('enum') &&
+            (compProp['enum'] as List).contains(type)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void _validateInstance(
+    Object? instance,
+    Map<String, dynamic> schema,
+    String path,
+  ) {
+    if (instance == null) {
+      // Check for nullable/null?
+      return;
+    }
+
+    // Validate const
+    if (schema.containsKey('const')) {
+      final Object? constVal = schema['const'];
+      if (instance != constVal) {
+        throw GenUiValidationException(
+          surfaceId: surfaceId,
+          message: 'Value mismatch. Expected $constVal, got $instance',
+          path: path,
+        );
+      }
+    }
+
+    // Validate enum
+    if (schema.containsKey('enum')) {
+      final enums = schema['enum'] as List;
+      if (!enums.contains(instance)) {
+        throw GenUiValidationException(
+          surfaceId: surfaceId,
+          message: 'Value not in enum: $instance',
+          path: path,
+        );
+      }
+    }
+
+    // Validate required
+    if (schema.containsKey('required') && instance is Map) {
+      final List<String> required = (schema['required'] as List).cast<String>();
+      for (final key in required) {
+        if (!instance.containsKey(key)) {
+          throw GenUiValidationException(
+            surfaceId: surfaceId,
+            message: 'Missing required property: $key',
+            path: path,
+          );
+        }
+      }
+    }
+
+    // Validate properties
+    if (schema.containsKey('properties') && instance is Map) {
+      final props = schema['properties'] as Map<String, dynamic>;
+      for (final MapEntry<String, dynamic> entry in props.entries) {
+        final String key = entry.key;
+        final propSchema = entry.value as Map<String, dynamic>;
+        if (instance.containsKey(key)) {
+          // Cast ensures checking against Map, assuming schema is valid
+          _validateInstance(instance[key], propSchema, '$path/$key');
+        }
+      }
+    }
+
+    // Validate items (list)
+    if (schema.containsKey('items') && instance is List) {
+      final itemsSchema = schema['items'] as Map<String, dynamic>;
+      for (var i = 0; i < instance.length; i++) {
+        _validateInstance(instance[i], itemsSchema, '$path/$i');
+      }
+    }
+
+    // Validate oneOf
+    if (schema.containsKey('oneOf')) {
+      final List<Map<String, dynamic>> oneOfs = (schema['oneOf'] as List)
+          .cast<Map<String, dynamic>>();
+      var oneMatched = false;
+      for (final s in oneOfs) {
+        try {
+          _validateInstance(instance, s, path);
+          oneMatched = true;
+          break;
+        } catch (_) {}
+      }
+      if (!oneMatched) {
+        throw GenUiValidationException(
+          surfaceId: surfaceId,
+          message: 'Value did not match any oneOf schema',
+          path: path,
+        );
+      }
+    }
   }
 }
 

@@ -10,6 +10,18 @@ import 'catalog.dart';
 /// Provides a set of pre-defined, reusable schema objects for common
 /// A2UI patterns, simplifying the creation of CatalogItem definitions.
 class A2uiSchemas {
+  /// Schema for a function call.
+  static Schema functionCall() => S.object(
+    properties: {
+      'func': S.string(description: 'The name of the function to call.'),
+      'args': S.list(
+        description: 'Arguments to pass to the function.',
+        items: S.any(),
+      ),
+    },
+    required: ['func', 'args'],
+  );
+
   /// Schema for a value that can be either a literal string or a
   /// data-bound path to a string in the DataModel.
   static Schema stringReference({
@@ -27,9 +39,9 @@ class A2uiSchemas {
     final Schema binding = _dataBindingSchema(
       description: 'A path to a string.',
     );
-    // TODO(gspencer): Add FunctionCall support here when ready.
+    final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding],
+      oneOf: [literal, verboseLiteral, binding, function],
       description: description,
     );
   }
@@ -45,8 +57,9 @@ class A2uiSchemas {
     final Schema binding = _dataBindingSchema(
       description: 'A path to a number.',
     );
+    final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding],
+      oneOf: [literal, verboseLiteral, binding, function],
       description: description,
     );
   }
@@ -62,8 +75,9 @@ class A2uiSchemas {
     final Schema binding = _dataBindingSchema(
       description: 'A path to a boolean.',
     );
+    final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding],
+      oneOf: [literal, verboseLiteral, binding, function],
       description: description,
     );
   }
@@ -124,8 +138,9 @@ class A2uiSchemas {
     final Schema binding = _dataBindingSchema(
       description: 'A path to a string list.',
     );
+    final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding],
+      oneOf: [literal, verboseLiteral, binding, function],
       description: description,
     );
   }

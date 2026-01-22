@@ -190,6 +190,10 @@ class DataModel {
     return notifier;
   }
 
+
+
+  final List<VoidCallback> _externalSubscriptions = [];
+
   /// Binds an external state [source] to a [path] in the DataModel.
   ///
   /// If [twoWay] is true, changes in the DataModel at [path] will also
@@ -206,13 +210,21 @@ class DataModel {
     void onSourceChanged() {
       final T newValue = source.value;
       // Avoid infinite loop if values are equal
-      if (getValue<T>(path) != newValue) {
+      final T? currentValue = getValue<T>(path);
+      if (currentValue != newValue) {
+        // Pass a flag or check in update?
+        // Actually, update() will notify subscribers.
+        // If twoWay is on, onModelChanged will fire.
+        // We need to be careful.
+        // The check `if (currentValue != newValue)` above prevents the update
+        // if they are already in sync.
         update(path, newValue);
       }
     }
 
     source.addListener(onSourceChanged);
-    _cleanupCallbacks.add(() => source.removeListener(onSourceChanged));
+    // Store cleanup for this specific listener on the source
+    _externalSubscriptions.add(() => source.removeListener(onSourceChanged));
 
     // 3. (Optional) Listen to DataModel changes -> External
     if (twoWay) {
@@ -222,19 +234,23 @@ class DataModel {
         );
       } else {
         final ValueNotifier<T> notifier = source;
-        final ValueNotifier<T?> subscription = subscribe<T>(path);
+        // We use subscribeToValue so we only get updates for this specific path
+        final ValueNotifier<T?> subscription = subscribeToValue<T>(path);
 
         void onModelChanged() {
           final T? modelValue = subscription.value;
+          // Null safety: if modelValue is null but T is not nullable, what do we do?
+          // Assuming source.value accepts the type from the model.
           if (modelValue != null && modelValue != notifier.value) {
             notifier.value = modelValue;
           }
         }
 
         subscription.addListener(onModelChanged);
-        // We don't remove subscription listener on dispose because the subscription itself lives on DataModel?
-        // Actually, we should clean up this listener too.
-        _cleanupCallbacks.add(
+        // Clean up the listener on the subscription
+        // Note: We don't dispose the subscription itself here as it's managed by DataModel cache,
+        // but we must remove our listener.
+        _externalSubscriptions.add(
           () => subscription.removeListener(onModelChanged),
         );
       }
@@ -247,9 +263,12 @@ class DataModel {
       callback();
     }
     _cleanupCallbacks.clear();
-    // We do NOT dispose the ValueNotifiers in _subscriptions because widgets might still be holding them?
-    // Actually, usually DataModel lifecycle is tied to the Surface.
-    // If DataModel is disposed, we can dispose the notifiers.
+
+    for (final VoidCallback callback in _externalSubscriptions) {
+      callback();
+    }
+    _externalSubscriptions.clear();
+
     for (final ValueNotifier<Object?> notifier in _subscriptions.values) {
       notifier.dispose();
     }
@@ -333,7 +352,8 @@ class DataModel {
               // Removing from list?
               // If we remove, indices shift.
               // v0.9 spec: "If the value is null, the key is removed."
-              // For lists, this might be ambiguous. Usually setting null in list just sets it to null or removes it?
+              // For lists, this might be ambiguous. Usually setting null in list
+              // just sets it to null or removes it?
               // Providing valid JSON Patch semantics (remove) might be better,
               // but here we just replace with null or remove?
               // Let's assume replace with null to preserve indices, or actually
@@ -399,8 +419,8 @@ class DataModel {
         _subscriptions[p]!.value = getValue(p);
       }
     }
-    // Note: _valueSubscriptions implies "only when value at exact path changes",
-    // but if parent replaced, value DID change.
+    // Note: _valueSubscriptions implies "only when value at exact path
+    // changes", but if parent replaced, value DID change.
     for (final DataPath p in _valueSubscriptions.keys) {
       if (p.startsWith(path) && p != path) {
         _valueSubscriptions[p]!.value = getValue(p);
