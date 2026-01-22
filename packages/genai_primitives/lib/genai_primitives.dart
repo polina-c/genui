@@ -6,7 +6,7 @@
 library;
 
 export 'src/llm_message.dart';
-export 'src/parts/llmPart.dart';
+export 'src/parts/part.dart';
 export 'src/parts/model.dart';
 export 'src/parts/parts.dart';
 export 'src/tool_definition.dart';

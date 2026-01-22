@@ -32,7 +32,10 @@ final class ChatMessage {
     this.metadata = const {},
   });
 
-  static List<Part> _partsFromText(String text, {required List<Part> parts}) {
+  static List<BasePart> _partsFromText(
+    String text, {
+    required List<BasePart> parts,
+  }) {
     return [TextPart(text), ...parts];
   }
 
@@ -41,11 +44,11 @@ final class ChatMessage {
   /// If [text] is not empty, converts it to a [TextPart] and puts it as a
   /// first member of the [parts] list.
   ///
-  /// [parts] may contain any type of [Part], including additional
+  /// [parts] may contain any type of [BasePart], including additional
   /// instances of [TextPart].
   ChatMessage.system(
     String text, {
-    List<Part> parts = const [],
+    List<BasePart> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.system,
@@ -58,11 +61,11 @@ final class ChatMessage {
   /// If [text] is not empty, converts it to a [TextPart] and puts it as a
   /// first member of the [parts] list.
   ///
-  /// [parts] may contain any type of [Part], including additional
+  /// [parts] may contain any type of [BasePart], including additional
   /// instances of [TextPart].
   ChatMessage.user(
     String text, {
-    List<Part> parts = const [],
+    List<BasePart> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.user,
@@ -75,11 +78,11 @@ final class ChatMessage {
   /// If [text] is not empty, converts it to a [TextPart] and puts it as a
   /// first member of the [parts] list.
   ///
-  /// [parts] may contain any type of [Part], including additional
+  /// [parts] may contain any type of [BasePart], including additional
   /// instances of [TextPart].
   ChatMessage.model(
     String text, {
-    List<Part> parts = const [],
+    List<BasePart> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.model,
@@ -91,9 +94,9 @@ final class ChatMessage {
   ///
   /// The message is compatible with [toJson].
   factory ChatMessage.fromJson(Map<String, Object?> json) {
-    final List<Part> parts =
+    final List<BasePart> parts =
         (json[_Json.parts] as List<Object?>?)
-            ?.map((e) => Part.fromJson(e as Map<String, Object?>))
+            ?.map((e) => BasePart.fromJson(e as Map<String, Object?>))
             .toList() ??
         const [];
 
@@ -115,7 +118,7 @@ final class ChatMessage {
   final ChatMessageRole role;
 
   /// The content parts of the message.
-  final List<Part> parts;
+  final List<BasePart> parts;
 
   late final Parts _parts = Parts(parts);
 

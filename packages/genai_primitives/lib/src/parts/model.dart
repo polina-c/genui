@@ -8,7 +8,7 @@ library;
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-export 'llmPart.dart';
+export 'part.dart';
 
 /// Base class for message content parts.
 ///
@@ -26,9 +26,9 @@ export 'llmPart.dart';
 /// * Pass extended [defaultPartConverterRegistry] to all methods `fromJson`
 ///   that accept a converter registry.
 @immutable
-abstract base class Part {
+abstract base class BasePart {
   /// Creates a new part.
-  const Part();
+  const BasePart();
 
   /// The key of the part type in the JSON representation.
   static const String typeKey = 'type';
@@ -36,7 +36,7 @@ abstract base class Part {
   /// Deserializes a part from a JSON map.
   ///
   /// The [converterRegistry] parameter is a map of part types to converters.
-  factory Part.fromJson(
+  factory BasePart.fromJson(
     Map<String, Object?> json, {
     required Map<String, JsonToPartConverter> converterRegistry,
   }) {
@@ -56,5 +56,5 @@ abstract base class Part {
   Map<String, Object?> toJson();
 }
 
-typedef JsonToPartConverter<T extends Part> =
+typedef JsonToPartConverter<T extends BasePart> =
     Converter<Map<String, Object?>, T>;

@@ -23,12 +23,12 @@ const _chatPartConverterRegistry = <String, JsonToPartConverter<LlmPart>>{
   ToolPart.type: PartConverter(ToolPart.fromJson),
 };
 
-sealed class LlmPart extends Part {
+sealed class LlmPart extends BasePart {
   const LlmPart();
 
   /// Deserializes a part from a JSON map.
   factory LlmPart.fromJson(Map<String, Object?> json) {
-    final type = json[Part.typeKey] as String;
+    final type = json[BasePart.typeKey] as String;
     final JsonToPartConverter<LlmPart> converter =
         _chatPartConverterRegistry[type]!;
     return converter.convert(json);
@@ -64,7 +64,10 @@ final class TextPart extends LlmPart {
   }
 
   @override
-  Map<String, Object?> toJson() => {Part.typeKey: type, _Json.content: text};
+  Map<String, Object?> toJson() => {
+    BasePart.typeKey: type,
+    _Json.content: text,
+  };
 
   @override
   bool operator ==(Object other) {
@@ -140,7 +143,7 @@ final class DataPart extends LlmPart {
 
   @override
   Map<String, Object?> toJson() => {
-    Part.typeKey: type,
+    BasePart.typeKey: type,
     _Json.content: {
       if (name != null) _Json.name: name,
       _Json.mimeType: mimeType,
@@ -224,7 +227,7 @@ final class LinkPart extends LlmPart {
 
   @override
   Map<String, Object?> toJson() => {
-    Part.typeKey: type,
+    BasePart.typeKey: type,
     _Json.content: {
       if (name != null) _Json.name: name,
       if (mimeType != null) _Json.mimeType: mimeType,
@@ -309,7 +312,7 @@ final class ToolPart extends LlmPart {
 
   @override
   Map<String, Object?> toJson() => {
-    Part.typeKey: type,
+    BasePart.typeKey: type,
     _Json.content: {
       _Json.id: callId,
       _Json.name: toolName,
@@ -364,7 +367,7 @@ enum ToolPartKind {
 
 /// A "thinking" part of a message, used by some models to show reasoning.
 @immutable
-final class ThinkingPart extends Part {
+final class ThinkingPart extends BasePart {
   static const type = 'Thinking';
 
   /// Creates a thinking part.
@@ -379,7 +382,7 @@ final class ThinkingPart extends Part {
   }
 
   @override
-  Map<String, Object?> toJson() => {Part.typeKey: type, _Json.text: text};
+  Map<String, Object?> toJson() => {BasePart.typeKey: type, _Json.text: text};
 
   @override
   bool operator ==(Object other) {

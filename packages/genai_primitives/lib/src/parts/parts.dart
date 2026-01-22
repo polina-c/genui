@@ -11,7 +11,7 @@ import 'model.dart';
 
 /// A collection of message parts.
 @immutable
-final class Parts extends ListBase<Part> {
+final class Parts extends ListBase<BasePart> {
   /// Creates a new collection of parts.
   const Parts(this._parts);
 
@@ -19,7 +19,7 @@ final class Parts extends ListBase<Part> {
   ///
   /// If [text] is not empty, converts it to a [TextPart] and puts it as a
   /// first member of the [parts] list.
-  factory Parts.fromText(String text, {Iterable<Part> parts = const []}) =>
+  factory Parts.fromText(String text, {Iterable<BasePart> parts = const []}) =>
       text.isEmpty ? Parts(parts.toList()) : Parts([TextPart(text), ...parts]);
 
   /// Deserializes parts from a JSON list.
@@ -31,7 +31,7 @@ final class Parts extends ListBase<Part> {
     return Parts(
       json
           .map(
-            (e) => Part.fromJson(
+            (e) => BasePart.fromJson(
               e as Map<String, Object?>,
               converterRegistry: converterRegistry,
             ),
@@ -40,7 +40,7 @@ final class Parts extends ListBase<Part> {
     );
   }
 
-  final List<Part> _parts;
+  final List<BasePart> _parts;
 
   @override
   int get length => _parts.length;
@@ -49,10 +49,10 @@ final class Parts extends ListBase<Part> {
   set length(int newLength) => throw UnsupportedError('Parts is immutable');
 
   @override
-  Part operator [](int index) => _parts[index];
+  BasePart operator [](int index) => _parts[index];
 
   @override
-  void operator []=(int index, Part value) =>
+  void operator []=(int index, BasePart value) =>
       throw UnsupportedError('Parts is immutable');
 
   /// Serializes parts to a JSON list.
@@ -110,9 +110,9 @@ const defaultPartConverterRegistry = <String, JsonToPartConverter>{
 
 typedef _JsonToPartFunction<T> = T Function(Map<String, Object?> json);
 
-/// A converter that converts a JSON map to a [Part].
+/// A converter that converts a JSON map to a [BasePart].
 @visibleForTesting
-class PartConverter<T extends Part> extends JsonToPartConverter<T> {
+class PartConverter<T extends BasePart> extends JsonToPartConverter<T> {
   const PartConverter(this._function);
 
   final _JsonToPartFunction<T> _function;
