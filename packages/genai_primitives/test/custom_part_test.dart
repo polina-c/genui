@@ -107,7 +107,7 @@ void main() {
     test('deserialization with custom registry', () {
       final message = const ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([CustomPart('custom_content')]),
+        parts: [TextPart('custom_content')],
       );
       final Map<String, Object?> json = message.toJson();
 
