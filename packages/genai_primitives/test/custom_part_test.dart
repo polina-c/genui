@@ -111,13 +111,7 @@ void main() {
       );
       final Map<String, Object?> json = message.toJson();
 
-      final reconstructed = ChatMessage.fromJson(
-        json,
-        converterRegistry: {
-          ...defaultPartConverterRegistry,
-          'Custom': const CustomPartConverter(),
-        },
-      );
+      final reconstructed = ChatMessage.fromJson(json);
 
       expect(reconstructed.parts.first, isA<CustomPart>());
       expect(
