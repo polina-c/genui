@@ -24,28 +24,29 @@ import 'model.dart';
 ///
 /// To limit supported part types, or to remove support for part types
 /// in future versions of `genai_primitives`, define a new map.
-const Map<String, JsonToPartConverter<BasePart>> defaultPartConverterRegistry =
-    _sealedPartConverterRegistry;
+const Map<String, JsonToPartConverter<Part>> defaultPartConverterRegistry =
+    _standardPartConverterRegistry;
 
-const _sealedPartConverterRegistry = <String, JsonToPartConverter<Part>>{
-  TextPart.type: PartConverter(TextPart.fromJson),
-  DataPart.type: PartConverter(DataPart.fromJson),
-  LinkPart.type: PartConverter(LinkPart.fromJson),
-  ToolPart.type: PartConverter(ToolPart.fromJson),
-  ThinkingPart.type: PartConverter(ThinkingPart.fromJson),
-};
+const _standardPartConverterRegistry =
+    <String, JsonToPartConverter<StandardPart>>{
+      TextPart.type: PartConverter(TextPart.fromJson),
+      DataPart.type: PartConverter(DataPart.fromJson),
+      LinkPart.type: PartConverter(LinkPart.fromJson),
+      ToolPart.type: PartConverter(ToolPart.fromJson),
+      ThinkingPart.type: PartConverter(ThinkingPart.fromJson),
+    };
 
-/// Base class for parts of a message allowed by model.
+/// Base class for parts that became de-facto standard for AI messages.
 ///
 /// It is sealed to prevent extensions.
-sealed class Part extends BasePart {
-  const Part();
+sealed class StandardPart extends Part {
+  const StandardPart();
 
   /// Deserializes a part from a JSON map.
-  factory Part.fromJson(Map<String, Object?> json) {
-    final type = json[BasePart.typeKey] as String;
-    final JsonToPartConverter<Part> converter =
-        _sealedPartConverterRegistry[type]!;
+  factory StandardPart.fromJson(Map<String, Object?> json) {
+    final type = json[Part.typeKey] as String;
+    final JsonToPartConverter<StandardPart> converter =
+        _standardPartConverterRegistry[type]!;
     return converter.convert(json);
   }
 }
@@ -63,7 +64,7 @@ final class _Json {
 
 /// A text part of a message.
 @immutable
-final class TextPart extends Part {
+final class TextPart extends StandardPart {
   static const type = 'Text';
 
   /// Creates a new text part.
@@ -78,10 +79,7 @@ final class TextPart extends Part {
   }
 
   @override
-  Map<String, Object?> toJson() => {
-    BasePart.typeKey: type,
-    _Json.content: text,
-  };
+  Map<String, Object?> toJson() => {Part.typeKey: type, _Json.content: text};
 
   @override
   bool operator ==(Object other) {
@@ -99,7 +97,7 @@ final class TextPart extends Part {
 
 /// A data part containing binary data (e.g., images).
 @immutable
-final class DataPart extends Part {
+final class DataPart extends StandardPart {
   static const type = 'Data';
 
   /// Creates a new data part.
@@ -157,7 +155,7 @@ final class DataPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    BasePart.typeKey: type,
+    Part.typeKey: type,
     _Json.content: {
       if (name != null) _Json.name: name,
       _Json.mimeType: mimeType,
@@ -214,7 +212,7 @@ final class DataPart extends Part {
 
 /// A link part referencing external content.
 @immutable
-final class LinkPart extends Part {
+final class LinkPart extends StandardPart {
   static const type = 'Link';
 
   /// Creates a new link part.
@@ -241,7 +239,7 @@ final class LinkPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    BasePart.typeKey: type,
+    Part.typeKey: type,
     _Json.content: {
       if (name != null) _Json.name: name,
       if (mimeType != null) _Json.mimeType: mimeType,
@@ -269,7 +267,7 @@ final class LinkPart extends Part {
 
 /// A tool interaction part of a message.
 @immutable
-final class ToolPart extends Part {
+final class ToolPart extends StandardPart {
   static const type = 'Tool';
 
   /// Creates a tool call part.
@@ -326,7 +324,7 @@ final class ToolPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    BasePart.typeKey: type,
+    Part.typeKey: type,
     _Json.content: {
       _Json.id: callId,
       _Json.name: toolName,
@@ -381,7 +379,7 @@ enum ToolPartKind {
 
 /// A "thinking" part of a message, used by some models to show reasoning.
 @immutable
-final class ThinkingPart extends Part {
+final class ThinkingPart extends StandardPart {
   static const type = 'Thinking';
 
   /// Creates a thinking part.
@@ -396,10 +394,7 @@ final class ThinkingPart extends Part {
   }
 
   @override
-  Map<String, Object?> toJson() => {
-    BasePart.typeKey: type,
-    _Json.content: text,
-  };
+  Map<String, Object?> toJson() => {Part.typeKey: type, _Json.content: text};
 
   @override
   bool operator ==(Object other) {
