@@ -10,6 +10,235 @@ import 'catalog.dart';
 /// Provides a set of pre-defined, reusable schema objects for common
 /// A2UI patterns, simplifying the creation of CatalogItem definitions.
 class A2uiSchemas {
+  /// Defines the usage of the function registry.
+  static Schema clientFunctions() {
+    return S.list(
+      title: 'A2UI Client Functions',
+      description: 'A list of functions available for use in the client.',
+      items: S.combined(
+        oneOf: [
+          _requiredFunction(),
+          _regexFunction(),
+          _lengthFunction(),
+          _numericFunction(),
+          _emailFunction(),
+          _formatStringFunction(),
+          _formatNumberFunction(),
+          _formatCurrencyFunction(),
+          _formatDateFunction(),
+        ],
+      ),
+    );
+  }
+
+  static Schema _functionDefinition({
+    required String name,
+    required String description,
+    required String returnType,
+    required Schema parameters,
+  }) {
+    return S.object(
+      properties: {
+        'name': S.string(constValue: name),
+        'description': S.string(constValue: description),
+        'returnType': S.string(constValue: returnType),
+        'parameters': parameters,
+      },
+      required: ['name', 'description', 'returnType', 'parameters'],
+    );
+  }
+
+  static Schema _requiredFunction() {
+    return _functionDefinition(
+      name: 'required',
+      description: 'Checks that the value is not null, undefined, or empty.',
+      returnType: 'boolean',
+      parameters: S.list(
+        items: S.combined(anyOf: [S.any()]), // DynamicValue reference
+        minItems: 1,
+      ),
+    );
+  }
+
+  static Schema _regexFunction() {
+    return _functionDefinition(
+      name: 'regex',
+      description: 'Checks that the value matches a regular expression string.',
+      returnType: 'boolean',
+      parameters: S.list(
+        items: S.combined(
+          oneOf: [
+            S.any(), // DynamicValue
+            S.string(description: 'The regex pattern to match against.'),
+          ],
+        ),
+        minItems: 2,
+      ),
+    );
+  }
+
+  static Schema _lengthFunction() {
+    return _functionDefinition(
+      name: 'length',
+      description: 'Checks string length constraints.',
+      returnType: 'boolean',
+      parameters: S.list(
+        items: S.combined(
+          oneOf: [
+            S.any(), // DynamicValue
+            S.combined(
+              allOf: [
+                S.object(
+                  properties: {
+                    'min': S.integer(
+                      minimum: 0,
+                      description: 'The minimum allowed length.',
+                    ),
+                    'max': S.integer(
+                      minimum: 0,
+                      description: 'The maximum allowed length.',
+                    ),
+                  },
+                ),
+                S.combined(
+                  anyOf: [
+                    S.object(required: ['min']),
+                    S.object(required: ['max']),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        minItems: 2,
+      ),
+    );
+  }
+
+  static Schema _numericFunction() {
+    return _functionDefinition(
+      name: 'numeric',
+      description: 'Checks numeric range constraints.',
+      returnType: 'boolean',
+      parameters: S.list(
+        items: S.combined(
+          oneOf: [
+            S.any(), // DynamicValue
+            S.combined(
+              allOf: [
+                S.object(
+                  properties: {
+                    'min': S.number(description: 'The minimum allowed value.'),
+                    'max': S.number(description: 'The maximum allowed value.'),
+                  },
+                ),
+                S.combined(
+                  anyOf: [
+                    S.object(required: ['min']),
+                    S.object(required: ['max']),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        minItems: 2,
+      ),
+    );
+  }
+
+  static Schema _emailFunction() {
+    return _functionDefinition(
+      name: 'email',
+      description: 'Checks that the value is a valid email address.',
+      returnType: 'boolean',
+      parameters: S.list(
+        items: S.combined(anyOf: [S.any()]), // DynamicValue
+        minItems: 1,
+      ),
+    );
+  }
+
+  static Schema _formatStringFunction() {
+    return _functionDefinition(
+      name: 'formatString',
+      description:
+          '''Performs string interpolation of data model values and other functions.''',
+      returnType: 'string',
+      // Note: json_schema_builder doesn't support 'additionalItems' or tuple
+      // validation easily in S.list. We use a generic list of DynamicValue for
+      // now.
+      parameters: S.list(
+        items: S.any(), // DynamicValue
+        minItems: 1,
+      ),
+    );
+  }
+
+  static Schema _formatNumberFunction() {
+    return _functionDefinition(
+      name: 'formatNumber',
+      description:
+          'Formats a number with the specified grouping and decimal precision.',
+      returnType: 'string',
+      parameters: S.list(
+        items: S.combined(
+          oneOf: [
+            S.number(description: 'The number to format.'), // DynamicNumber
+            S.number(
+              description: 'Optional. The number of decimal places to show.',
+            ), // DynamicNumber
+            S.boolean(
+              description:
+                  '''Optional. If true, uses locale-specific grouping separators.''',
+            ), // DynamicBoolean
+          ],
+        ),
+        minItems: 1,
+      ),
+    );
+  }
+
+  static Schema _formatCurrencyFunction() {
+    return _functionDefinition(
+      name: 'formatCurrency',
+      description: 'Formats a number as a currency string.',
+      returnType: 'string',
+      parameters: S.list(
+        items: S.combined(
+          oneOf: [
+            S.number(description: 'The monetary amount.'), // DynamicNumber
+            S.string(
+              description: "The ISO 4217 currency code (e.g., 'USD', 'EUR').",
+            ), // DynamicString
+          ],
+        ),
+        minItems: 2,
+      ),
+    );
+  }
+
+  static Schema _formatDateFunction() {
+    return _functionDefinition(
+      name: 'formatDate',
+      description: 'Formats a timestamp into a string using a pattern.',
+      returnType: 'string',
+      parameters: S.list(
+        items: S.combined(
+          oneOf: [
+            S.string(
+              description: 'The ISO 8601 timestamp string.',
+            ), // DynamicString
+            S.string(
+              description: 'The format pattern (e.g. "MM/dd/yyyy").',
+            ), // DynamicString
+          ],
+        ),
+        minItems: 2,
+      ),
+    );
+  }
+
   /// Schema for a function call.
   static Schema functionCall() => S.object(
     properties: {
@@ -36,7 +265,7 @@ class A2uiSchemas {
       properties: {'literalString': S.string(enumValues: enumValues)},
       required: ['literalString'],
     );
-    final Schema binding = _dataBindingSchema(
+    final Schema binding = dataBindingSchema(
       description: 'A path to a string.',
     );
     final Schema function = functionCall();
@@ -54,7 +283,7 @@ class A2uiSchemas {
       properties: {'literalNumber': S.number()},
       required: ['literalNumber'],
     );
-    final Schema binding = _dataBindingSchema(
+    final Schema binding = dataBindingSchema(
       description: 'A path to a number.',
     );
     final Schema function = functionCall();
@@ -72,7 +301,7 @@ class A2uiSchemas {
       properties: {'literalBoolean': S.boolean()},
       required: ['literalBoolean'],
     );
-    final Schema binding = _dataBindingSchema(
+    final Schema binding = dataBindingSchema(
       description: 'A path to a boolean.',
     );
     final Schema function = functionCall();
@@ -83,7 +312,7 @@ class A2uiSchemas {
   }
 
   /// Helper to create a DataBinding schema.
-  static Schema _dataBindingSchema({String? description}) {
+  static Schema dataBindingSchema({String? description}) {
     return S.object(
       description: description,
       properties: {
@@ -135,7 +364,7 @@ class A2uiSchemas {
       properties: {'literalArray': S.list(items: S.string())},
       required: ['literalArray'],
     );
-    final Schema binding = _dataBindingSchema(
+    final Schema binding = dataBindingSchema(
       description: 'A path to a string list.',
     );
     final Schema function = functionCall();

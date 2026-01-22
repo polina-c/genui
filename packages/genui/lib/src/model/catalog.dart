@@ -8,6 +8,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
+import 'a2ui_schemas.dart';
 import 'catalog_item.dart';
 import 'data_model.dart';
 
@@ -122,8 +123,9 @@ class Catalog {
               'properties.',
           properties: {},
         ),
+        'functions': A2uiSchemas.clientFunctions(),
       },
-      required: ['components', 'styles'],
+      required: ['components', 'styles', 'functions'],
     );
   }
 }
