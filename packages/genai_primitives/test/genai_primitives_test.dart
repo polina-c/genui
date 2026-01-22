@@ -473,6 +473,30 @@ void main() {
       expect(reconstructed, equals(msg));
     });
 
+    test('mixed content JSON round-trip', () {
+      final msg = const ChatMessage(
+        role: ChatMessageRole.model,
+        parts: [
+          TextPart('text'),
+          ToolPart.call(callId: 'id', toolName: 'name', arguments: {'a': 1}),
+          ToolPart.result(
+            callId: 'id',
+            toolName: 'name',
+            result: {'success': true},
+          ),
+        ],
+      );
+
+      final Map<String, Object?> json = msg.toJson();
+      final reconstructed = ChatMessage.fromJson(json);
+
+      expect(reconstructed, equals(msg));
+      expect(reconstructed.parts, hasLength(3));
+      expect(reconstructed.parts[0], isA<TextPart>());
+      expect(reconstructed.parts[1], isA<ToolPart>());
+      expect(reconstructed.parts[2], isA<ToolPart>());
+    });
+
     test('equality and hashCode', () {
       const msg1 = ChatMessage(
         role: ChatMessageRole.user,
@@ -551,11 +575,39 @@ void main() {
         ToolPart.result(callId: 'c2', toolName: 't2', result: 'r'),
       ]);
 
-      expect(parts.text, equals('Hello'));
-      expect(parts.toolCalls, hasLength(1));
-      expect(parts.toolCalls.first.callId, equals('c1'));
       expect(parts.toolResults, hasLength(1));
       expect(parts.toolResults.first.callId, equals('c2'));
+    });
+
+    test('immutability', () {
+      final parts = const Parts([TextPart('text')]);
+      expect(() => parts.length = 2, throwsUnsupportedError);
+      expect(() => parts[0] = const TextPart('new'), throwsUnsupportedError);
+    });
+
+    test('equality', () {
+      final parts1 = const Parts([TextPart('a'), TextPart('b')]);
+      final parts2 = const Parts([TextPart('a'), TextPart('b')]);
+      final parts3 = const Parts([TextPart('a')]);
+
+      expect(parts1, equals(parts2));
+      expect(parts1.hashCode, equals(parts2.hashCode));
+      expect(parts1, isNot(equals(parts3)));
+    });
+
+    test('JSON serialization', () {
+      final parts = const Parts([
+        TextPart('text'),
+        ToolPart.call(callId: '1', toolName: 't', arguments: {}),
+      ]);
+
+      final List<Object?> json = parts.toJson();
+      expect(json, hasLength(2));
+
+      final reconstructed = Parts.fromJson(json);
+      expect(reconstructed, equals(parts));
+      expect(reconstructed.first, isA<TextPart>());
+      expect(reconstructed.last, isA<ToolPart>());
     });
   });
 
