@@ -59,7 +59,6 @@ final class _Json {
   static const id = 'id';
   static const arguments = 'arguments';
   static const result = 'result';
-  static const text = 'text';
 }
 
 /// A text part of a message.
@@ -393,11 +392,14 @@ final class ThinkingPart extends Part {
 
   /// Creates a thinking part from a JSON map.
   factory ThinkingPart.fromJson(Map<String, Object?> json) {
-    return ThinkingPart(json[_Json.text] as String);
+    return ThinkingPart(json[_Json.content] as String);
   }
 
   @override
-  Map<String, Object?> toJson() => {BasePart.typeKey: type, _Json.text: text};
+  Map<String, Object?> toJson() => {
+    BasePart.typeKey: type,
+    _Json.content: text,
+  };
 
   @override
   bool operator ==(Object other) {
