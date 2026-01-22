@@ -15,7 +15,7 @@ final class _Json {
 
 /// A part representing a UI definition to be rendered.
 @immutable
-final class UiPart extends Part {
+final class UiPart extends BasePart {
   static const type = 'Ui';
 
   /// Creates a UI part.
@@ -44,7 +44,7 @@ final class UiPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    Part.typeKey: type,
+    BasePart.typeKey: type,
     _Json.definition: definition.toJson(),
     _Json.surfaceId: surfaceId,
   };
@@ -64,7 +64,7 @@ final class UiPart extends Part {
 
 /// A part representing a user's interaction with the UI.
 @immutable
-final class UiInteractionPart extends Part {
+final class UiInteractionPart extends BasePart {
   static const type = 'UiInteraction';
 
   /// Creates a UI interaction part.
@@ -80,7 +80,7 @@ final class UiInteractionPart extends Part {
 
   @override
   Map<String, Object?> toJson() => {
-    Part.typeKey: type,
+    BasePart.typeKey: type,
     _Json.interaction: interaction,
   };
 
