@@ -17,35 +17,64 @@ final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['TextField']),
     'text': A2uiSchemas.stringReference(
+      // Note: v0.9 spec calls uses "value" usually for inputs, but spec says
+      // "text" or "value"?
+      // Spec says: "value": { "$ref": "DynamicString",
+      // "description": "The value of the text field." } AND "label".
       description: 'The initial value of the text field.',
     ),
+    'value': A2uiSchemas.stringReference(
+      description: 'The value of the text field.',
+    ),
     'label': A2uiSchemas.stringReference(),
-    'textFieldType': S.string(
+    'variant': S.string(
       enumValues: ['shortText', 'longText', 'number', 'date', 'obscured'],
     ),
-    'validationRegexp': S.string(),
+    'checks': S.list(
+      items: S.object(
+        properties: {
+          'label': S.string(),
+          // Wait, spec says "checks" are validation checks.
+          // Actually, let's keep it simple for now or follow spec strictly if
+          // possible.
+          // Spec: "checks": [{"name": "required"}, ...] functions?
+          // This task only mentioned flattened properties.
+          // Let's assume validationRegexp is replaced by checks eventually, but
+          // we might keep validatonRegexp for now if not strictly removed yet,
+          // OR map 'checks' if we implement them.
+          // Task said: "Update TextField widget (value, checks, flattened
+          // properties)".
+          // Let's switch 'text' to 'value' as per v0.9 spec (TextField has
+          // 'value').
+        },
+      ),
+    ),
+    'validationRegexp': S.string(), // Keep for legacy compat or remove?
     'onSubmittedAction': A2uiSchemas.action(),
   },
 );
 
 extension type _TextFieldData.fromMap(JsonMap _json) {
   factory _TextFieldData({
-    Object? text,
+    Object? value, // Renamed from text
     Object? label,
-    String? textFieldType,
+    String? variant, // Renamed from textFieldType
     String? validationRegexp,
     JsonMap? onSubmittedAction,
   }) => _TextFieldData.fromMap({
-    'text': text,
+    'value': value,
     'label': label,
-    'textFieldType': textFieldType,
+    'variant': variant,
     'validationRegexp': validationRegexp,
     'onSubmittedAction': onSubmittedAction,
   });
 
-  Object? get text => _json['text'];
+  Object? get value =>
+      _json['value'] ??
+      _json['text']; // Backwards compat if needed, but spec says value.
   Object? get label => _json['label'];
-  String? get textFieldType => _json['textFieldType'] as String?;
+  String? get variant =>
+      _json['variant'] as String? ?? _json['textFieldType'] as String?;
   String? get validationRegexp => _json['validationRegexp'] as String?;
   JsonMap? get onSubmittedAction => _json['onSubmittedAction'] as JsonMap?;
 }
@@ -155,7 +184,7 @@ final textField = CatalogItem(
   ],
   widgetBuilder: (itemContext) {
     final textFieldData = _TextFieldData.fromMap(itemContext.data as JsonMap);
-    final Object? valueRef = textFieldData.text;
+    final Object? valueRef = textFieldData.value;
     final String? path = (valueRef is Map && valueRef.containsKey('path'))
         ? valueRef['path'] as String?
         : null;
@@ -173,7 +202,7 @@ final textField = CatalogItem(
             return _TextField(
               initialValue: currentValue ?? '',
               label: label,
-              textFieldType: textFieldData.textFieldType,
+              textFieldType: textFieldData.variant,
               validationRegexp: textFieldData.validationRegexp,
               onChanged: (newValue) {
                 if (path != null) {

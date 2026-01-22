@@ -7,6 +7,8 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/expression_parser.dart';
+import '../core/functions.dart';
 import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
 
@@ -112,6 +114,29 @@ class DataContext {
       return pathToResolve;
     }
     return path.join(pathToResolve);
+  }
+
+  /// Resolves any expressions in the given value.
+  ///
+  /// If the value is a String containing `${...}`, it will be parsed and
+  /// evaluated. Otherwise, the value is returned as is.
+  Object? resolve(Object? value) {
+    if (value is String) {
+      return ExpressionParser(this).parse(value);
+    }
+    if (value is Map &&
+        value.containsKey('func') &&
+        value.containsKey('args')) {
+      final funcName = value['func'] as String;
+      final List<Object?> args = (value['args'] as List)
+          .map(resolve)
+          .toList(); // Resolve args recursively?
+      // Spec: args can be literals or expressions.
+      // If args are strings with ${}, they need resolving.
+      // If args are nested function calls, they need resolving.
+      return FunctionRegistry().invoke(funcName, args);
+    }
+    return value;
   }
 }
 

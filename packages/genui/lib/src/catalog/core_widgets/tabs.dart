@@ -13,24 +13,32 @@ import '../../primitives/simple_items.dart';
 final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['Tabs']),
-    'tabItems': S.list(
+    'tabs': S.list(
       items: S.object(
         properties: {
-          'title': A2uiSchemas.stringReference(),
-          'child': A2uiSchemas.componentReference(),
+          'label': A2uiSchemas.stringReference(
+            description: 'The label for the tab.',
+          ),
+          'content': A2uiSchemas.componentReference(
+            description:
+                'The content (widget ID) to display when this tab is active.',
+          ),
         },
-        required: ['title', 'child'],
+        required: ['label', 'content'],
       ),
     ),
   },
-  required: ['component', 'tabItems'],
+  required: ['component', 'tabs'],
 );
 
 extension type _TabsData.fromMap(JsonMap _json) {
-  factory _TabsData({required List<JsonMap> tabItems}) =>
-      _TabsData.fromMap({'tabItems': tabItems});
+  factory _TabsData({required List<JsonMap> tabs}) =>
+      _TabsData.fromMap({'tabs': tabs});
 
-  List<JsonMap> get tabItems => (_json['tabItems'] as List).cast<JsonMap>();
+  List<JsonMap> get tabs {
+    return (_json['tabs'] as List? ?? _json['tabItems'] as List)
+        .cast<JsonMap>();
+  }
 }
 
 /// A catalog item representing a Material Design tab layout.
@@ -49,14 +57,15 @@ final tabs = CatalogItem(
   widgetBuilder: (itemContext) {
     final tabsData = _TabsData.fromMap(itemContext.data as JsonMap);
     return DefaultTabController(
-      length: tabsData.tabItems.length,
+      length: tabsData.tabs.length,
       child: Column(
         children: [
           TabBar(
-            tabs: tabsData.tabItems.map((tabItem) {
+            tabs: tabsData.tabs.map((tabItem) {
+              final Object? labelRef = tabItem['label'] ?? tabItem['title'];
               final ValueNotifier<String?> titleNotifier = itemContext
                   .dataContext
-                  .subscribeToString(tabItem['title']);
+                  .subscribeToString(labelRef);
               return ValueListenableBuilder<String?>(
                 valueListenable: titleNotifier,
                 builder: (context, title, child) {
@@ -73,9 +82,10 @@ final tabs = CatalogItem(
               return AnimatedBuilder(
                 animation: tabController,
                 builder: (context, child) {
-                  return itemContext.buildChild(
-                    tabsData.tabItems[tabController.index]['child'] as String,
-                  );
+                  final JsonMap tabItem = tabsData.tabs[tabController.index];
+                  final contentId =
+                      (tabItem['content'] ?? tabItem['child']) as String;
+                  return itemContext.buildChild(contentId);
                 },
               );
             },
@@ -90,14 +100,14 @@ final tabs = CatalogItem(
         {
           "id": "root",
           "component": "Tabs",
-          "tabItems": [
+          "tabs": [
             {
-              "title": "Overview",
-              "child": "text1"
+              "label": "Overview",
+              "content": "text1"
             },
             {
-              "title": "Details",
-              "child": "text2"
+              "label": "Details",
+              "content": "text2"
             }
           ]
         },

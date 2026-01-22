@@ -17,13 +17,15 @@ final _schema = S.object(
     'value': A2uiSchemas.stringReference(
       description: 'The selected date and/or time.',
     ),
-    'enableDate': S.boolean(),
-    'enableTime': S.boolean(),
-    'firstDate': S.string(
+    'variant': S.string(
+      description: 'The input type: date, time, or datetime.',
+      enumValues: ['date', 'time', 'datetime'],
+    ),
+    'min': S.string(
       description:
           'The earliest selectable date (YYYY-MM-DD). Defaults to -9999-01-01.',
     ),
-    'lastDate': S.string(
+    'max': S.string(
       description:
           'The latest selectable date (YYYY-MM-DD). Defaults to 9999-12-31.',
     ),
@@ -34,25 +36,44 @@ final _schema = S.object(
 extension type _DateTimeInputData.fromMap(JsonMap _json) {
   factory _DateTimeInputData({
     required JsonMap value,
-    bool? enableDate,
-    bool? enableTime,
-    String? firstDate,
-    String? lastDate,
+    String? variant,
+    String? min,
+    String? max,
   }) => _DateTimeInputData.fromMap({
     'value': value,
-    'enableDate': enableDate,
-    'enableTime': enableTime,
-    'firstDate': firstDate,
-    'lastDate': lastDate,
+    'variant': variant,
+    'min': min,
+    'max': max,
   });
 
   Object get value => _json['value'] as Object;
-  bool get enableDate => (_json['enableDate'] as bool?) ?? true;
-  bool get enableTime => (_json['enableTime'] as bool?) ?? true;
+  String? get variant => _json['variant'] as String?;
+
+  bool get enableDate {
+    final String? v = variant;
+    if (v == null) {
+      if (_json.containsKey('enableDate')) return _json['enableDate'] as bool;
+      return true;
+    }
+    return v == 'date' || v == 'datetime';
+  }
+
+  bool get enableTime {
+    final String? v = variant;
+    if (v == null) {
+      if (_json.containsKey('enableTime')) return _json['enableTime'] as bool;
+      return true;
+    }
+    return v == 'time' || v == 'datetime';
+  }
+
   DateTime get firstDate =>
-      DateTime.tryParse(_json['firstDate'] as String? ?? '') ?? DateTime(-9999);
+      DateTime.tryParse(
+        (_json['min'] ?? _json['firstDate']) as String? ?? '',
+      ) ??
+      DateTime(-9999);
   DateTime get lastDate =>
-      DateTime.tryParse(_json['lastDate'] as String? ?? '') ??
+      DateTime.tryParse((_json['max'] ?? _json['lastDate']) as String? ?? '') ??
       DateTime(9999, 12, 31);
 }
 

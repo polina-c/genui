@@ -15,8 +15,8 @@ final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['Slider']),
     'value': A2uiSchemas.numberReference(),
-    'minValue': S.number(),
-    'maxValue': S.number(),
+    'min': S.number(description: 'The minimum value. Defaults to 0.0.'),
+    'max': S.number(description: 'The maximum value. Defaults to 1.0.'),
   },
   required: ['component', 'value'],
 );
@@ -24,17 +24,17 @@ final _schema = S.object(
 extension type _SliderData.fromMap(JsonMap _json) {
   factory _SliderData({
     required JsonMap value,
-    double? minValue,
-    double? maxValue,
+    double? min, double? max,
   }) => _SliderData.fromMap({
     'value': value,
-    'minValue': minValue,
-    'maxValue': maxValue,
+    'min': min, 'max': max,
   });
 
   Object get value => _json['value'] as Object;
-  double get minValue => (_json['minValue'] as num?)?.toDouble() ?? 0.0;
-  double get maxValue => (_json['maxValue'] as num?)?.toDouble() ?? 1.0;
+  double get min =>
+      ((_json['min'] ?? _json['minValue']) as num?)?.toDouble() ?? 0.0;
+  double get max =>
+      ((_json['max'] ?? _json['maxValue']) as num?)?.toDouble() ?? 1.0;
 }
 
 /// A catalog item representing a Material Design slider.
@@ -46,8 +46,8 @@ extension type _SliderData.fromMap(JsonMap _json) {
 /// ## Parameters:
 ///
 /// - `value`: The current value of the slider.
-/// - `minValue`: The minimum value of the slider. Defaults to 0.0.
-/// - `maxValue`: The maximum value of the slider. Defaults to 1.0.
+/// - `min`: The minimum value of the slider. Defaults to 0.0.
+/// - `max`: The maximum value of the slider. Defaults to 1.0.
 final slider = CatalogItem(
   name: 'Slider',
   dataSchema: _schema,
@@ -66,10 +66,10 @@ final slider = CatalogItem(
             children: [
               Expanded(
                 child: Slider(
-                  value: (value ?? sliderData.minValue).toDouble(),
-                  min: sliderData.minValue,
-                  max: sliderData.maxValue,
-                  divisions: (sliderData.maxValue - sliderData.minValue)
+                  value: (value ?? sliderData.min).toDouble(),
+                  min: sliderData.min,
+                  max: sliderData.max,
+                  divisions: (sliderData.max - sliderData.min)
                       .toInt(),
                   onChanged: (newValue) {
                     final Object val = sliderData.value;
@@ -82,7 +82,7 @@ final slider = CatalogItem(
               ),
               Text(
                 value?.toStringAsFixed(0) ??
-                    sliderData.minValue.toStringAsFixed(0),
+                    sliderData.min.toStringAsFixed(0),
               ),
             ],
           ),

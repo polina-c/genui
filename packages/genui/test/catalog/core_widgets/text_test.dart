@@ -48,7 +48,7 @@ void main() {
           builder: (context) => Scaffold(
             body: text.widgetBuilder(
               CatalogItemContext(
-                data: {'text': 'Heading 1', 'usageHint': 'h1'},
+                data: {'text': 'Heading 1', 'variant': 'h1'},
                 id: 'test_text_h1',
                 type: 'Text',
                 buildChild: (_, [_]) => const SizedBox(),

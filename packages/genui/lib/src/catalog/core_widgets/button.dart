@@ -23,8 +23,9 @@ final _schema = S.object(
           'of a `Text` widget.',
     ),
     'action': A2uiSchemas.action(),
-    'primary': S.boolean(
-      description: 'Whether the button invokes a primary action.',
+    'variant': S.string(
+      description: 'A hint for the button style.',
+      enumValues: ['primary', 'borderless'],
     ),
   },
   required: ['component', 'child', 'action'],
@@ -34,11 +35,11 @@ extension type _ButtonData.fromMap(JsonMap _json) {
   factory _ButtonData({
     required String child,
     required JsonMap action,
-    bool primary = false,
+    String? variant,
   }) => _ButtonData.fromMap({
     'child': child,
     'action': action,
-    'primary': primary,
+    'variant': variant,
   });
 
   String get child {
@@ -51,7 +52,7 @@ extension type _ButtonData.fromMap(JsonMap _json) {
   }
 
   JsonMap get action => _json['action'] as JsonMap;
-  bool get primary => (_json['primary'] as bool?) ?? false;
+  String? get variant => _json['variant'] as String?;
 }
 
 /// A catalog item representing a Material Design elevated button.
@@ -72,15 +73,13 @@ final button = CatalogItem(
   widgetBuilder: (itemContext) {
     final buttonData = _ButtonData.fromMap(itemContext.data as JsonMap);
     final Widget child = itemContext.buildChild(buttonData.child);
-    final JsonMap actionData = buttonData.action;
-    final actionName = actionData['name'] as String;
-    final contextDefinition = actionData['context'] as JsonMap?;
-
     genUiLogger.info('Building Button with child: ${buttonData.child}');
     final ColorScheme colorScheme = Theme.of(
       itemContext.buildContext,
     ).colorScheme;
-    final bool primary = buttonData.primary;
+    final String variant = buttonData.variant ?? '';
+    final primary = variant == 'primary';
+    final borderless = variant == 'borderless';
 
     final TextStyle? textStyle = Theme.of(itemContext.buildContext)
         .textTheme
@@ -89,28 +88,32 @@ final button = CatalogItem(
           color: primary ? colorScheme.onPrimary : colorScheme.onSurface,
         );
 
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primary ? colorScheme.primary : colorScheme.surface,
-        foregroundColor: primary
-            ? colorScheme.onPrimary
-            : colorScheme.onSurface,
-      ).copyWith(textStyle: WidgetStatePropertyAll(textStyle)),
-      onPressed: () {
-        final JsonMap resolvedContext = resolveContext(
-          itemContext.dataContext,
-          contextDefinition,
-        );
-        itemContext.dispatchEvent(
-          UserActionEvent(
-            name: actionName,
-            sourceComponentId: itemContext.id,
-            context: resolvedContext,
-          ),
-        );
-      },
-      child: child,
-    );
+    final ButtonStyle style = switch (variant) {
+      'primary' => ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+      ),
+      'borderless' => TextButton.styleFrom(
+        foregroundColor: colorScheme.onSurface,
+      ),
+      _ => ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+      ),
+    };
+
+    final Widget buttonWidget = borderless
+        ? TextButton(
+            onPressed: () => _handlePress(itemContext, buttonData),
+            child: child,
+          )
+        : ElevatedButton(
+            style: style.copyWith(textStyle: WidgetStatePropertyAll(textStyle)),
+            onPressed: () => _handlePress(itemContext, buttonData),
+            child: child,
+          );
+
+    return buttonWidget;
   },
   exampleData: [
     () => '''
@@ -168,3 +171,21 @@ final button = CatalogItem(
     ''',
   ],
 );
+
+void _handlePress(CatalogItemContext itemContext, _ButtonData buttonData) {
+  final JsonMap actionData = buttonData.action;
+  final actionName = actionData['name'] as String;
+  final contextDefinition = actionData['context'] as JsonMap?;
+
+  final JsonMap resolvedContext = resolveContext(
+    itemContext.dataContext,
+    contextDefinition,
+  );
+  itemContext.dispatchEvent(
+    UserActionEvent(
+      name: actionName,
+      sourceComponentId: itemContext.id,
+      context: resolvedContext,
+    ),
+  );
+}

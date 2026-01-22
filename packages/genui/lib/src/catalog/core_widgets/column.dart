@@ -15,7 +15,7 @@ import 'widget_helpers.dart';
 final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['Column']),
-    'distribution': S.string(
+    'justify': S.string(
       description: 'How children are aligned on the main axis. ',
       enumValues: [
         'start',
@@ -24,9 +24,10 @@ final _schema = S.object(
         'spaceBetween',
         'spaceAround',
         'spaceEvenly',
+        'stretch', // Added stretch to match keys
       ],
     ),
-    'alignment': S.string(
+    'align': S.string(
       description: 'How children are aligned on the cross axis. ',
       enumValues: ['start', 'center', 'end', 'stretch', 'baseline'],
     ),
@@ -42,17 +43,18 @@ final _schema = S.object(
 extension type _ColumnData.fromMap(JsonMap _json) {
   factory _ColumnData({
     Object? children,
-    String? distribution,
-    String? alignment,
+    String? justify, String? align,
   }) => _ColumnData.fromMap({
     'children': children,
-    'distribution': distribution,
-    'alignment': alignment,
+        'justify': justify,
+        'align': align,
   });
 
   Object? get children => _json['children'];
-  String? get distribution => _json['distribution'] as String?;
-  String? get alignment => _json['alignment'] as String?;
+  String? get justify =>
+      _json['justify'] as String? ?? _json['distribution'] as String?;
+  String? get align =>
+      _json['align'] as String? ?? _json['alignment'] as String?;
 }
 
 MainAxisAlignment _parseMainAxisAlignment(String? alignment) {
@@ -116,8 +118,8 @@ final column = CatalogItem(
       getComponent: itemContext.getComponent,
       explicitListBuilder: (childIds, buildChild, getComponent, dataContext) {
         return Column(
-          mainAxisAlignment: _parseMainAxisAlignment(columnData.distribution),
-          crossAxisAlignment: _parseCrossAxisAlignment(columnData.alignment),
+          mainAxisAlignment: _parseMainAxisAlignment(columnData.justify),
+          crossAxisAlignment: _parseCrossAxisAlignment(columnData.align),
           mainAxisSize: MainAxisSize.min,
           children: childIds
               .map(
@@ -134,8 +136,8 @@ final column = CatalogItem(
       },
       templateListWidgetBuilder: (context, list, componentId, dataBinding) {
         return Column(
-          mainAxisAlignment: _parseMainAxisAlignment(columnData.distribution),
-          crossAxisAlignment: _parseCrossAxisAlignment(columnData.alignment),
+          mainAxisAlignment: _parseMainAxisAlignment(columnData.justify),
+          crossAxisAlignment: _parseCrossAxisAlignment(columnData.align),
           mainAxisSize: MainAxisSize.min,
           children: [
             for (var i = 0; i < list.length; i++) ...[

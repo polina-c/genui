@@ -14,41 +14,41 @@ import '../../primitives/simple_items.dart';
 final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['Modal']),
-    'entryPointChild': A2uiSchemas.componentReference(
+    'trigger': A2uiSchemas.componentReference(
       description: 'The widget that opens the modal.',
     ),
-    'contentChild': A2uiSchemas.componentReference(
+    'content': A2uiSchemas.componentReference(
       description: 'The widget to display in the modal.',
     ),
   },
-  required: ['component', 'entryPointChild', 'contentChild'],
+  required: ['component', 'trigger', 'content'],
 );
 
 extension type _ModalData.fromMap(JsonMap _json) {
   factory _ModalData({
-    required String entryPointChild,
-    required String contentChild,
+    required String trigger, required String content,
   }) => _ModalData.fromMap({
-    'entryPointChild': entryPointChild,
-    'contentChild': contentChild,
+    'trigger': trigger, 'content': content,
   });
 
-  String get entryPointChild {
-    final Object? val = _json['entryPointChild'];
+  String get trigger {
+    final Object? val = _json['trigger'] ?? _json['entryPointChild'];
     if (val is String) return val;
     if (val is JsonMap && val.containsKey('literalString')) {
       return val['literalString'] as String;
     }
-    throw ArgumentError('Invalid entryPointChild: $val');
+    // Fallback if missing?
+    if (val == null) return ''; // Unexpected
+    throw ArgumentError('Invalid trigger: $val');
   }
 
-  String get contentChild {
-    final Object? val = _json['contentChild'];
+  String get content {
+    final Object? val = _json['content'] ?? _json['contentChild'];
     if (val is String) return val;
     if (val is JsonMap && val.containsKey('literalString')) {
       return val['literalString'] as String;
     }
-    throw ArgumentError('Invalid contentChild: $val');
+    throw ArgumentError('Invalid content: $val');
   }
 }
 
@@ -68,7 +68,7 @@ final modal = CatalogItem(
   dataSchema: _schema,
   widgetBuilder: (itemContext) {
     final modalData = _ModalData.fromMap(itemContext.data as JsonMap);
-    return itemContext.buildChild(modalData.entryPointChild);
+    return itemContext.buildChild(modalData.trigger);
   },
   exampleData: [
     () => '''
@@ -76,8 +76,8 @@ final modal = CatalogItem(
         {
           "id": "root",
           "component": "Modal",
-          "entryPointChild": "button",
-          "contentChild": "text"
+          "trigger": "button",
+          "content": "text"
         },
         {
           "id": "button",
