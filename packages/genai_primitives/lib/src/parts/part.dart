@@ -16,21 +16,23 @@ import 'package:path/path.dart' as p;
 import 'model.dart';
 import 'parts.dart';
 
-const _chatPartConverterRegistry = <String, JsonToPartConverter<LlmPart>>{
+const _partConverterRegistry = <String, JsonToPartConverter<Part>>{
   TextPart.type: PartConverter(TextPart.fromJson),
   DataPart.type: PartConverter(DataPart.fromJson),
   LinkPart.type: PartConverter(LinkPart.fromJson),
   ToolPart.type: PartConverter(ToolPart.fromJson),
 };
 
-sealed class LlmPart extends BasePart {
-  const LlmPart();
+/// Base class for parts of a message allowed by model.
+///
+/// It is sealed to prevent extensions.
+sealed class Part extends BasePart {
+  const Part();
 
   /// Deserializes a part from a JSON map.
-  factory LlmPart.fromJson(Map<String, Object?> json) {
+  factory Part.fromJson(Map<String, Object?> json) {
     final type = json[BasePart.typeKey] as String;
-    final JsonToPartConverter<LlmPart> converter =
-        _chatPartConverterRegistry[type]!;
+    final JsonToPartConverter<Part> converter = _partConverterRegistry[type]!;
     return converter.convert(json);
   }
 }
@@ -49,7 +51,7 @@ final class _Json {
 
 /// A text part of a message.
 @immutable
-final class TextPart extends LlmPart {
+final class TextPart extends Part {
   static const type = 'Text';
 
   /// Creates a new text part.
@@ -85,7 +87,7 @@ final class TextPart extends LlmPart {
 
 /// A data part containing binary data (e.g., images).
 @immutable
-final class DataPart extends LlmPart {
+final class DataPart extends Part {
   static const type = 'Data';
 
   /// Creates a new data part.
@@ -200,7 +202,7 @@ final class DataPart extends LlmPart {
 
 /// A link part referencing external content.
 @immutable
-final class LinkPart extends LlmPart {
+final class LinkPart extends Part {
   static const type = 'Link';
 
   /// Creates a new link part.
@@ -255,7 +257,7 @@ final class LinkPart extends LlmPart {
 
 /// A tool interaction part of a message.
 @immutable
-final class ToolPart extends LlmPart {
+final class ToolPart extends Part {
   static const type = 'Tool';
 
   /// Creates a tool call part.

@@ -96,7 +96,7 @@ final class ChatMessage {
   factory ChatMessage.fromJson(Map<String, Object?> json) {
     final List<BasePart> parts =
         (json[_Json.parts] as List<Object?>?)
-            ?.map((e) => BasePart.fromJson(e as Map<String, Object?>))
+            ?.map((e) => Part.fromJson(e as Map<String, Object?>))
             .toList() ??
         const [];
 
