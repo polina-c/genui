@@ -14,7 +14,6 @@ import 'package:mime/src/default_extension_map.dart';
 import 'package:path/path.dart' as p;
 
 import 'model.dart';
-import 'parts.dart';
 
 const _partConverterRegistry = <String, JsonToPartConverter<Part>>{
   TextPart.type: PartConverter(TextPart.fromJson),
