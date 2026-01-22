@@ -363,7 +363,7 @@ void main() {
     test('fromParts', () {
       final fromParts = const ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([TextPart('hello')]),
+        parts: [TextPart('hello')],
       );
       expect(fromParts.text, equals('hello'));
     });
@@ -433,7 +433,7 @@ void main() {
 
       final msg1 = ChatMessage(
         role: ChatMessageRole.model,
-        parts: Parts([const TextPart('Hi'), toolCall]),
+        parts: [const TextPart('Hi'), toolCall],
       );
       expect(msg1.hasToolCalls, isTrue);
       expect(msg1.hasToolResults, isFalse);
@@ -441,10 +441,7 @@ void main() {
       expect(msg1.toolResults, isEmpty);
       expect(msg1.text, equals('Hi'));
 
-      final msg2 = ChatMessage(
-        role: ChatMessageRole.user,
-        parts: Parts([toolResult]),
-      );
+      final msg2 = ChatMessage(role: ChatMessageRole.user, parts: [toolResult]);
       expect(msg2.hasToolCalls, isFalse);
       expect(msg2.hasToolResults, isTrue);
       expect(msg2.toolCalls, isEmpty);
@@ -454,7 +451,7 @@ void main() {
     test('metadata', () {
       final msg = const ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([TextPart('hi')]),
+        parts: [TextPart('hi')],
         metadata: {'key': 'value'},
       );
       expect(msg.metadata['key'], equals('value'));
@@ -479,21 +476,21 @@ void main() {
     test('equality and hashCode', () {
       const msg1 = ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([TextPart('hi')]),
+        parts: [TextPart('hi')],
         metadata: {'k': 'v'},
       );
       const msg2 = ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([TextPart('hi')]),
+        parts: [TextPart('hi')],
         metadata: {'k': 'v'},
       );
       const msg3 = ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([TextPart('hello')]),
+        parts: [TextPart('hello')],
       );
       const msg4 = ChatMessage(
         role: ChatMessageRole.user,
-        parts: Parts([TextPart('hi')]),
+        parts: [TextPart('hi')],
         metadata: {'k': 'other'},
       );
 
@@ -506,11 +503,11 @@ void main() {
     test('text concatenation', () {
       final msg = const ChatMessage(
         role: ChatMessageRole.model,
-        parts: Parts([
+        parts: [
           TextPart('Part 1. '),
           ToolPart.call(callId: '1', toolName: 't', arguments: {}),
           TextPart('Part 2.'),
-        ]),
+        ],
       );
       expect(msg.text, equals('Part 1. Part 2.'));
     });
