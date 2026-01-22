@@ -105,13 +105,13 @@ void main() {
 
   group('ChatMessage with Custom Part', () {
     test('deserialization with custom registry', () {
-      final message = const LlmMessage(
+      final message = const ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([CustomPart('custom_content')]),
       );
       final Map<String, Object?> json = message.toJson();
 
-      final reconstructed = LlmMessage.fromJson(
+      final reconstructed = ChatMessage.fromJson(
         json,
         converterRegistry: {
           ...defaultPartConverterRegistry,

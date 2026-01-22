@@ -16,7 +16,7 @@ final class _Json {
 
 /// A chat message.
 @immutable
-final class LlmMessage {
+final class ChatMessage {
   /// Creates a new message.
   ///
   /// If `parts` or `metadata` is not provided, an empty collections are used.
@@ -26,16 +26,13 @@ final class LlmMessage {
   ///
   /// If there is more than one part of type [TextPart], the [text] property
   /// will be a concatenation of all of them.
-  LlmMessage({
+  ChatMessage({
     required this.role,
     this.parts = const [],
     this.metadata = const {},
   });
 
-  static List<LlmPart> _partsFromText(
-    String text, {
-    required List<LlmPart> parts,
-  }) {
+  static List<Part> _partsFromText(String text, {required List<Part> parts}) {
     return [TextPart(text), ...parts];
   }
 
@@ -46,9 +43,9 @@ final class LlmMessage {
   ///
   /// [parts] may contain any type of [Part], including additional
   /// instances of [TextPart].
-  LlmMessage.system(
+  ChatMessage.system(
     String text, {
-    List<LlmPart> parts = const [],
+    List<Part> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.system,
@@ -63,9 +60,9 @@ final class LlmMessage {
   ///
   /// [parts] may contain any type of [Part], including additional
   /// instances of [TextPart].
-  LlmMessage.user(
+  ChatMessage.user(
     String text, {
-    List<LlmPart> parts = const [],
+    List<Part> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.user,
@@ -80,9 +77,9 @@ final class LlmMessage {
   ///
   /// [parts] may contain any type of [Part], including additional
   /// instances of [TextPart].
-  LlmMessage.model(
+  ChatMessage.model(
     String text, {
-    List<LlmPart> parts = const [],
+    List<Part> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.model,
@@ -93,28 +90,23 @@ final class LlmMessage {
   /// Deserializes a message.
   ///
   /// The message is compatible with [toJson].
-  ///
-  /// The [converterRegistry] parameter is a map of part types to converters.
-  /// If the registry is not provided, [defaultPartConverterRegistry] is used.
-  ///
-  /// If you do not need to deserialize custom part types, you can omit the
-  /// [converterRegistry] parameter.
-  factory LlmMessage.fromJson(
-    Map<String, Object?> json, {
-    Map<String, JsonToPartConverter> converterRegistry =
-        defaultPartConverterRegistry,
-  }) => LlmMessage(
-    role: ChatMessageRole.values.byName(json[_Json.role] as String),
-    parts: Parts.fromJson(
-      json[_Json.parts] as List<Object?>,
-      converterRegistry: converterRegistry,
-    ),
-    metadata: (json[_Json.metadata] as Map<String, Object?>?) ?? const {},
-  );
+  factory ChatMessage.fromJson(Map<String, Object?> json) {
+    final List<Part> parts =
+        (json[_Json.parts] as List<Object?>?)
+            ?.map((e) => Part.fromJson(e as Map<String, Object?>))
+            .toList() ??
+        const [];
+
+    return ChatMessage(
+      role: ChatMessageRole.values.byName(json[_Json.role] as String),
+      parts: parts,
+      metadata: (json[_Json.metadata] as Map<String, Object?>?) ?? const {},
+    );
+  }
 
   /// Serializes the message to JSON.
   Map<String, Object?> toJson() => {
-    _Json.parts: parts.toJson(),
+    _Json.parts: _parts.toJson(),
     _Json.metadata: metadata,
     _Json.role: role.name,
   };
@@ -123,7 +115,7 @@ final class LlmMessage {
   final ChatMessageRole role;
 
   /// The content parts of the message.
-  final List<LlmPart> parts;
+  final List<Part> parts;
 
   late final Parts _parts = Parts(parts);
 
@@ -133,19 +125,19 @@ final class LlmMessage {
   final Map<String, Object?> metadata;
 
   /// Concatenated [TextPart] parts.
-  String get text => parts.text;
+  String get text => _parts.text;
 
   /// Whether this message contains any tool calls.
-  bool get hasToolCalls => parts.toolCalls.isNotEmpty;
+  bool get hasToolCalls => _parts.toolCalls.isNotEmpty;
 
   /// Gets all tool calls in this message.
-  List<ToolPart> get toolCalls => parts.toolCalls;
+  List<ToolPart> get toolCalls => _parts.toolCalls;
 
   /// Whether this message contains any tool results.
-  bool get hasToolResults => parts.toolResults.isNotEmpty;
+  bool get hasToolResults => _parts.toolResults.isNotEmpty;
 
   /// Gets all tool results in this message.
-  List<ToolPart> get toolResults => parts.toolResults;
+  List<ToolPart> get toolResults => _parts.toolResults;
 
   @override
   bool operator ==(Object other) {
@@ -153,7 +145,7 @@ final class LlmMessage {
     if (other.runtimeType != runtimeType) return false;
 
     const deepEquality = DeepCollectionEquality();
-    return other is LlmMessage &&
+    return other is ChatMessage &&
         deepEquality.equals(other.parts, parts) &&
         deepEquality.equals(other.metadata, metadata);
   }

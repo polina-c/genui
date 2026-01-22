@@ -108,17 +108,17 @@ const defaultPartConverterRegistry = <String, JsonToPartConverter>{
   ToolPart.type: PartConverter(ToolPart.fromJson),
 };
 
-typedef _JsonToPartFunction = Part Function(Map<String, Object?> json);
+typedef _JsonToPartFunction<T> = T Function(Map<String, Object?> json);
 
 /// A converter that converts a JSON map to a [Part].
 @visibleForTesting
-class PartConverter extends JsonToPartConverter {
+class PartConverter<T extends Part> extends JsonToPartConverter<T> {
   const PartConverter(this._function);
 
-  final _JsonToPartFunction _function;
+  final _JsonToPartFunction<T> _function;
 
   @override
-  Part convert(Map<String, Object?> input) {
+  T convert(Map<String, Object?> input) {
     return _function(input);
   }
 }

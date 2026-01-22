@@ -14,9 +14,25 @@ import 'package:mime/src/default_extension_map.dart';
 import 'package:path/path.dart' as p;
 
 import 'model.dart';
+import 'parts.dart';
+
+const _chatPartConverterRegistry = <String, JsonToPartConverter<LlmPart>>{
+  TextPart.type: PartConverter(TextPart.fromJson),
+  DataPart.type: PartConverter(DataPart.fromJson),
+  LinkPart.type: PartConverter(LinkPart.fromJson),
+  ToolPart.type: PartConverter(ToolPart.fromJson),
+};
 
 sealed class LlmPart extends Part {
   const LlmPart();
+
+  /// Deserializes a part from a JSON map.
+  factory LlmPart.fromJson(Map<String, Object?> json) {
+    final type = json[Part.typeKey] as String;
+    final JsonToPartConverter<LlmPart> converter =
+        _chatPartConverterRegistry[type]!;
+    return converter.convert(json);
+  }
 }
 
 final class _Json {

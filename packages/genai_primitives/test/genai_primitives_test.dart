@@ -361,7 +361,7 @@ void main() {
 
   group('Message', () {
     test('fromParts', () {
-      final fromParts = const LlmMessage(
+      final fromParts = const ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([TextPart('hello')]),
       );
@@ -370,7 +370,7 @@ void main() {
 
     group('Named constructors', () {
       test('system', () {
-        final message = LlmMessage.system(
+        final message = ChatMessage.system(
           'instruction',
           parts: [const TextPart(' extra')],
           metadata: {'a': 1},
@@ -385,7 +385,7 @@ void main() {
       });
 
       test('user', () {
-        final message = LlmMessage.user(
+        final message = ChatMessage.user(
           'hello',
           parts: [const TextPart(' world')],
           metadata: {'b': 2},
@@ -398,7 +398,7 @@ void main() {
       });
 
       test('model', () {
-        final message = LlmMessage.model(
+        final message = ChatMessage.model(
           'response',
           parts: [
             const ToolPart.call(callId: 'id', toolName: 't', arguments: {}),
@@ -415,7 +415,7 @@ void main() {
     });
 
     test('default constructor', () {
-      final message = LlmMessage.system('instructions');
+      final message = ChatMessage.system('instructions');
       expect(message.text, equals('instructions'));
     });
 
@@ -431,7 +431,7 @@ void main() {
         result: 'ok',
       );
 
-      final msg1 = LlmMessage(
+      final msg1 = ChatMessage(
         role: ChatMessageRole.model,
         parts: Parts([const TextPart('Hi'), toolCall]),
       );
@@ -441,7 +441,7 @@ void main() {
       expect(msg1.toolResults, isEmpty);
       expect(msg1.text, equals('Hi'));
 
-      final msg2 = LlmMessage(
+      final msg2 = ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([toolResult]),
       );
@@ -452,7 +452,7 @@ void main() {
     });
 
     test('metadata', () {
-      final msg = const LlmMessage(
+      final msg = const ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([TextPart('hi')]),
         metadata: {'key': 'value'},
@@ -462,36 +462,36 @@ void main() {
       final Map<String, dynamic> json = msg.toJson();
       expect(json['metadata'], equals({'key': 'value'}));
 
-      final reconstructed = LlmMessage.fromJson(json);
+      final reconstructed = ChatMessage.fromJson(json);
       expect(reconstructed.metadata, equals({'key': 'value'}));
     });
 
     test('JSON serialization', () {
-      final msg = LlmMessage.model('response');
+      final msg = ChatMessage.model('response');
       final Map<String, dynamic> json = msg.toJson();
 
       expect((json['parts'] as List).length, equals(1));
 
-      final reconstructed = LlmMessage.fromJson(json);
+      final reconstructed = ChatMessage.fromJson(json);
       expect(reconstructed, equals(msg));
     });
 
     test('equality and hashCode', () {
-      const msg1 = LlmMessage(
+      const msg1 = ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([TextPart('hi')]),
         metadata: {'k': 'v'},
       );
-      const msg2 = LlmMessage(
+      const msg2 = ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([TextPart('hi')]),
         metadata: {'k': 'v'},
       );
-      const msg3 = LlmMessage(
+      const msg3 = ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([TextPart('hello')]),
       );
-      const msg4 = LlmMessage(
+      const msg4 = ChatMessage(
         role: ChatMessageRole.user,
         parts: Parts([TextPart('hi')]),
         metadata: {'k': 'other'},
@@ -504,7 +504,7 @@ void main() {
     });
 
     test('text concatenation', () {
-      final msg = const LlmMessage(
+      final msg = const ChatMessage(
         role: ChatMessageRole.model,
         parts: Parts([
           TextPart('Part 1. '),
@@ -516,7 +516,7 @@ void main() {
     });
 
     test('toString', () {
-      final msg = LlmMessage.user('hi');
+      final msg = ChatMessage.user('hi');
       expect(msg.toString(), contains('Message'));
       expect(msg.toString(), contains('parts: [TextPart(hi)]'));
     });

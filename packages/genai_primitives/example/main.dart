@@ -43,15 +43,15 @@ void main({void Function(Object?)? output}) {
   print(const JsonEncoder.withIndent('  ').convert(getWeatherTool.toJson()));
 
   // 2. Create a conversation history
-  final history = <LlmMessage>[
+  final history = <ChatMessage>[
     // System message
-    LlmMessage.system(
+    ChatMessage.system(
       'You are a helpful weather assistant. '
       'Use the get_weather tool when needed.',
     ),
 
     // User message asking for weather
-    LlmMessage.user('What is the weather in London?'),
+    ChatMessage.user('What is the weather in London?'),
   ];
 
   print('\n[Initial Conversation]');
@@ -60,7 +60,7 @@ void main({void Function(Object?)? output}) {
   }
 
   // 3. Simulate Model Response with Tool Call
-  final modelResponse = LlmMessage.model(
+  final modelResponse = ChatMessage.model(
     '', // Empty text for tool call
     parts: [
       const TextPart('Thinking: User wants weather for London...'),
@@ -81,7 +81,7 @@ void main({void Function(Object?)? output}) {
   }
 
   // 4. Simulate Tool Execution & Result
-  final toolResult = LlmMessage.user(
+  final toolResult = ChatMessage.user(
     '', // User role is typically used for tool results in many APIs
     parts: [
       const ToolPart.result(
@@ -98,7 +98,7 @@ void main({void Function(Object?)? output}) {
 
   // 5. Simulate Final Model Response with Data (e.g. an image generated or
   //    returned)
-  final finalResponse = LlmMessage.model(
+  final finalResponse = ChatMessage.model(
     'Here is a chart of the weather trend:',
     parts: [
       DataPart(
