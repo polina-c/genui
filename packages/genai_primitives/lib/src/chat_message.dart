@@ -26,7 +26,7 @@ final class ChatMessage {
   ///
   /// If there is more than one part of type [TextPart], the [text] property
   /// will be a concatenation of all of them.
-  const ChatMessage({
+  ChatMessage({
     required this.role,
     this.parts = const [],
     this.metadata = const {},
@@ -117,6 +117,7 @@ final class ChatMessage {
 
   /// The content parts of the message.
   final List<Part> parts;
+  late final _parts = Parts(parts);
 
   /// Optional metadata associated with this message.
   ///
@@ -124,19 +125,19 @@ final class ChatMessage {
   final Map<String, Object?> metadata;
 
   /// Concatenated [TextPart] parts.
-  String get text => Parts(parts).text;
+  String get text => _parts.text;
 
   /// Whether this message contains any tool calls.
-  bool get hasToolCalls => Parts(parts).toolCalls.isNotEmpty;
+  bool get hasToolCalls => _parts.toolCalls.isNotEmpty;
 
   /// Gets all tool calls in this message.
-  List<ToolPart> get toolCalls => Parts(parts).toolCalls;
+  List<ToolPart> get toolCalls => _parts.toolCalls;
 
   /// Whether this message contains any tool results.
-  bool get hasToolResults => Parts(parts).toolResults.isNotEmpty;
+  bool get hasToolResults => _parts.toolResults.isNotEmpty;
 
   /// Gets all tool results in this message.
-  List<ToolPart> get toolResults => Parts(parts).toolResults;
+  List<ToolPart> get toolResults => _parts.toolResults;
 
   @override
   bool operator ==(Object other) {
