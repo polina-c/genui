@@ -45,7 +45,9 @@ void main() {
           type: 'Button',
           properties: {
             'child': 'text',
-            'action': {'name': 'testAction'},
+            'action': {
+              'event': {'name': 'testAction'},
+            },
           },
         ),
         const Component(
@@ -121,7 +123,9 @@ void main() {
           properties: {
             'text': {'path': '/myValue'},
             'label': 'My Label',
-            'onSubmittedAction': {'name': 'submit'},
+            'onSubmittedAction': {
+              'event': {'name': 'submit'},
+            },
           },
         ),
       ];

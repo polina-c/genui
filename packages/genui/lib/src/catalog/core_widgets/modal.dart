@@ -25,11 +25,8 @@ final _schema = S.object(
 );
 
 extension type _ModalData.fromMap(JsonMap _json) {
-  factory _ModalData({
-    required String trigger, required String content,
-  }) => _ModalData.fromMap({
-    'trigger': trigger, 'content': content,
-  });
+  factory _ModalData({required String trigger, required String content}) =>
+      _ModalData.fromMap({'trigger': trigger, 'content': content});
 
   String get trigger {
     final Object? val = _json['trigger'] ?? _json['entryPointChild'];
@@ -84,9 +81,11 @@ final modal = CatalogItem(
           "component": "Button",
           "child": "button_text",
           "action": {
-            "name": "showModal",
-            "context": {
-              "modalId": "root"
+            "event": {
+              "name": "showModal",
+              "context": {
+                "modalId": "root"
+              }
             }
           }
         },

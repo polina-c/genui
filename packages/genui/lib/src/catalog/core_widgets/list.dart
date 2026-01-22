@@ -21,13 +21,8 @@ final _schema = S.object(
 );
 
 extension type _ListData.fromMap(JsonMap _json) {
-  factory _ListData({
-    required Object? children,
-    String? direction,
-  }) => _ListData.fromMap({
-    'children': children,
-    'direction': direction,
-  });
+  factory _ListData({required Object? children, String? direction}) =>
+      _ListData.fromMap({'children': children, 'direction': direction});
 
   Object? get children => _json['children'];
   String? get direction => _json['direction'] as String?;

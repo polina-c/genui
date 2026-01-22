@@ -32,8 +32,10 @@ void main() {
         properties: {
           'child': 'button_text',
           'action': {
-            'name': 'showModal',
-            'context': {'modalId': 'root'},
+            'event': {
+              'name': 'showModal',
+              'context': {'modalId': 'root'},
+            },
           },
         },
       ),

@@ -38,7 +38,9 @@ void main() {
         type: 'Button',
         properties: {
           'child': 'text',
-          'action': {'name': 'testAction'},
+          'action': {
+            'event': {'name': 'testAction'},
+          },
         },
       ),
       const Component(id: 'text', type: 'Text', properties: {'text': 'Hello'}),
@@ -68,7 +70,9 @@ void main() {
         type: 'Button',
         properties: {
           'child': 'text',
-          'action': {'name': 'testAction'},
+          'action': {
+            'event': {'name': 'testAction'},
+          },
         },
       ),
       const Component(id: 'text', type: 'Text', properties: {'text': 'Hello'}),

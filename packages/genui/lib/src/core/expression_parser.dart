@@ -4,6 +4,7 @@
 
 import '../model/data_model.dart';
 import '../primitives/logging.dart';
+import '../primitives/simple_items.dart';
 import 'functions.dart';
 
 /// Parses and evaluates expressions in the A2UI `${expression}` format.
@@ -23,19 +24,64 @@ class ExpressionParser {
   ///
   /// If the string contains text mixed with expressions (e.g. "Value: ${/foo}"),
   /// the return value will always be a String.
+  /// Evaluates a logic expression against the current context.
+  bool evaluateLogic(JsonMap expression) {
+    if (expression.containsKey('and')) {
+      final list = expression['and'] as List;
+      return list.every((item) => evaluateLogic(item as JsonMap));
+    }
+    if (expression.containsKey('or')) {
+      final list = expression['or'] as List;
+      return list.any((item) => evaluateLogic(item as JsonMap));
+    }
+    if (expression.containsKey('not')) {
+      return !evaluateLogic(expression['not'] as JsonMap);
+    }
+    if (expression.containsKey('call')) {
+      final Object? result = evaluateFunctionCall(expression);
+      return result == true;
+    }
+    if (expression.containsKey('true')) return true;
+    if (expression.containsKey('false')) return false;
+
+    // Fallback: strictly assume false or throw?
+    // v0.9 schema implies these are the options.
+    return false;
+  }
+
+  Object? evaluateFunctionCall(JsonMap callDefinition) {
+    final name = callDefinition['call'] as String;
+    final List<Object?> args =
+        (callDefinition['args'] as List?)?.map((arg) {
+          if (arg is String) {
+            // Check if it's a path or expression string
+            return parse(arg);
+          } else if (arg is Map) {
+            // Nested expression or data binding?
+            if (arg.containsKey('path')) {
+              return _resolvePath(arg['path'] as String);
+            }
+            // Literal object
+            return arg;
+          }
+          return arg;
+        }).toList() ??
+        [];
+    return _functions.invoke(name, args);
+  }
+
+  /// Parses the input string and resolves any embedded expressions.
+  ///
+  /// If the string contains a single expression that encompasses the entire
+  /// string (e.g. "${/foo}"), the return value may be of any type (not just
+  /// String).
+  ///
+  /// If the string contains text mixed with expressions (e.g. "Value: ${/foo}"),
+  /// the return value will always be a String.
   Object? parse(String input) {
     if (!input.contains(r'${')) {
       return input;
     }
-
-    // Check for whole-string expression: "^${...}$" without other content?
-    // But we need to handle escaping: "\${" is literal.
-    // Let's rely on a tokenizer/parser approach.
-
-    // Quick check: is it EXACTLY one expression?
-    // We'll parse it fully. If result is single expression value, return it.
-    // If it's mixed string parts, return concatenated string.
-
     return _parseStringWithInterpolations(input);
   }
 
@@ -43,26 +89,19 @@ class ExpressionParser {
     var i = 0;
 
     // We might have multiple parts: literals and expressions.
-    // If we have exactly ONE part and it IS an expression, we return that
-    // object.
-
     final parts = <Object?>[];
 
     while (i < input.length) {
       final int startIndex = input.indexOf(r'${', i);
       if (startIndex == -1) {
-        // No more start tokens
         parts.add(input.substring(i));
         break;
       }
 
       // Check for escape
       if (startIndex > 0 && input[startIndex - 1] == r'\') {
-        // Escaped: add "input[i...startIndex-1]" + "${"
-        // Actually, we need to handle the escape char.
-        // "abc\${def" -> "abc${def"
         parts.add(input.substring(i, startIndex - 1));
-        parts.add(r'${'); // The literal characters
+        parts.add(r'${');
         i = startIndex + 2;
         continue;
       }
@@ -78,9 +117,6 @@ class ExpressionParser {
         startIndex + 2,
       );
       if (endIndex == -1) {
-        // Unclosed brace? Treat as literal?
-        // Or throw?
-        // Let's treat as literal rest of string if malformed, or just append.
         parts.add(input.substring(startIndex));
         break;
       }
@@ -96,8 +132,6 @@ class ExpressionParser {
       return parts[0];
     }
 
-    // If parts contain non-strings, we stringify them for interpolation (unless
-    // it was single object return)
     return parts.map((e) => e?.toString() ?? '').join('');
   }
 
@@ -113,15 +147,7 @@ class ExpressionParser {
           return (input.substring(start, i), i);
         }
       }
-      // Also handle quoted strings inside expression?
-      // e.g. ${formatString('Hello } world')}
-      // Yes, we need a smarter scanner if we support strings with braces
-      // inside.
-      // The spec says: "Function arguments must be literals (quoted strings,
-      // numbers, booleans) or nested expressions"
-      // We should handle quotes: ' or "
       if (input[i] == "'" || input[i] == '"') {
-        // Skip string literal
         final String quote = input[i];
         i++;
         while (i < input.length) {
@@ -144,24 +170,6 @@ class ExpressionParser {
       return null;
     }
 
-    // Content can be:
-    // 1. Path: /foo/bar or relative/path
-    // 2. Function call: funcName(arg1, arg2, ...)
-    // 3. Nested expression.
-
-    // Now we have content like "func(${path})".
-    // We need to resolve nested parts first?
-    // Or parse "func(...)" and arguments might contain ${...} tokens?
-
-    // Actually, "content" might contain "${path}".
-    // We should resolve any inner `${...}` sequences first.
-    // RECURSIVE EVALUATION of the content string itself?
-
-    // But wait, the content string IS the expression.
-    // If it has `${...}` inside, it means we have mixed content?
-    // "func(${path})" -> The argument to func is THE RESULT of ${path}.
-    // So we need to parse the arguments.
-
     content = content.trim();
 
     // Is it a function call? name(...)
@@ -175,28 +183,11 @@ class ExpressionParser {
       return _functions.invoke(funcName, args);
     }
 
-    // Is it a path? (starts with / or is just characters)
-    // Note: Standard JSON Pointer starts with /. GenUI paths might correspond
-    // to JSON pointers or relative.
-    // If it starts with a quote, it's a literal? But this is inside ${...}.
-    // Usually literal strings in ${...} are pointless unless as function args.
-    // So distinct bare words are likely paths.
-
-    // Check if it is an inner expression ${...}?
-    // No, _extractExpressionContent extracted the content *between* the outer
-    // ${ and }.
-    // If we have `${path}`, content is `/path`.
-    // If we have `func(${path})`, content is `func(${path})`.
-
-    // Resolve inner expressions manually?
-    // The args parser will handle this.
-
-    // If it's just a path:
+    // Is it a path?
     return _resolvePath(content);
   }
 
   List<Object?> _parseArgs(String argsStr, int depth) {
-    // Split by comma, respecting quotes and parentheses (and braces)
     final args = <Object?>[];
     var balanceParens = 0;
     var balanceBraces = 0;
@@ -238,20 +229,19 @@ class ExpressionParser {
   Object? _parseArg(String arg, int depth) {
     if (arg.isEmpty) return null;
 
-    // If arg is wrapped in ${...}, evaluate it.
     if (arg.startsWith(r'${') && arg.endsWith(r'}')) {
-      // Recurse!
-      // Extract content
       final String content = arg.substring(2, arg.length - 1);
       return _evaluateExpression(content, depth);
     }
 
-    // Literals
     if (arg.startsWith("'") && arg.endsWith("'")) {
-      return arg.substring(1, arg.length - 1);
+      final String val = arg.substring(1, arg.length - 1);
+      // Interpolate inside string literal!
+      return _parseStringWithInterpolations(val);
     }
     if (arg.startsWith('"') && arg.endsWith('"')) {
-      return arg.substring(1, arg.length - 1);
+      final String val = arg.substring(1, arg.length - 1);
+      return _parseStringWithInterpolations(val);
     }
 
     if (arg == 'true') return true;
@@ -261,18 +251,10 @@ class ExpressionParser {
     final num? numVal = num.tryParse(arg);
     if (numVal != null) return numVal;
 
-    // If it looks like a path but NOT wrapped in ${}, it is a string literal.
-    // In function args: `formatString('template', /path)`
-    // Paths in args should be wrapped in ${} if they are to be resolved.
-    // Spec: "Function arguments must be literals ... or nested expressions
-    // (e.g., `${...}`)"
-    // Bare paths are NOT allowed in function args.
-
-    return arg; // Return as string if unknown?
+    return arg;
   }
 
   Object? _resolvePath(String pathStr) {
-    // Remove leading/trailing whitespace
     pathStr = pathStr.trim();
     return context.getValue(DataPath(pathStr));
   }

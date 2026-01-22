@@ -344,17 +344,39 @@ class A2uiSchemas {
   }
 
   /// Schema for a user-initiated action.
-  static Schema action({String? description}) => S.object(
-    description: description,
-    properties: {
-      'name': S.string(),
-      'context': S.object(
-        description: 'Arbitrary context data to send with the action.',
-        additionalProperties: true,
-      ),
-    },
-    required: ['name'],
-  );
+  /// Schema for a user-initiated action (v0.9).
+  ///
+  /// Can be either a server-side event or a client-side function call.
+  static Schema action({String? description}) {
+    final eventSchema = S.object(
+      properties: {
+        'event': S.object(
+          properties: {
+            'name': S.string(
+              description:
+                  'The name of the action to be dispatched to the server.',
+            ),
+            'context': S.object(
+              description: 'Arbitrary context data to send with the action.',
+              additionalProperties: true,
+            ),
+          },
+          required: ['name'],
+        ),
+      },
+      required: ['event'],
+    );
+
+    final functionCallSchema = S.object(
+      properties: {'functionCall': functionCall()},
+      required: ['functionCall'],
+    );
+
+    return S.combined(
+      description: description,
+      oneOf: [eventSchema, functionCallSchema],
+    );
+  }
 
   /// Schema for a value that can be either a literal array of strings or a
   /// data-bound path to an array of strings.

@@ -27,7 +27,9 @@ void main() {
         type: 'Button',
         properties: {
           'child': 'button_text',
-          'action': {'name': 'testAction'},
+          'action': {
+            'event': {'name': 'testAction'},
+          },
         },
       ),
       const Component(

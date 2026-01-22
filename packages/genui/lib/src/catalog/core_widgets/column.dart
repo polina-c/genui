@@ -41,14 +41,12 @@ final _schema = S.object(
 );
 
 extension type _ColumnData.fromMap(JsonMap _json) {
-  factory _ColumnData({
-    Object? children,
-    String? justify, String? align,
-  }) => _ColumnData.fromMap({
-    'children': children,
+  factory _ColumnData({Object? children, String? justify, String? align}) =>
+      _ColumnData.fromMap({
+        'children': children,
         'justify': justify,
         'align': align,
-  });
+      });
 
   Object? get children => _json['children'];
   String? get justify =>
@@ -184,7 +182,9 @@ final column = CatalogItem(
           "component": "Button",
           "child": "submit_button_text",
           "action": {
-            "name": "submit"
+            "event": {
+              "name": "submit"
+            }
           }
         },
         {

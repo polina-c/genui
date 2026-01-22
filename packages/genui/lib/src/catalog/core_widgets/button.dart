@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:json_schema_builder/json_schema_builder.dart';
 
+import '../../core/expression_parser.dart';
 import '../../core/widget_utilities.dart';
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
@@ -123,7 +124,9 @@ final button = CatalogItem(
           "component": "Button",
           "child": "text",
           "action": {
-            "name": "button_pressed"
+            "event": {
+              "name": "button_pressed"
+            }
           }
         },
         {
@@ -146,7 +149,9 @@ final button = CatalogItem(
           "child": "primaryText",
           "primary": true,
           "action": {
-            "name": "primary_pressed"
+            "event": {
+              "name": "primary_pressed"
+            }
           }
         },
         {
@@ -154,7 +159,9 @@ final button = CatalogItem(
           "component": "Button",
           "child": "secondaryText",
           "action": {
-            "name": "secondary_pressed"
+            "event": {
+              "name": "secondary_pressed"
+            }
           }
         },
         {
@@ -174,18 +181,42 @@ final button = CatalogItem(
 
 void _handlePress(CatalogItemContext itemContext, _ButtonData buttonData) {
   final JsonMap actionData = buttonData.action;
-  final actionName = actionData['name'] as String;
-  final contextDefinition = actionData['context'] as JsonMap?;
 
-  final JsonMap resolvedContext = resolveContext(
-    itemContext.dataContext,
-    contextDefinition,
-  );
-  itemContext.dispatchEvent(
-    UserActionEvent(
-      name: actionName,
-      sourceComponentId: itemContext.id,
-      context: resolvedContext,
-    ),
-  );
+  // v0.9 Action: { "event": { ... } } OR { "functionCall": { ... } }
+  if (actionData.containsKey('event')) {
+    final eventMap = actionData['event'] as JsonMap;
+    final actionName = eventMap['name'] as String;
+    final contextDefinition = eventMap['context'] as JsonMap?;
+
+    final JsonMap resolvedContext = resolveContext(
+      itemContext.dataContext,
+      contextDefinition,
+    );
+    itemContext.dispatchEvent(
+      UserActionEvent(
+        name: actionName,
+        sourceComponentId: itemContext.id,
+        context: resolvedContext,
+      ),
+    );
+  } else if (actionData.containsKey('functionCall')) {
+    final funcMap = actionData['functionCall'] as JsonMap;
+    final callName = funcMap['call'] as String;
+
+    // Special Client-Side Actions that require UI context
+    if (callName == 'closeModal') {
+      Navigator.of(itemContext.buildContext).pop();
+      return;
+    }
+
+    // Execute standard register function
+    final parser = ExpressionParser(itemContext.dataContext);
+    parser.evaluateFunctionCall(funcMap);
+  } else {
+    // Fallback for v0.8 or malformed?
+    // Spec says OneOf event/functionCall.
+    genUiLogger.warning(
+      'Button action missing event or functionCall: $actionData',
+    );
+  }
 }

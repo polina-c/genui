@@ -39,14 +39,12 @@ final _schema = S.object(
 );
 
 extension type _RowData.fromMap(JsonMap _json) {
-  factory _RowData({
-    Object? children,
-    String? justify, String? align,
-  }) => _RowData.fromMap({
-    'children': children,
+  factory _RowData({Object? children, String? justify, String? align}) =>
+      _RowData.fromMap({
+        'children': children,
         'justify': justify,
         'align': align,
-  });
+      });
 
   Object? get children => _json['children'];
   String? get justify =>

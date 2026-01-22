@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:json_schema_builder/json_schema_builder.dart';
 
+import '../../core/expression_parser.dart';
 import '../../core/widget_utilities.dart';
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
@@ -30,49 +31,32 @@ final _schema = S.object(
     'variant': S.string(
       enumValues: ['shortText', 'longText', 'number', 'date', 'obscured'],
     ),
-    'checks': S.list(
-      items: S.object(
-        properties: {
-          'label': S.string(),
-          // Wait, spec says "checks" are validation checks.
-          // Actually, let's keep it simple for now or follow spec strictly if
-          // possible.
-          // Spec: "checks": [{"name": "required"}, ...] functions?
-          // This task only mentioned flattened properties.
-          // Let's assume validationRegexp is replaced by checks eventually, but
-          // we might keep validatonRegexp for now if not strictly removed yet,
-          // OR map 'checks' if we implement them.
-          // Task said: "Update TextField widget (value, checks, flattened
-          // properties)".
-          // Let's switch 'text' to 'value' as per v0.9 spec (TextField has
-          // 'value').
-        },
-      ),
-    ),
-    'validationRegexp': S.string(), // Keep for legacy compat or remove?
+    'checks': S.list(items: S.object(properties: {'message': S.string()})),
+    'validationRegexp': S.string(),
     'onSubmittedAction': A2uiSchemas.action(),
   },
 );
 
 extension type _TextFieldData.fromMap(JsonMap _json) {
   factory _TextFieldData({
-    Object? value, // Renamed from text
+    Object? value,
     Object? label,
-    String? variant, // Renamed from textFieldType
+    List<JsonMap>? checks,
+    String? variant,
     String? validationRegexp,
     JsonMap? onSubmittedAction,
   }) => _TextFieldData.fromMap({
     'value': value,
     'label': label,
+    'checks': checks,
     'variant': variant,
     'validationRegexp': validationRegexp,
     'onSubmittedAction': onSubmittedAction,
   });
 
-  Object? get value =>
-      _json['value'] ??
-      _json['text']; // Backwards compat if needed, but spec says value.
+  Object? get value => _json['value'] ?? _json['text'];
   Object? get label => _json['label'];
+  List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
   String? get variant =>
       _json['variant'] as String? ?? _json['textFieldType'] as String?;
   String? get validationRegexp => _json['validationRegexp'] as String?;
@@ -83,6 +67,8 @@ class _TextField extends StatefulWidget {
   const _TextField({
     required this.initialValue,
     this.label,
+    this.checks,
+    this.parser,
     this.textFieldType,
     this.validationRegexp,
     required this.onChanged,
@@ -91,6 +77,8 @@ class _TextField extends StatefulWidget {
 
   final String initialValue;
   final String? label;
+  final List<JsonMap>? checks;
+  final ExpressionParser? parser;
   final String? textFieldType;
   final String? validationRegexp;
   final void Function(String) onChanged;
@@ -102,6 +90,7 @@ class _TextField extends StatefulWidget {
 
 class _TextFieldState extends State<_TextField> {
   late final TextEditingController _controller;
+  String? _errorText;
 
   @override
   void initState() {
@@ -115,6 +104,34 @@ class _TextFieldState extends State<_TextField> {
     if (widget.initialValue != _controller.text) {
       _controller.text = widget.initialValue;
     }
+    // Re-validate if checks changed?
+    // Start with clean state or re-validate if value changed externally?
+  }
+
+  void _validate(String value) {
+    if (widget.checks == null || widget.parser == null) {
+      setState(() => _errorText = null);
+      return;
+    }
+
+    for (final JsonMap check in widget.checks!) {
+      // Each check is a CheckRule: LogicExpression + message
+      // We evaluate the CheckRule as a LogicExpression.
+      // But CheckRule schema says allOf [LogicExpression, {property: message}].
+      // So the check object ITSELF is the logic expression (mixed in).
+      // We pass the check object to evaluateLogic.
+      // NOTE: evaluateLogic returns true if valid.
+      // But we need to make sure we don't treat 'message' as part of logic.
+      // evaluateLogic ignores unknown keys.
+      final bool isValid = widget.parser!.evaluateLogic(check);
+      if (!isValid) {
+        setState(() {
+          _errorText = check['message'] as String? ?? 'Invalid value';
+        });
+        return;
+      }
+    }
+    setState(() => _errorText = null);
   }
 
   @override
@@ -127,7 +144,10 @@ class _TextFieldState extends State<_TextField> {
   Widget build(BuildContext context) {
     return TextField(
       controller: _controller,
-      decoration: InputDecoration(labelText: widget.label),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        errorText: _errorText,
+      ),
       obscureText: widget.textFieldType == 'obscured',
       keyboardType: switch (widget.textFieldType) {
         'number' => TextInputType.number,
@@ -135,8 +155,16 @@ class _TextFieldState extends State<_TextField> {
         'date' => TextInputType.datetime,
         _ => TextInputType.text,
       },
-      onChanged: widget.onChanged,
-      onSubmitted: widget.onSubmitted,
+      onChanged: (val) {
+        _validate(val);
+        widget.onChanged(val);
+      },
+      onSubmitted: (val) {
+        _validate(val);
+        if (_errorText == null) {
+          widget.onSubmitted(val);
+        }
+      },
     );
   }
 }
@@ -193,6 +221,8 @@ final textField = CatalogItem(
     final ValueNotifier<String?> labelNotifier = itemContext.dataContext
         .subscribeToString(textFieldData.label);
 
+    final parser = ExpressionParser(itemContext.dataContext);
+
     return ValueListenableBuilder<String?>(
       valueListenable: notifier,
       builder: (context, currentValue, child) {
@@ -202,6 +232,8 @@ final textField = CatalogItem(
             return _TextField(
               initialValue: currentValue ?? '',
               label: label,
+              checks: textFieldData.checks,
+              parser: parser,
               textFieldType: textFieldData.variant,
               validationRegexp: textFieldData.validationRegexp,
               onChanged: (newValue) {
@@ -214,19 +246,33 @@ final textField = CatalogItem(
                 if (actionData == null) {
                   return;
                 }
-                final actionName = actionData['name'] as String;
-                final contextDefinition = actionData['context'] as JsonMap?;
-                final JsonMap resolvedContext = resolveContext(
-                  itemContext.dataContext,
-                  contextDefinition,
-                );
-                itemContext.dispatchEvent(
-                  UserActionEvent(
-                    name: actionName,
-                    sourceComponentId: itemContext.id,
-                    context: resolvedContext,
-                  ),
-                );
+
+                if (actionData.containsKey('event')) {
+                  final eventMap = actionData['event'] as JsonMap;
+                  final actionName = eventMap['name'] as String;
+                  final contextDefinition = eventMap['context'] as JsonMap?;
+                  final JsonMap resolvedContext = resolveContext(
+                    itemContext.dataContext,
+                    contextDefinition,
+                  );
+                  itemContext.dispatchEvent(
+                    UserActionEvent(
+                      name: actionName,
+                      sourceComponentId: itemContext.id,
+                      context: resolvedContext,
+                    ),
+                  );
+                } else if (actionData.containsKey('functionCall')) {
+                  final funcMap = actionData['functionCall'] as JsonMap;
+                  // Handle function call (e.g. closeModal)
+                  final callName = funcMap['call'] as String;
+                  if (callName == 'closeModal') {
+                    Navigator.of(itemContext.buildContext).pop();
+                    return;
+                  }
+                  // Evaluate generic function
+                  parser.evaluateFunctionCall(funcMap);
+                }
               },
             );
           },

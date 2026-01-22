@@ -22,13 +22,8 @@ final _schema = S.object(
 );
 
 extension type _SliderData.fromMap(JsonMap _json) {
-  factory _SliderData({
-    required JsonMap value,
-    double? min, double? max,
-  }) => _SliderData.fromMap({
-    'value': value,
-    'min': min, 'max': max,
-  });
+  factory _SliderData({required JsonMap value, double? min, double? max}) =>
+      _SliderData.fromMap({'value': value, 'min': min, 'max': max});
 
   Object get value => _json['value'] as Object;
   double get min =>
@@ -69,8 +64,7 @@ final slider = CatalogItem(
                   value: (value ?? sliderData.min).toDouble(),
                   min: sliderData.min,
                   max: sliderData.max,
-                  divisions: (sliderData.max - sliderData.min)
-                      .toInt(),
+                  divisions: (sliderData.max - sliderData.min).toInt(),
                   onChanged: (newValue) {
                     final Object val = sliderData.value;
                     if (val is Map && val.containsKey('path')) {
@@ -81,8 +75,7 @@ final slider = CatalogItem(
                 ),
               ),
               Text(
-                value?.toStringAsFixed(0) ??
-                    sliderData.min.toStringAsFixed(0),
+                value?.toStringAsFixed(0) ?? sliderData.min.toStringAsFixed(0),
               ),
             ],
           ),
