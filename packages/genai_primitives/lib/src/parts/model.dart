@@ -56,4 +56,5 @@ abstract base class Part {
   Map<String, Object?> toJson();
 }
 
-typedef JsonToPartConverter = Converter<Map<String, Object?>, Part>;
+typedef JsonToPartConverter<T extends Part> =
+    Converter<Map<String, Object?>, T>;

@@ -5,7 +5,7 @@
 /// A set of primitives for working with generative AI.
 library;
 
-export 'src/chat_message.dart';
+export 'src/llm_message.dart';
 export 'src/parts/llmPart.dart';
 export 'src/parts/model.dart';
 export 'src/parts/parts.dart';

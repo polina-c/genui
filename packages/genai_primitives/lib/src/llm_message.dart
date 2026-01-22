@@ -16,7 +16,7 @@ final class _Json {
 
 /// A chat message.
 @immutable
-final class ChatMessage {
+final class LlmMessage {
   /// Creates a new message.
   ///
   /// If `parts` or `metadata` is not provided, an empty collections are used.
@@ -26,11 +26,18 @@ final class ChatMessage {
   ///
   /// If there is more than one part of type [TextPart], the [text] property
   /// will be a concatenation of all of them.
-  const ChatMessage({
+  LlmMessage({
     required this.role,
-    this.parts = const Parts([]),
+    this.parts = const [],
     this.metadata = const {},
   });
+
+  static List<LlmPart> _partsFromText(
+    String text, {
+    required List<LlmPart> parts,
+  }) {
+    return [TextPart(text), ...parts];
+  }
 
   /// Creates a system message.
   ///
@@ -39,13 +46,13 @@ final class ChatMessage {
   ///
   /// [parts] may contain any type of [Part], including additional
   /// instances of [TextPart].
-  ChatMessage.system(
+  LlmMessage.system(
     String text, {
-    List<Part> parts = const [],
+    List<LlmPart> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.system,
-         parts: Parts.fromText(text, parts: parts),
+         parts: _partsFromText(text, parts: parts),
          metadata: metadata,
        );
 
@@ -56,13 +63,13 @@ final class ChatMessage {
   ///
   /// [parts] may contain any type of [Part], including additional
   /// instances of [TextPart].
-  ChatMessage.user(
+  LlmMessage.user(
     String text, {
-    List<Part> parts = const [],
+    List<LlmPart> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.user,
-         parts: Parts.fromText(text, parts: parts),
+         parts: _partsFromText(text, parts: parts),
          metadata: metadata,
        );
 
@@ -73,13 +80,13 @@ final class ChatMessage {
   ///
   /// [parts] may contain any type of [Part], including additional
   /// instances of [TextPart].
-  ChatMessage.model(
+  LlmMessage.model(
     String text, {
-    List<Part> parts = const [],
+    List<LlmPart> parts = const [],
     Map<String, Object?> metadata = const {},
   }) : this(
          role: ChatMessageRole.model,
-         parts: Parts.fromText(text, parts: parts),
+         parts: _partsFromText(text, parts: parts),
          metadata: metadata,
        );
 
@@ -92,11 +99,11 @@ final class ChatMessage {
   ///
   /// If you do not need to deserialize custom part types, you can omit the
   /// [converterRegistry] parameter.
-  factory ChatMessage.fromJson(
+  factory LlmMessage.fromJson(
     Map<String, Object?> json, {
     Map<String, JsonToPartConverter> converterRegistry =
         defaultPartConverterRegistry,
-  }) => ChatMessage(
+  }) => LlmMessage(
     role: ChatMessageRole.values.byName(json[_Json.role] as String),
     parts: Parts.fromJson(
       json[_Json.parts] as List<Object?>,
@@ -116,7 +123,9 @@ final class ChatMessage {
   final ChatMessageRole role;
 
   /// The content parts of the message.
-  final Parts parts;
+  final List<LlmPart> parts;
+
+  late final Parts _parts = Parts(parts);
 
   /// Optional metadata associated with this message.
   ///
@@ -144,7 +153,7 @@ final class ChatMessage {
     if (other.runtimeType != runtimeType) return false;
 
     const deepEquality = DeepCollectionEquality();
-    return other is ChatMessage &&
+    return other is LlmMessage &&
         deepEquality.equals(other.parts, parts) &&
         deepEquality.equals(other.metadata, metadata);
   }
