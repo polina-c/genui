@@ -26,7 +26,7 @@ final class ChatMessage {
   ///
   /// If there is more than one part of type [TextPart], the [text] property
   /// will be a concatenation of all of them.
-  ChatMessage({
+  const ChatMessage({
     required this.role,
     this.parts = const [],
     this.metadata = const {},
@@ -36,6 +36,7 @@ final class ChatMessage {
     String text, {
     required List<BasePart> parts,
   }) {
+    if (text.isEmpty) return parts;
     return [TextPart(text), ...parts];
   }
 
@@ -93,10 +94,24 @@ final class ChatMessage {
   /// Deserializes a message.
   ///
   /// The message is compatible with [toJson].
-  factory ChatMessage.fromJson(Map<String, Object?> json) {
+  factory ChatMessage.fromJson(
+    Map<String, Object?> json, {
+    Map<String, JsonToPartConverter> converterRegistry =
+        const <String, JsonToPartConverter>{
+          TextPart.type: PartConverter(TextPart.fromJson),
+          DataPart.type: PartConverter(DataPart.fromJson),
+          LinkPart.type: PartConverter(LinkPart.fromJson),
+          ToolPart.type: PartConverter(ToolPart.fromJson),
+        },
+  }) {
     final List<BasePart> parts =
         (json[_Json.parts] as List<Object?>?)
-            ?.map((e) => Part.fromJson(e as Map<String, Object?>))
+            ?.map(
+              (e) => BasePart.fromJson(
+                e as Map<String, Object?>,
+                converterRegistry: converterRegistry,
+              ),
+            )
             .toList() ??
         const [];
 
@@ -109,7 +124,7 @@ final class ChatMessage {
 
   /// Serializes the message to JSON.
   Map<String, Object?> toJson() => {
-    _Json.parts: _parts.toJson(),
+    _Json.parts: Parts(parts).toJson(),
     _Json.metadata: metadata,
     _Json.role: role.name,
   };
@@ -120,27 +135,25 @@ final class ChatMessage {
   /// The content parts of the message.
   final List<BasePart> parts;
 
-  late final Parts _parts = Parts(parts);
-
   /// Optional metadata associated with this message.
   ///
   /// This can include information like suppressed content, warnings, etc.
   final Map<String, Object?> metadata;
 
   /// Concatenated [TextPart] parts.
-  String get text => _parts.text;
+  String get text => Parts(parts).text;
 
   /// Whether this message contains any tool calls.
-  bool get hasToolCalls => _parts.toolCalls.isNotEmpty;
+  bool get hasToolCalls => Parts(parts).toolCalls.isNotEmpty;
 
   /// Gets all tool calls in this message.
-  List<ToolPart> get toolCalls => _parts.toolCalls;
+  List<ToolPart> get toolCalls => Parts(parts).toolCalls;
 
   /// Whether this message contains any tool results.
-  bool get hasToolResults => _parts.toolResults.isNotEmpty;
+  bool get hasToolResults => Parts(parts).toolResults.isNotEmpty;
 
   /// Gets all tool results in this message.
-  List<ToolPart> get toolResults => _parts.toolResults;
+  List<ToolPart> get toolResults => Parts(parts).toolResults;
 
   @override
   bool operator ==(Object other) {

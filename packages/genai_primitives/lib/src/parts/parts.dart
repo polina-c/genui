@@ -9,7 +9,7 @@ import 'package:meta/meta.dart';
 
 import 'model.dart';
 
-/// A collection of message parts.
+/// A collection of parts.
 @immutable
 final class Parts extends ListBase<BasePart> {
   /// Creates a new collection of parts.
