@@ -5,7 +5,7 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
-import 'parts/model.dart';
+import 'parts/part.dart';
 import 'parts/parts.dart';
 
 final class _Json {
