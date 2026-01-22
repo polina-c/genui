@@ -18,7 +18,7 @@ final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['TextField']),
     'text': A2uiSchemas.stringReference(
-      // Note: v0.9 spec calls uses "value" usually for inputs, but spec says
+      // Note: The spec uses "value" usually for inputs, but spec says
       // "text" or "value"?
       // Spec says: "value": { "$ref": "DynamicString",
       // "description": "The value of the text field." } AND "label".

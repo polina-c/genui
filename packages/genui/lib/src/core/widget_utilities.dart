@@ -53,8 +53,9 @@ extension DataContextExtensions on DataContext {
       if (value.containsKey('path')) {
         final path = value['path'] as String;
         // If we supported default values in binding, we would extract them
-        // here. v0.9 allows initializing the path if it's empty, but usually
-        // that's done via 'value' property in binding? For now, simple binding.
+        // here. The spec allows initializing the path if it's empty, but
+        // usually that's done via 'value' property in binding? For now, simple
+        // binding.
         return subscribe<T>(DataPath(path));
       }
       if (value.containsKey('literalString')) {

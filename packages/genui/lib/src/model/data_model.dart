@@ -373,7 +373,7 @@ class DataModel {
         if (remaining.isEmpty) {
           if (index < current.length) {
             if (value == null) {
-              // Removing from list? If we remove, indices shift. v0.9 spec: "If
+              // Removing from list? If we remove, indices shift. Spec says: "If
               // the value is null, the key is removed." For lists, this might
               // be ambiguous. Usually setting null in list just sets it to null
               // or removes it? Providing valid JSON Patch semantics (remove)

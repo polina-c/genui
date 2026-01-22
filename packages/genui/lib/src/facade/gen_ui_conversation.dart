@@ -80,6 +80,11 @@ class GenUiConversation {
   final ValueNotifier<List<ChatMessage>> _conversation =
       ValueNotifier<List<ChatMessage>>([]);
 
+  /// Handles updates to the UI components (add, update, remove).
+  ///
+  /// This method updates the local conversation history to reflect the changes
+  /// in the UI. parameters to this method are supplied by the
+  /// [A2uiMessageProcessor].
   void _handleUpdateComponents(GenUiUpdate update) {
     switch (update) {
       case SurfaceAdded():

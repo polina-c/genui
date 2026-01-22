@@ -155,7 +155,6 @@ class A2uiMessageProcessor implements GenUiHost {
   /// Handles an [A2uiMessage] and updates the UI accordingly.
   void handleMessage(A2uiMessage message) {
     switch (message) {
-      // v0.9: UpdateComponents (formerly UpdateComponents)
       case UpdateComponents():
         final String surfaceId = message.surfaceId;
         final ValueNotifier<UiDefinition?> notifier = getSurfaceNotifier(
@@ -173,15 +172,11 @@ class A2uiMessageProcessor implements GenUiHost {
         uiDefinition = uiDefinition.copyWith(components: newComponents);
         notifier.value = uiDefinition;
 
-        // In v0.9, we assume if we have components, we might be ready to
-        // update. We check if "root" component exists or if the definition
-        // previously had a root-like structure. For now, we notify update.
         genUiLogger.info(
           '''Updating surface $surfaceId with ${message.components.length} components''',
         );
         _surfaceUpdates.add(ComponentsUpdated(surfaceId, uiDefinition));
 
-      // v0.9: CreateSurface (formerly CreateSurface)
       case CreateSurface():
         final String surfaceId = message.surfaceId;
         dataModelForSurface(surfaceId);
@@ -201,7 +196,6 @@ class A2uiMessageProcessor implements GenUiHost {
         genUiLogger.info('Created new surface $surfaceId');
         _surfaceUpdates.add(SurfaceAdded(surfaceId, newUiDefinition));
 
-      // v0.9: UpdateDataModel (formerly UpdateDataModel)
       case UpdateDataModel():
         final String path = message.path;
         genUiLogger.info(
@@ -225,7 +219,6 @@ class A2uiMessageProcessor implements GenUiHost {
           );
         }
 
-      // v0.9: DeleteSurface (formerly DeleteSurface)
       case DeleteSurface():
         final String surfaceId = message.surfaceId;
         if (_surfaces.containsKey(surfaceId)) {

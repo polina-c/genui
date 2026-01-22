@@ -182,7 +182,7 @@ final button = CatalogItem(
 void _handlePress(CatalogItemContext itemContext, _ButtonData buttonData) {
   final JsonMap actionData = buttonData.action;
 
-  // v0.9 Action: { "event": { ... } } OR { "functionCall": { ... } }
+  // Action: { "event": { ... } } OR { "functionCall": { ... } }
   if (actionData.containsKey('event')) {
     final eventMap = actionData['event'] as JsonMap;
     final actionName = eventMap['name'] as String;
@@ -213,7 +213,7 @@ void _handlePress(CatalogItemContext itemContext, _ButtonData buttonData) {
     final parser = ExpressionParser(itemContext.dataContext);
     parser.evaluateFunctionCall(funcMap);
   } else {
-    // Fallback for v0.8 or malformed?
+    // Fallback?
     // Spec says OneOf event/functionCall.
     genUiLogger.warning(
       'Button action missing event or functionCall: $actionData',

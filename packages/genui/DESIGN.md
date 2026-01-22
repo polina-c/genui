@@ -66,8 +66,8 @@ This layer is responsible for all communication with the generative AI model.
 
 This is the central nervous system of the package, orchestrating the state of all generated UI surfaces.
 
-- **`A2uiMessageProcessor`**: The core state manager for the dynamic UI. It maintains a map of all active UI "surfaces", where each surface is represented by a `UiDefinition`. It takes a `GenUiConfiguration` object that can restrict AI actions (e.g., only allow creating surfaces, not updating or deleting them). The AI interacts with the manager by invoking tools defined in `ui_tools.dart` (`SurfaceUpdateTool`, `DeleteSurfaceTool`, `BeginRenderingTool`), which in turn call `a2uiMessageProcessor.handleMessage()`. It exposes a stream of `GenUiUpdate` events (`SurfaceAdded`, `SurfaceUpdated`, `SurfaceRemoved`) so that the application can react to changes. It also owns the `DataModel` to manage the state of individual widgets (e.g., text field content) and acts as the `GenUiHost` for the `GenUiSurface` widget.
-- **`ui_tools.dart`**: Contains the `SurfaceUpdateTool` and `DeleteSurfaceTool` classes that wrap the `A2uiMessageProcessor`'s methods, making them available to the AI.
+- **`A2uiMessageProcessor`**: The core state manager for the dynamic UI. It maintains a map of all active UI "surfaces", where each surface is represented by a `UiDefinition`. It takes a `GenUiConfiguration` object that can restrict AI actions (e.g., only allow creating surfaces, not updating or deleting them). The AI interacts with the manager by invoking tools defined in `ui_tools.dart` (`CreateSurfaceTool`, `UpdateComponentsTool`, `DeleteSurfaceTool`), which in turn call `a2uiMessageProcessor.handleMessage()`. It exposes a stream of `GenUiUpdate` events (`SurfaceAdded`, `ComponentsUpdated`, `SurfaceRemoved`) so that the application can react to changes. It also owns the `DataModel` to manage the state of individual widgets (e.g., text field content) and acts as the `GenUiHost` for the `GenUiSurface` widget.
+- **`ui_tools.dart`**: Contains the `CreateSurfaceTool`, `UpdateComponentsTool`, and `DeleteSurfaceTool` classes that wrap the `A2uiMessageProcessor`'s methods, making them available to the AI.
 
 ### 3. UI Model Layer (`lib/src/model/`)
 
@@ -75,10 +75,10 @@ This layer defines the data structures that represent the dynamic UI and the con
 
 - **`Catalog` and `CatalogItem`**: These classes define the registry of available UI components. The `Catalog` holds a list of `CatalogItem`s, and each `CatalogItem` defines a widget's name, its data schema, and a builder function to render it.
 - **`A2uiMessage`**: A sealed class (`lib/src/model/a2ui_message.dart`) representing the commands the AI sends to the UI. It has the following subtypes:
-  - `BeginRendering`: Signals the start of rendering for a surface, specifying the root component.
-  - `SurfaceUpdate`: Adds or updates components on a surface.
-  - `DataModelUpdate`: Modifies data within the `DataModel` for a surface.
-  - `SurfaceDeletion`: Requests the removal of a surface.
+  - `CreateSurface`: Signals the start of rendering for a surface, specifying the root component.
+  - `UpdateComponents`: Adds or updates components on a surface.
+  - `UpdateDataModel`: Modifies data within the `DataModel` for a surface.
+  - `DeleteSurface`: Requests the removal of a surface.
     The schemas for these messages are defined in `lib/src/model/a2ui_schemas.dart`.
 - **`UiDefinition` and `UiEvent`**: `UiDefinition` represents a complete UI tree to be rendered, including the root widget and a map of all widget definitions. `UiEvent` is a data object representing a user interaction. `UserActionEvent` is a subtype used for events that should trigger a submission to the AI, like a button tap.
 - **`ChatMessage`**: A sealed class representing the different types of messages in a conversation: `UserMessage`, `AiTextMessage`, `ToolResponseMessage`, `AiUiMessage`, `InternalMessage`, and `UserUiInteractionMessage`.
@@ -169,7 +169,7 @@ sequenceDiagram
 4. **Conversation Management**: The `GenUiConversation` adds the `UserMessage` to its internal conversation history.
 5. **AI Invocation**: The `GenUiConversation` calls `contentGenerator.sendRequest()`, passing in the conversation history.
 6. **Model Processing & Response**: The LLM processes the conversation and the `ContentGenerator` emits responses on its streams.
-7. **A2UI Message Handling**: When an `A2uiMessage` is received on the `a2uiMessageStream`, `GenUiConversation` calls `a2uiMessageProcessor.handleMessage()` with the message (e.g., `SurfaceUpdate`, `BeginRendering`).
+7. **A2UI Message Handling**: When an `A2uiMessage` is received on the `a2uiMessageStream`, `GenUiConversation` calls `a2uiMessageProcessor.handleMessage()` with the message (e.g., `UpdateComponents`, `CreateSurface`).
 8. **State Update & Notification**: The `A2uiMessageProcessor` updates its internal state (the `UiDefinition` for the surface) based on the `A2uiMessage` and broadcasts a `GenUiUpdate` event on its `surfaceUpdates` stream.
 9. **Text/Error Handling**: Text responses or errors from the `ContentGenerator`'s other streams trigger the `onTextResponse` or `onError` callbacks, respectively.
 10. **UI Rendering**: A `GenUiSurface` widget listening to the `A2uiMessageProcessor` (via the `GenUiHost` interface) receives the update and rebuilds, rendering the new UI based on the updated `UiDefinition`.

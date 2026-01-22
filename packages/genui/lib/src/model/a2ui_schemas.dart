@@ -327,24 +327,14 @@ class A2uiSchemas {
   /// Schema for a property that holds a list of child components,
   /// either as an explicit list of IDs or a data-bound template.
   static Schema componentArrayReference({String? description}) {
-    // In v0.9, children are usually just a list of IDs (strings).
-    // Templates are handled differently (e.g. List component).
-    // For now, core support is a list of strings (IDs).
-    // If we support templates inline, we'd need a complex schema.
-    // Spec v0.9 says "children": ["id1", "id2"] OR template object.
-    // "ChildList" in common_types.json.
-
-    final idList = S.list(items: S.string(description: 'Component ID'));
-
-    // We can add template support if needed, matching common_types.json For
-    // Phase 1 implementation plan, it mostly talks about flattening components.
+    // We can add template support if needed, matching common_types.json.
     // We'll stick to List<String> for now as per `common_types.json` "simple"
-    // list. A2ui v0.9 allows ChildList to be a template too.
+    // list.
+    final idList = S.list(items: S.string(description: 'Component ID'));
     return idList;
   }
 
   /// Schema for a user-initiated action.
-  /// Schema for a user-initiated action (v0.9).
   ///
   /// Can be either a server-side event or a client-side function call.
   static Schema action({String? description}) {
@@ -396,7 +386,7 @@ class A2uiSchemas {
     );
   }
 
-  /// Schema for a createSurface message (v0.9).
+  /// Schema for a createSurface message.
   static Schema createSurfaceSchema() => S.object(
     properties: {
       surfaceIdKey: S.string(description: 'The unique ID for the surface.'),
@@ -437,10 +427,10 @@ class A2uiSchemas {
     return S.string(description: description ?? 'The ID of a component.');
   }
 
-  /// Schema for a updateComponents message (v0.9).
+  /// Schema for a updateComponents message.
   static Schema updateComponentsSchema(Catalog catalog) {
     // Collect specific component schemas from the catalog.
-    // We assume catalog items have updated v0.9 schemas (flattened).
+    // We assume catalog items have updated schemas (flattened).
     final List<Schema> componentSchemas = catalog.items
         .map((item) => item.dataSchema)
         .toList();
@@ -467,8 +457,7 @@ class A2uiSchemas {
     );
   }
 
-  // Backward compatibility alias if needed, or removable.
-  // We remove the old methods to enforce v0.9.
+  // Backward compatibility aliases.
   static Schema beginRenderingSchema() => createSurfaceSchema();
   static Schema beginRenderingSchemaNoCatalogId() => S.object(
     properties: {

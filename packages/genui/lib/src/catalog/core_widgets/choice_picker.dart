@@ -61,7 +61,7 @@ final choicePicker = CatalogItem(
         .subscribeToObjectArray(data.value);
 
     // If variant is missing, default based on something? Or assume defaults.
-    // v0.9 `variant` controls it.
+    // The `variant` controls it.
     final isMutuallyExclusive = data.variant == 'mutuallyExclusive';
 
     return Column(

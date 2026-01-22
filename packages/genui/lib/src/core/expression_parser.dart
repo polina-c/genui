@@ -20,11 +20,25 @@ class ExpressionParser {
   ///
   /// If the string contains a single expression that encompasses the entire
   /// string (e.g. "${/foo}"), the return value may be of any type (not just
-  /// String).
+  /// [String]).
   ///
   /// If the string contains text mixed with expressions (e.g. "Value: ${/foo}"),
-  /// the return value will always be a String.
+  /// the return value will always be a [String].
+  ///
+  /// This method is the entry point for expression resolution. It handles
+  /// escaping of the `${` sequence using a backslash (e.g. `\${`).
+  Object? parse(String input) {
+    if (!input.contains(r'${')) {
+      return input;
+    }
+    return _parseStringWithInterpolations(input);
+  }
+
   /// Evaluates a logic expression against the current context.
+  ///
+  /// Supports `and`, `or`, `not`, `call`, `true`, and `false` keys in the
+  /// [expression] map.
+
   bool evaluateLogic(JsonMap expression) {
     if (expression.containsKey('and')) {
       final list = expression['and'] as List;
@@ -44,11 +58,15 @@ class ExpressionParser {
     if (expression.containsKey('true')) return true;
     if (expression.containsKey('false')) return false;
 
-    // Fallback: strictly assume false or throw?
-    // v0.9 schema implies these are the options.
+    // Fallback: strictly assume false for unknown logic operators.
     return false;
   }
 
+  /// Evaluates a function call defined in [callDefinition].
+  ///
+  /// The [callDefinition] must contain a 'call' key with the function name
+  /// and an optional 'args' key with a list of arguments.
+  /// Arguments can be literal values, expressions, or nested function calls.
   Object? evaluateFunctionCall(JsonMap callDefinition) {
     final name = callDefinition['call'] as String;
     final List<Object?> args =
@@ -68,21 +86,6 @@ class ExpressionParser {
         }).toList() ??
         [];
     return _functions.invoke(name, args);
-  }
-
-  /// Parses the input string and resolves any embedded expressions.
-  ///
-  /// If the string contains a single expression that encompasses the entire
-  /// string (e.g. "${/foo}"), the return value may be of any type (not just
-  /// String).
-  ///
-  /// If the string contains text mixed with expressions (e.g. "Value: ${/foo}"),
-  /// the return value will always be a String.
-  Object? parse(String input) {
-    if (!input.contains(r'${')) {
-      return input;
-    }
-    return _parseStringWithInterpolations(input);
   }
 
   Object? _parseStringWithInterpolations(String input) {

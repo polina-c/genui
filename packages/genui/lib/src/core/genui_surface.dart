@@ -55,10 +55,7 @@ class _GenUiSurfaceState extends State<GenUiSurface> {
           return widget.defaultBuilder?.call(context) ??
               const SizedBox.shrink();
         }
-        // v0.9: Implicit root is "root" or falling back logic if needed. If
-        // definition logic changed to always use "root", we can hardcode it
-        // here. Or if UiDefinition provides a helper. Assuming "root" is the
-        // standard ID for the root component.
+        // Implicit root is "root".
         const rootId = 'root';
         if (definition.components.isEmpty ||
             !definition.components.containsKey(rootId)) {
@@ -142,10 +139,8 @@ class _GenUiSurfaceState extends State<GenUiSurface> {
       final modalId = event.context['modalId'] as String;
       final Component? modalComponent = definition.components[modalId];
       if (modalComponent == null) return;
-      // In v0.9, properties are flat, so 'contentChild' is directly in
-      // properties or nested? Modal schema usually defines content.
-      // 'contentChild' was likely a property in v0.8. We assume it's a property
-      // named 'contentChild' in the Modal component.
+      // The 'contentChild' property is expected to be a direct property of the
+      // Modal component.
       final contentChildId =
           modalComponent.properties['contentChild'] as String;
       showModalBottomSheet<void>(

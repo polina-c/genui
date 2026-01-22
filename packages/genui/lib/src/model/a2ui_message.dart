@@ -28,8 +28,6 @@ sealed class A2uiMessage {
     if (json.containsKey('deleteSurface')) {
       return DeleteSurface.fromJson(json['deleteSurface'] as JsonMap);
     }
-    // Backward compatibility for v0.8 (optional, but checking just in case)
-    // or simply throw if we are strictly v0.9
     throw ArgumentError('Unknown A2UI message type: $json');
   }
 
@@ -159,9 +157,7 @@ final class UpdateDataModel extends A2uiMessage {
 
   /// The new value to write to the data model. If null (and key is present in
   /// JSON), it implies deletion of the key at path. However, dart `fromJson`
-  /// might not distinguish absent vs null easily without helper. In v0.9 spec:
-  /// "If omitted, the key at 'path' is removed." Here we assume `value` is the
-  /// value from JSON.
+  /// JSON.
   final Object? value;
 
   /// Converts this message to a JSON map.
