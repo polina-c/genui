@@ -94,24 +94,10 @@ final class ChatMessage {
   /// Deserializes a message.
   ///
   /// The message is compatible with [toJson].
-  factory ChatMessage.fromJson(
-    Map<String, Object?> json, {
-    Map<String, JsonToPartConverter> converterRegistry =
-        const <String, JsonToPartConverter>{
-          TextPart.type: PartConverter(TextPart.fromJson),
-          DataPart.type: PartConverter(DataPart.fromJson),
-          LinkPart.type: PartConverter(LinkPart.fromJson),
-          ToolPart.type: PartConverter(ToolPart.fromJson),
-        },
-  }) {
+  factory ChatMessage.fromJson(Map<String, Object?> json) {
     final List<BasePart> parts =
         (json[_Json.parts] as List<Object?>?)
-            ?.map(
-              (e) => BasePart.fromJson(
-                e as Map<String, Object?>,
-                converterRegistry: converterRegistry,
-              ),
-            )
+            ?.map((e) => Part.fromJson(e as Map<String, Object?>))
             .toList() ??
         const [];
 

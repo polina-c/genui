@@ -106,6 +106,7 @@ const defaultPartConverterRegistry = <String, JsonToPartConverter>{
   DataPart.type: PartConverter(DataPart.fromJson),
   LinkPart.type: PartConverter(LinkPart.fromJson),
   ToolPart.type: PartConverter(ToolPart.fromJson),
+  ThinkingPart.type: PartConverter(ThinkingPart.fromJson),
 };
 
 typedef _JsonToPartFunction<T> = T Function(Map<String, Object?> json);
