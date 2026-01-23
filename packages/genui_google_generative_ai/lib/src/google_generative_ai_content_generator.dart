@@ -135,6 +135,7 @@ class GoogleGenerativeAiContentGenerator
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
     Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   }) async {
     _isProcessing.value = true;
     try {
@@ -144,11 +145,15 @@ class GoogleGenerativeAiContentGenerator
         messages: messages,
         // This turns on forced function calling.
         outputSchema: dsb.S.object(properties: {'response': dsb.S.string()}),
+        cancellationSignal: cancellationSignal,
       );
+      // Convert any response to a text response to the user.
       // Convert any response to a text response to the user.
       if (response is Map && response.containsKey('response')) {
         _textResponseController.add(response['response']! as String);
       }
+    } on CancellationException {
+      genUiLogger.info('Request cancelled');
     } catch (e, st) {
       genUiLogger.severe('Error generating content', e, st);
       _errorController.add(ContentGeneratorError(e, st));
@@ -416,6 +421,7 @@ class GoogleGenerativeAiContentGenerator
   Future<Object?> _generate({
     required Iterable<ChatMessage> messages,
     dsb.Schema? outputSchema,
+    CancellationSignal? cancellationSignal,
   }) async {
     final isForcedToolCalling = outputSchema != null;
     final converter = GoogleContentConverter();
@@ -424,13 +430,18 @@ class GoogleGenerativeAiContentGenerator
     final service = serviceFactory(configuration: this);
 
     try {
+      // Remove default tools if they are overridden by additionalTools
+      final userToolNames = additionalTools.map((t) => t.name).toSet();
       final availableTools = [
-        UpdateComponentsTool(
-          handleMessage: _a2uiMessageController.add,
-          catalog: catalog,
-        ),
-        CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
-        DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
+        if (!userToolNames.contains('updateComponents'))
+          UpdateComponentsTool(
+            handleMessage: _a2uiMessageController.add,
+            catalog: catalog,
+          ),
+        if (!userToolNames.contains('createSurface'))
+          CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
+        if (!userToolNames.contains('deleteSurface'))
+          DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
         ...additionalTools,
       ];
 
@@ -471,6 +482,9 @@ class GoogleGenerativeAiContentGenerator
           : <google_ai.Content>[];
 
       while (toolUsageCycle < maxToolUsageCycles) {
+        if (cancellationSignal?.isCancelled ?? false) {
+          throw const CancellationException();
+        }
         genUiLogger.fine('Starting tool usage cycle ${toolUsageCycle + 1}.');
         if (isForcedToolCalling && capturedResult != null) {
           genUiLogger.fine('Captured result found, exiting tool usage loop.');

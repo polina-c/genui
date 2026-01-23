@@ -17,7 +17,8 @@ sealed class ToolAction {}
 /// Proceed with the tool execution as normal.
 class ToolActionProceed extends ToolAction {}
 
-/// Cancel the tool execution. The AI will receive an error or a cancellation message.
+/// Cancel the tool execution. The AI will receive an error or a cancellation
+/// message.
 class ToolActionCancel extends ToolAction {
   final String reason;
   ToolActionCancel(this.reason);
@@ -45,6 +46,58 @@ final class ContentGeneratorError implements Exception {
 
   /// Creates a [ContentGeneratorError].
   const ContentGeneratorError(this.error, [this.stackTrace]);
+
+  @override
+  String toString() => 'ContentGeneratorError: $error';
+}
+
+/// Thrown when an operation is cancelled.
+class CancellationException implements Exception {
+  /// The reason for the cancellation.
+  final String? message;
+
+  /// Creates a [CancellationException].
+  const CancellationException([this.message]);
+
+  @override
+  String toString() =>
+      'CancellationException${message != null ? ': $message' : ''}';
+}
+
+/// A signal that can be used to cancel an operation.
+class CancellationSignal {
+  bool _isCancelled = false;
+
+  /// Whether the operation has been cancelled.
+  bool get isCancelled => _isCancelled;
+
+  final _listeners = <VoidCallback>[];
+
+  /// Cancels the operation.
+  void cancel() {
+    if (_isCancelled) return;
+    _isCancelled = true;
+    for (final VoidCallback listener in _listeners) {
+      listener();
+    }
+  }
+
+  /// Adds a listener that will be called when the operation is cancelled.
+  ///
+  /// If the operation is already cancelled, the listener will be called
+  /// immediately.
+  void addListener(VoidCallback listener) {
+    if (_isCancelled) {
+      listener();
+    } else {
+      _listeners.add(listener);
+    }
+  }
+
+  /// Removes a listener.
+  void removeListener(VoidCallback listener) {
+    _listeners.remove(listener);
+  }
 }
 
 /// An abstract interface for a content generator.
@@ -61,7 +114,8 @@ abstract interface class ContentGenerator {
   /// A stream of text responses from the agent.
   Stream<String> get textResponseStream;
 
-  /// A stream of events related to the generation process (tool calls, usage, etc.).
+  /// A stream of events related to the generation process (tool calls, usage,
+  /// etc.).
   Stream<GenUiEvent> get eventStream;
 
   /// A stream of errors from the agent.
@@ -80,6 +134,7 @@ abstract interface class ContentGenerator {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
     Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   });
 
   /// Adds a tool interceptor.

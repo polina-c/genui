@@ -61,6 +61,7 @@ class A2uiContentGenerator
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
     Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   }) async {
     _isProcessing.value = true;
     try {
@@ -73,6 +74,7 @@ class A2uiContentGenerator
         message,
         clientCapabilities: clientCapabilities,
         clientDataModel: clientDataModel,
+        cancellationSignal: cancellationSignal,
       );
       if (responseText != null && responseText.isNotEmpty) {
         _textResponseController.add(responseText);

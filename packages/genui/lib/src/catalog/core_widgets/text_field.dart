@@ -164,8 +164,8 @@ class _TextFieldState extends State<_TextField> {
         _ => TextInputType.text,
       },
       onChanged: (val) {
-        _validate(val);
         widget.onChanged(val);
+        _validate(val);
       },
       onSubmitted: (val) {
         _validate(val);

@@ -128,6 +128,7 @@ class FirebaseAiContentGenerator
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
     Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   }) async {
     _isProcessing.value = true;
     try {
@@ -137,11 +138,15 @@ class FirebaseAiContentGenerator
         messages: messages,
         // This turns on forced function calling.
         outputSchema: dsb.S.object(properties: {'response': dsb.S.string()}),
+        cancellationSignal: cancellationSignal,
       );
+      // Convert any response to a text response to the user.
       // Convert any response to a text response to the user.
       if (response is Map && response.containsKey('response')) {
         _textResponseController.add(response['response']! as String);
       }
+    } on CancellationException {
+      genUiLogger.info('Request cancelled');
     } catch (e, st) {
       genUiLogger.severe('Error generating content', e, st);
       _errorController.add(ContentGeneratorError(e, st));
@@ -396,6 +401,7 @@ class FirebaseAiContentGenerator
   Future<Object?> _generate({
     required Iterable<ChatMessage> messages,
     dsb.Schema? outputSchema,
+    CancellationSignal? cancellationSignal,
   }) async {
     final isForcedToolCalling = outputSchema != null;
     final converter = GeminiContentConverter();
@@ -451,6 +457,9 @@ class FirebaseAiContentGenerator
     );
 
     while (toolUsageCycle < maxToolUsageCycles) {
+      if (cancellationSignal?.isCancelled ?? false) {
+        throw const CancellationException();
+      }
       genUiLogger.fine('Starting tool usage cycle ${toolUsageCycle + 1}.');
       if (isForcedToolCalling && capturedResult != null) {
         genUiLogger.fine('Captured result found, exiting tool usage loop.');

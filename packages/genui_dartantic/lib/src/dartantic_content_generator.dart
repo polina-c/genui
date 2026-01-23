@@ -143,15 +143,23 @@ ${_outputSchema.toJson()}
     _isProcessing.dispose();
   }
 
+  CancellationSignal? _currentCancellationSignal;
+
   @override
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
     Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   }) async {
     _isProcessing.value = true;
+    _currentCancellationSignal = cancellationSignal;
     try {
+      if (cancellationSignal?.isCancelled ?? false) {
+        throw const CancellationException();
+      }
+
       // Convert GenUI history to dartantic ChatMessage list
       final List<dartantic.ChatMessage> dartanticHistory = _converter.toHistory(
         history,
@@ -185,10 +193,13 @@ ${_outputSchema.toJson()}
 
       _textResponseController.add(responseText);
       genUiLogger.info('Received response from Dartantic: $responseText');
+    } on CancellationException {
+      genUiLogger.info('Request cancelled');
     } catch (e, st) {
       genUiLogger.severe('Error generating content', e, st);
       _errorController.add(ContentGeneratorError(e, st));
     } finally {
+      _currentCancellationSignal = null;
       _isProcessing.value = false;
     }
   }
@@ -201,6 +212,10 @@ ${_outputSchema.toJson()}
           description: aiTool.description,
           inputSchema: adaptSchema(aiTool.parameters),
           onCall: (Map<String, dynamic> args) async {
+            if (_currentCancellationSignal?.isCancelled ?? false) {
+              throw const CancellationException();
+            }
+
             // Intercept tool call
             final toolAction = await interceptToolCall(aiTool.name, args);
 

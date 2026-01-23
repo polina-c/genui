@@ -121,10 +121,12 @@ class A2uiMessageProcessor implements GenUiHost {
   /// The policy to use for cleaning up old surfaces.
   final SurfaceCleanupPolicy cleanupPolicy;
 
-  /// The maximum number of surfaces to keep when using [SurfaceCleanupPolicy.keepLastN].
+  /// The maximum number of surfaces to keep when using
+  /// [SurfaceCleanupPolicy.keepLastN].
   final int maxSurfaces;
 
-  /// The duration to wait for a [CreateSurface] message before discarding pending updates.
+  /// The duration to wait for a [CreateSurface] message before discarding
+  /// pending updates.
   final Duration pendingUpdateTimeout;
 
   final _surfaces = <String, ValueNotifier<UiDefinition?>>{};
@@ -222,6 +224,13 @@ class A2uiMessageProcessor implements GenUiHost {
     switch (message) {
       case CreateSurface():
         final String surfaceId = message.surfaceId;
+        if (surfaceId.isEmpty) {
+          throw GenUiValidationException(
+            surfaceId: surfaceId,
+            message: 'Surface ID cannot be empty',
+            path: 'surfaceId',
+          );
+        }
 
         // Check buffer first
         final List<A2uiMessage>? pending = _pendingUpdates.remove(surfaceId);
@@ -290,7 +299,8 @@ class A2uiMessageProcessor implements GenUiHost {
         // Validate before applying? Or validate inside copyWith/Components?
         // Phase 1 implementation added validate(Schema).
         // We need the schema to validate.
-        // For now, we assume implicit validation or call validate if schema available.
+        // For now, we assume implicit validation or call validate if schema
+        // available.
 
         notifier.value = uiDefinition;
 
@@ -323,9 +333,7 @@ class A2uiMessageProcessor implements GenUiHost {
         );
         final UiDefinition? uiDefinition = notifier.value;
         if (uiDefinition != null) {
-          _surfaceUpdates.add(
-            ComponentsUpdated(surfaceId, uiDefinition),
-          );
+          _surfaceUpdates.add(ComponentsUpdated(surfaceId, uiDefinition));
         }
 
       case DeleteSurface():
@@ -347,7 +355,8 @@ class A2uiMessageProcessor implements GenUiHost {
     if (!_pendingUpdateTimers.containsKey(surfaceId)) {
       _pendingUpdateTimers[surfaceId] = Timer(pendingUpdateTimeout, () {
         genUiLogger.warning(
-          'Timeout waiting for CreateSurface for $surfaceId. Discarding pending updates.',
+          'Timeout waiting for CreateSurface for $surfaceId. '
+          'Discarding pending updates.',
         );
         _pendingUpdates.remove(surfaceId);
         _pendingUpdateTimers.remove(surfaceId);

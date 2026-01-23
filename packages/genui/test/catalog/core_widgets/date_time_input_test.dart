@@ -186,6 +186,33 @@ void main() {
       await robot.cancelPicker();
     });
   });
+
+  group('validation', () {
+    testWidgets('shows error when check fails', (tester) async {
+      final robot = DateTimeInputRobot(tester);
+      final (GenUiHost manager, String surfaceId) = setup('validation_test', {
+        'value': {'path': '/myDate'},
+        'checks': [
+          {
+            'func': 'required',
+            'args': [
+              {'path': '/myDate'},
+            ],
+            'message': 'Date is required',
+          },
+        ],
+      });
+
+      await robot.pumpSurface(manager, surfaceId);
+      robot.expectError('Date is required');
+
+      manager
+          .dataModelForSurface(surfaceId)
+          .update(DataPath('/myDate'), '2022-01-01');
+      await robot.pumpSurface(manager, surfaceId);
+      robot.expectNoError();
+    });
+  });
 }
 
 (GenUiHost, String) setup(String componentId, Map<String, dynamic> props) {
@@ -262,5 +289,19 @@ class DateTimeInputRobot {
 
   void expectTimePickerHidden() {
     expect(find.text('Select time'), findsNothing);
+  }
+
+  void expectError(String errorText) {
+    final Finder finder = find.byType(InputDecorator);
+    expect(finder, findsOneWidget);
+    final InputDecorator decorator = tester.widget(finder);
+    expect(decorator.decoration.errorText, errorText);
+  }
+
+  void expectNoError() {
+    final Finder finder = find.byType(InputDecorator);
+    expect(finder, findsOneWidget);
+    final InputDecorator decorator = tester.widget(finder);
+    expect(decorator.decoration.errorText, isNull);
   }
 }

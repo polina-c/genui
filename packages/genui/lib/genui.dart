@@ -35,3 +35,5 @@ export 'src/model/tools.dart';
 export 'src/model/ui_models.dart';
 export 'src/primitives/logging.dart';
 export 'src/primitives/simple_items.dart';
+export 'src/widgets/gen_ui_fallback.dart';
+export 'src/widgets/gen_ui_surface_manager.dart';

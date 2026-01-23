@@ -79,7 +79,14 @@ class A2uiAgentConnector {
     genui.ChatMessage chatMessage, {
     genui.A2UiClientCapabilities? clientCapabilities,
     Map<String, Object?>? clientDataModel,
+    genui.CancellationSignal? cancellationSignal,
   }) async {
+    cancellationSignal?.addListener(() {
+      if (taskId != null) {
+        client.cancelTask(taskId!);
+      }
+    });
+
     final List<genui.MessagePart> parts = switch (chatMessage) {
       genui.UserMessage(parts: final p) => p,
       genui.UserUiInteractionMessage(parts: final p) => p,
