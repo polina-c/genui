@@ -46,3 +46,9 @@ This document provides context for AI agents making changes to the `genui_a2ui` 
 -   `a2a`: A2A client library.
 -   `logging`: For logging.
 -   `uuid`: For message IDs.
+
+## Development
+
+- While you could run the `tool/run_all_tests_and_fixes.sh` (or `tool/test_and_fix/bin/test_and_fix.dart`, which is the same thing) each time you want to test a change, it is very inefficient.
+  - Instead, run the tests for the specific package you are working on. For example, `flutter test packages/genui_a2ui/test`.
+  - When all the tests in the package pass, and you are about to commit the code, run the tool/run_all_tests_and_fixes.sh script to fix any linting and formatting issues, and to verify that all the tests have been run.

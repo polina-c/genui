@@ -62,7 +62,9 @@ final trailhead = CatalogItem(
             }
           ],
           "action": {
-            "name": "select_topic"
+            "event": {
+              "name": "select_topic"
+            }
           }
         }
       ]

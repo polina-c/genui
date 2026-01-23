@@ -70,7 +70,9 @@ final inputGroup = CatalogItem(
             "text_input2"
           ],
           "action": {
-            "name": "submit_form"
+            "event": {
+              "name": "submit_form"
+            }
           }
         },
         {

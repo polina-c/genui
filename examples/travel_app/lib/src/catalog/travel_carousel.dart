@@ -308,13 +308,17 @@ String _hotelExample() {
           'description': hotel1.description,
           'imageChildId': 'image_1',
           'listingSelectionId': '12345',
-          'action': {'name': 'selectHotel'},
+          'action': {
+            'event': {'name': 'selectHotel'},
+          },
         },
         {
           'description': hotel2.description,
           'imageChildId': 'image_2',
           'listingSelectionId': '12346',
-          'action': {'name': 'selectHotel'},
+          'action': {
+            'event': {'name': 'selectHotel'},
+          },
         },
       ],
     },
@@ -354,7 +358,9 @@ String _inspirationExample() => '''
           "imageChildId": "santorini_beach_image",
           "listingSelectionId": "12345",
           "action": {
-            "name": "selectExperience"
+            "event": {
+              "name": "selectExperience"
+            }
           }
         },
         {
@@ -362,7 +368,9 @@ String _inspirationExample() => '''
           "description": "Cultural Exploration",
           "listingSelectionId": "12346",
           "action": {
-            "name": "selectExperience"
+            "event": {
+              "name": "selectExperience"
+            }
           }
         },
         {
@@ -370,14 +378,18 @@ String _inspirationExample() => '''
           "description": "Adventure & Outdoors",
           "listingSelectionId": "12347",
           "action": {
-            "name": "selectExperience"
+            "event": {
+              "name": "selectExperience"
+            }
           }
         },
         {
           "description": "Foodie Tour",
           "imageChildId": "greece_food_image",
           "action": {
-            "name": "selectExperience"
+            "event": {
+              "name": "selectExperience"
+            }
           }
         }
       ]
