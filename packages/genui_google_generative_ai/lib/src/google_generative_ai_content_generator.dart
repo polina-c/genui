@@ -451,12 +451,23 @@ class GoogleGenerativeAiContentGenerator
       Object? capturedResult;
 
       // Build system instruction if provided
-      final systemInstructionContent = systemInstruction != null
-          ? [
-              google_ai.Content(
-                parts: [google_ai.Part(text: systemInstruction)],
-              ),
-            ]
+      // Build system instruction if provided
+      final parts = <google_ai.Part>[];
+      if (systemInstruction != null) {
+        parts.add(google_ai.Part(text: systemInstruction));
+      }
+      parts.add(
+        google_ai.Part(text: StandardCatalogEmbed.standardCatalogRules),
+      );
+      parts.add(
+        google_ai.Part(
+          text:
+              'Standard Catalog:\n${StandardCatalogEmbed.standardCatalogJson}',
+        ),
+      );
+
+      final systemInstructionContent = parts.isNotEmpty
+          ? [google_ai.Content(role: 'user', parts: parts)]
           : <google_ai.Content>[];
 
       while (toolUsageCycle < maxToolUsageCycles) {

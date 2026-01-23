@@ -74,6 +74,14 @@ class DartanticContentGenerator
 ${dartanticTools.map((tool) => tool.toJson()).join('\n\n')}
 </tools>
 
+<standard_catalog>
+${StandardCatalogEmbed.standardCatalogJson}
+</standard_catalog>
+
+<standard_catalog_rules>
+${StandardCatalogEmbed.standardCatalogRules}
+</standard_catalog_rules>
+
 <output_schema>
 ${_outputSchema.toJson()}
 </output_schema>

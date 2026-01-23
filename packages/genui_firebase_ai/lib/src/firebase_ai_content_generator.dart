@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_ai/firebase_ai.dart' as fai;
 import 'package:firebase_ai/firebase_ai.dart' hide TextPart;
 // ignore: implementation_imports
 import 'package:firebase_ai/src/api.dart' show ModalityTokenCount;
@@ -432,9 +433,13 @@ class FirebaseAiContentGenerator
 
     final GeminiGenerativeModelInterface model = modelCreator(
       configuration: this,
-      systemInstruction: systemInstruction == null
-          ? null
-          : Content.system(systemInstruction!),
+      systemInstruction: Content('system', [
+        if (systemInstruction != null) fai.TextPart(systemInstruction!),
+        const fai.TextPart(StandardCatalogEmbed.standardCatalogRules),
+        const fai.TextPart(
+          'Standard Catalog:\n${StandardCatalogEmbed.standardCatalogJson}',
+        ),
+      ]),
       tools: generativeAiTools,
       toolConfig: isForcedToolCalling
           ? ToolConfig(

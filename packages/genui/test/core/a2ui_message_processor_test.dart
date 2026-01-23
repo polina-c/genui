@@ -46,16 +46,22 @@ void main() {
         UpdateComponents(surfaceId: surfaceId, components: components),
       );
 
-      final Future<GenUiUpdate> futureUpdate =
-          messageProcessor.surfaceUpdates.first;
+      final Future<List<GenUiUpdate>> futureUpdates = messageProcessor
+          .surfaceUpdates
+          .take(2)
+          .toList();
       messageProcessor.handleMessage(
         const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
       );
-      final GenUiUpdate update = await futureUpdate;
+      final List<GenUiUpdate> updates = await futureUpdates;
 
-      expect(update, isA<SurfaceAdded>());
-      expect(update.surfaceId, surfaceId);
-      final UiDefinition definition = (update as SurfaceAdded).definition;
+      expect(updates[0], isA<SurfaceAdded>());
+      expect(updates[0].surfaceId, surfaceId);
+
+      final GenUiUpdate update2 = updates[1];
+      expect(update2, isA<ComponentsUpdated>());
+      final UiDefinition definition = (update2 as ComponentsUpdated).definition;
+
       expect(definition, isNotNull);
       expect(
         definition.components['root'],
@@ -121,11 +127,15 @@ void main() {
         ),
       ];
       messageProcessor.handleMessage(
+        const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
+      );
+      messageProcessor.handleMessage(
         UpdateComponents(surfaceId: surfaceId, components: components),
       );
 
       final Future<GenUiUpdate> futureUpdate =
           messageProcessor.surfaceUpdates.first;
+
       messageProcessor.handleMessage(const DeleteSurface(surfaceId: surfaceId));
       final GenUiUpdate update = await futureUpdate;
 
@@ -176,7 +186,7 @@ void main() {
       final UserUiInteractionMessage message = await future;
       expect(message, isA<UserUiInteractionMessage>());
       final String expectedJson = jsonEncode({
-        'userAction': {
+        'action': {
           'surfaceId': 'testSurface',
           'name': 'testAction',
           'sourceComponentId': 'testWidget',

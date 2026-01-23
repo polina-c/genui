@@ -31,7 +31,7 @@ void main() {
       final Future<void> future = expectLater(
         a2uiMessageProcessor.surfaceUpdates,
         emitsThrough(
-          isA<SurfaceAdded>()
+          isA<ComponentsUpdated>()
               .having((e) => e.surfaceId, surfaceIdKey, 'testSurface')
               .having(
                 (e) => e.definition.components.length,
