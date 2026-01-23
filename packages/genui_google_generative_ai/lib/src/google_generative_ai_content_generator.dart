@@ -461,7 +461,8 @@ class GoogleGenerativeAiContentGenerator
       );
       parts.add(
         google_ai.Part(
-          text: 'Standard Catalog:\n${catalog.definition.toJson(indent: '  ')}',
+          text:
+              'A2UI Message Schema:\n${const JsonEncoder.withIndent('  ').convert(A2uiMessage.a2uiMessageSchema(catalog).toJson())}',
         ),
       );
 

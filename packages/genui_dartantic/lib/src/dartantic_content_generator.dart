@@ -68,9 +68,9 @@ class DartanticContentGenerator
 ${dartanticTools.map((tool) => tool.toJson()).join('\n\n')}
 </tools>
 
-<standard_catalog>
-${const JsonEncoder.withIndent('  ').convert(catalog.definition.toJson())}
-</standard_catalog>
+<a2ui_schema>
+${const JsonEncoder.withIndent('  ').convert(A2uiMessage.a2uiMessageSchema(catalog).toJson())}
+</a2ui_schema>
 
 ''';
 

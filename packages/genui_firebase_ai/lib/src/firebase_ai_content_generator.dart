@@ -428,13 +428,15 @@ class FirebaseAiContentGenerator
     var toolUsageCycle = 0;
     const maxToolUsageCycles = 40; // Safety break for tool loops
 
-    final String catalogJson = catalog.definition.toJson(indent: '  ');
+    final String catalogJson = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(A2uiMessage.a2uiMessageSchema(catalog).toJson());
     final GeminiGenerativeModelInterface model = modelCreator(
       configuration: this,
       systemInstruction: Content('system', [
         if (systemInstruction != null) fai.TextPart(systemInstruction!),
         const fai.TextPart(StandardCatalogEmbed.standardCatalogRules),
-        fai.TextPart('Standard Catalog:\n$catalogJson'),
+        fai.TextPart('A2UI Message Schema:\n$catalogJson'),
       ]),
       tools: generativeAiTools,
       toolConfig: (generativeAiTools?.isNotEmpty ?? false)
