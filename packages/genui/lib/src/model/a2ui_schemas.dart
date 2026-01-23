@@ -251,6 +251,46 @@ class A2uiSchemas {
     required: ['func', 'args'],
   );
 
+  /// Schema for a logic expression used in validation.
+  static Schema logicExpression({String? description}) {
+    return S.object(
+      description: description,
+      properties: {
+        'func': S.string(description: 'Function to call.'),
+        'args': S.list(
+          items: S.any(),
+          description: 'Arguments for the function.',
+        ),
+        'and': S.list(items: S.object(), description: 'Logical AND.'),
+        'or': S.list(items: S.object(), description: 'Logical OR.'),
+        'not': S.object(description: 'Logical NOT.'),
+        'true': S.boolean(description: 'Always true.'),
+        'false': S.boolean(description: 'Always false.'),
+      },
+    );
+  }
+
+  /// Schema for a validation check, including logic and an error message.
+  static Schema validationCheck({String? description}) {
+    return S.object(
+      description: description,
+      properties: {
+        'message': S.string(description: 'Error message if validation fails.'),
+        'func': S.string(description: 'Function to call.'),
+        'args': S.list(
+          items: S.any(),
+          description: 'Arguments for the function.',
+        ),
+        'and': S.list(items: S.object(), description: 'Logical AND.'),
+        'or': S.list(items: S.object(), description: 'Logical OR.'),
+        'not': S.object(description: 'Logical NOT.'),
+        'true': S.boolean(description: 'Always true.'),
+        'false': S.boolean(description: 'Always false.'),
+      },
+      required: ['message'],
+    );
+  }
+
   /// Schema for a value that can be either a literal string or a
   /// data-bound path to a string in the DataModel.
   static Schema stringReference({

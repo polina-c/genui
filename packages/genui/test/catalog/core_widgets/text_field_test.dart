@@ -116,4 +116,68 @@ void main() {
     final Size size = tester.getSize(find.byType(TextField));
     expect(size.width, 800.0);
   });
+
+  testWidgets('TextField validation checks work', (WidgetTester tester) async {
+    final manager = A2uiMessageProcessor(
+      catalogs: [CoreCatalogItems.asCatalog()],
+    );
+    const surfaceId = 'validationTest';
+    // Initialize with invalid value
+    manager.handleMessage(
+      const UpdateDataModel(
+        surfaceId: surfaceId,
+        path: '/',
+        value: {'inputValue': 'short'},
+      ),
+    );
+
+    final components = [
+      const Component(
+        id: 'root',
+        type: 'TextField',
+        properties: {
+          'label': 'Input',
+          'value': {'path': 'inputValue'},
+          'checks': [
+            {
+              'message': 'Must be at least 6 chars',
+              'func': 'length',
+              'args': [
+                {'path': 'inputValue'},
+                {'min': 6},
+              ],
+            },
+          ],
+        },
+      ),
+    ];
+
+    manager.handleMessage(
+      UpdateComponents(surfaceId: surfaceId, components: components),
+    );
+    manager.handleMessage(
+      const CreateSurface(
+        surfaceId: surfaceId,
+        catalogId: 'a2ui.org:standard_catalog_0_8_0',
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GenUiSurface(host: manager, surfaceId: surfaceId),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify error text is shown
+    expect(find.text('Must be at least 6 chars'), findsOneWidget);
+
+    // Update with valid value
+    await tester.enterText(find.byType(TextField), 'valid value');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Must be at least 6 chars'), findsNothing);
+  });
 }

@@ -51,7 +51,7 @@ class ExpressionParser {
     if (expression.containsKey('not')) {
       return !evaluateLogic(expression['not'] as JsonMap);
     }
-    if (expression.containsKey('call')) {
+    if (expression.containsKey('func')) {
       final Object? result = evaluateFunctionCall(expression);
       return result == true;
     }
@@ -64,11 +64,11 @@ class ExpressionParser {
 
   /// Evaluates a function call defined in [callDefinition].
   ///
-  /// The [callDefinition] must contain a 'call' key with the function name
+  /// The [callDefinition] must contain a 'func' key with the function name
   /// and an optional 'args' key with a list of arguments.
   /// Arguments can be literal values, expressions, or nested function calls.
   Object? evaluateFunctionCall(JsonMap callDefinition) {
-    final name = callDefinition['call'] as String;
+    final name = callDefinition['func'] as String;
     final List<Object?> args =
         (callDefinition['args'] as List?)?.map((arg) {
           if (arg is String) {

@@ -31,7 +31,7 @@ final _schema = S.object(
     'variant': S.string(
       enumValues: ['shortText', 'longText', 'number', 'date', 'obscured'],
     ),
-    'checks': S.list(items: S.object(properties: {'message': S.string()})),
+    'checks': S.list(items: A2uiSchemas.validationCheck()),
     'validationRegexp': S.string(),
     'onSubmittedAction': A2uiSchemas.action(),
   },
@@ -96,6 +96,7 @@ class _TextFieldState extends State<_TextField> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue);
+    _errorText = _calculateError(widget.initialValue);
   }
 
   @override
@@ -103,35 +104,42 @@ class _TextFieldState extends State<_TextField> {
     super.didUpdateWidget(oldWidget);
     if (widget.initialValue != _controller.text) {
       _controller.text = widget.initialValue;
+      final String? newError = _calculateError(widget.initialValue);
+      if (newError != _errorText) {
+        setState(() {
+          _errorText = newError;
+        });
+      }
+    } else if (widget.checks != oldWidget.checks) {
+      // Re-validate if checks changed
+      final String? newError = _calculateError(_controller.text);
+      if (newError != _errorText) {
+        setState(() {
+          _errorText = newError;
+        });
+      }
     }
-    // Re-validate if checks changed?
-    // Start with clean state or re-validate if value changed externally?
   }
 
-  void _validate(String value) {
+  String? _calculateError(String value) {
     if (widget.checks == null || widget.parser == null) {
-      setState(() => _errorText = null);
-      return;
+      return null;
     }
 
     for (final JsonMap check in widget.checks!) {
-      // Each check is a CheckRule: LogicExpression + message
-      // We evaluate the CheckRule as a LogicExpression.
-      // But CheckRule schema says allOf [LogicExpression, {property: message}].
-      // So the check object ITSELF is the logic expression (mixed in).
-      // We pass the check object to evaluateLogic.
-      // NOTE: evaluateLogic returns true if valid.
-      // But we need to make sure we don't treat 'message' as part of logic.
-      // evaluateLogic ignores unknown keys.
       final bool isValid = widget.parser!.evaluateLogic(check);
       if (!isValid) {
-        setState(() {
-          _errorText = check['message'] as String? ?? 'Invalid value';
-        });
-        return;
+        return check['message'] as String? ?? 'Invalid value';
       }
     }
-    setState(() => _errorText = null);
+    return null;
+  }
+
+  void _validate(String value) {
+    final String? newError = _calculateError(value);
+    if (newError != _errorText) {
+      setState(() => _errorText = newError);
+    }
   }
 
   @override
@@ -265,7 +273,7 @@ final textField = CatalogItem(
                 } else if (actionData.containsKey('functionCall')) {
                   final funcMap = actionData['functionCall'] as JsonMap;
                   // Handle function call (e.g. closeModal)
-                  final callName = funcMap['call'] as String;
+                  final callName = funcMap['func'] as String;
                   if (callName == 'closeModal') {
                     Navigator.of(itemContext.buildContext).pop();
                     return;

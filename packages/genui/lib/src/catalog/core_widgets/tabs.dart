@@ -8,6 +8,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 import '../../core/widget_utilities.dart';
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
+import '../../model/data_model.dart';
 import '../../primitives/simple_items.dart';
 
 final _schema = S.object(
@@ -27,71 +28,170 @@ final _schema = S.object(
         required: ['label', 'content'],
       ),
     ),
+    'activeTab': A2uiSchemas.numberReference(
+      description: 'The index of the currently active tab.',
+    ),
   },
   required: ['component', 'tabs'],
 );
 
 extension type _TabsData.fromMap(JsonMap _json) {
-  factory _TabsData({required List<JsonMap> tabs}) =>
-      _TabsData.fromMap({'tabs': tabs});
+  factory _TabsData({required List<JsonMap> tabs, Object? activeTab}) =>
+      _TabsData.fromMap({'tabs': tabs, 'activeTab': activeTab});
 
   List<JsonMap> get tabs {
     return (_json['tabs'] as List? ?? _json['tabItems'] as List)
         .cast<JsonMap>();
   }
+
+  Object? get activeTab => _json['activeTab'];
+}
+
+class _TabsWidget extends StatefulWidget {
+  const _TabsWidget({
+    required this.tabs,
+    required this.itemContext,
+    required this.activeTabNotifier,
+    required this.onTabChanged,
+  });
+
+  final List<JsonMap> tabs;
+  final CatalogItemContext itemContext;
+  final ValueNotifier<num?> activeTabNotifier;
+  final ValueChanged<int> onTabChanged;
+
+  @override
+  State<_TabsWidget> createState() => _TabsWidgetState();
+}
+
+class _TabsWidgetState extends State<_TabsWidget>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: widget.tabs.length, vsync: this);
+    _tabController.addListener(_handleTabSelection);
+    widget.activeTabNotifier.addListener(_handleExternalChange);
+    _handleExternalChange(); // Initial sync
+  }
+
+  @override
+  void didUpdateWidget(_TabsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tabs.length != oldWidget.tabs.length) {
+      _tabController.dispose();
+      _tabController = TabController(
+        length: widget.tabs.length,
+        vsync: this,
+        initialIndex: (widget.activeTabNotifier.value?.toInt() ?? 0).clamp(
+          0,
+          widget.tabs.length - 1,
+        ),
+      );
+      _tabController.addListener(_handleTabSelection);
+    }
+  }
+
+  void _handleTabSelection() {
+    // Only notify if index actually changed and we aren't currently switching
+    // triggered by external update (to avoid loops, though strict inequality
+    // check helps).
+    if (!_tabController.indexIsChanging) {
+      widget.onTabChanged(_tabController.index);
+    }
+  }
+
+  void _handleExternalChange() {
+    final int? newIndex = widget.activeTabNotifier.value?.toInt();
+    if (newIndex != null &&
+        newIndex >= 0 &&
+        newIndex < widget.tabs.length &&
+        newIndex != _tabController.index) {
+      _tabController.animateTo(newIndex);
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    widget.activeTabNotifier.removeListener(_handleExternalChange);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          tabs: widget.tabs.map((tabItem) {
+            final Object? labelRef = tabItem['label'] ?? tabItem['title'];
+            final ValueNotifier<String?> titleNotifier = widget
+                .itemContext
+                .dataContext
+                .subscribeToString(labelRef);
+            return ValueListenableBuilder<String?>(
+              valueListenable: titleNotifier,
+              builder: (context, title, child) {
+                return Tab(text: title ?? '');
+              },
+            );
+          }).toList(),
+        ),
+        SizedBox(
+          child: AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, child) {
+              final int index = _tabController.index;
+              if (index < 0 || index >= widget.tabs.length) {
+                return const SizedBox.shrink();
+              }
+              final JsonMap tabItem = widget.tabs[index];
+              final contentId =
+                  (tabItem['content'] ?? tabItem['child']) as String;
+              return widget.itemContext.buildChild(contentId);
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// A catalog item representing a Material Design tab layout.
 ///
-/// This widget displays a [TabBar] and a [TabBarView] to allow navigation
-/// between different child components. Each tab in `tabItems` has a title and
+/// This widget displays a [TabBar] and a view area to allow navigation
+/// between different child components. Each tab in `tabs` has a label and
 /// a corresponding child component ID to display when selected.
 ///
 /// ## Parameters:
 ///
-/// - `tabItems`: A list of tabs to display, each with a `title` and a `child`
+/// - `tabs`: A list of tabs to display, each with a `label` and a `content`
 ///   widget ID.
+/// - `activeTab`: (Optional) Binding to the current tab index.
 final tabs = CatalogItem(
   name: 'Tabs',
   dataSchema: _schema,
   widgetBuilder: (itemContext) {
     final tabsData = _TabsData.fromMap(itemContext.data as JsonMap);
-    return DefaultTabController(
-      length: tabsData.tabs.length,
-      child: Column(
-        children: [
-          TabBar(
-            tabs: tabsData.tabs.map((tabItem) {
-              final Object? labelRef = tabItem['label'] ?? tabItem['title'];
-              final ValueNotifier<String?> titleNotifier = itemContext
-                  .dataContext
-                  .subscribeToString(labelRef);
-              return ValueListenableBuilder<String?>(
-                valueListenable: titleNotifier,
-                builder: (context, title, child) {
-                  return Tab(text: title ?? '');
-                },
-              );
-            }).toList(),
-          ),
-          Builder(
-            builder: (context) {
-              final TabController tabController = DefaultTabController.of(
-                context,
-              );
-              return AnimatedBuilder(
-                animation: tabController,
-                builder: (context, child) {
-                  final JsonMap tabItem = tabsData.tabs[tabController.index];
-                  final contentId =
-                      (tabItem['content'] ?? tabItem['child']) as String;
-                  return itemContext.buildChild(contentId);
-                },
-              );
-            },
-          ),
-        ],
-      ),
+    final ValueNotifier<num?> activeTabNotifier = itemContext.dataContext
+        .subscribeToNumber(tabsData.activeTab);
+
+    return _TabsWidget(
+      tabs: tabsData.tabs,
+      itemContext: itemContext,
+      activeTabNotifier: activeTabNotifier,
+      onTabChanged: (newIndex) {
+        final Object? activeTabRef = tabsData.activeTab;
+        if (activeTabRef is Map && activeTabRef.containsKey('path')) {
+          itemContext.dataContext.update(
+            DataPath(activeTabRef['path'] as String),
+            newIndex,
+          );
+        }
+      },
     );
   },
   exampleData: [
@@ -100,6 +200,7 @@ final tabs = CatalogItem(
         {
           "id": "root",
           "component": "Tabs",
+          "activeTab": { "path": "/currentTab" },
           "tabs": [
             {
               "label": "Overview",
@@ -119,7 +220,7 @@ final tabs = CatalogItem(
         {
           "id": "text2",
           "component": "Text",
-          "text": "This is a much longer, more detailed description of the item, providing in-depth information and context. It can span multiple lines and include rich formatting if needed."
+          "text": "This is a much longer, more detailed description."
         }
       ]
     ''',

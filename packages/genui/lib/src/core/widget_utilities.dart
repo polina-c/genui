@@ -98,6 +98,12 @@ extension DataContextExtensions on DataContext {
   ValueNotifier<List<Object?>?> subscribeToObjectArray(Object? value) {
     return subscribeToValue<List<Object?>>(value);
   }
+
+  /// Subscribes to a number value, which can be a literal or a data-bound
+  /// path.
+  ValueNotifier<num?> subscribeToNumber(Object? value) {
+    return subscribeToValue<num>(value);
+  }
 }
 
 /// Resolves a context map definition against a [DataContext].
