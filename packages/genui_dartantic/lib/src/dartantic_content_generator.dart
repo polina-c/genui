@@ -5,11 +5,11 @@
 // ignore_for_file: specify_nonobvious_local_variable_types
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dartantic_ai/dartantic_ai.dart' as dartantic;
 import 'package:flutter/foundation.dart';
 import 'package:genui/genui.dart';
-import 'package:json_schema/json_schema.dart';
 
 import 'dartantic_content_converter.dart';
 import 'dartantic_schema_adapter.dart';
@@ -48,12 +48,6 @@ class DartanticContentGenerator
   }) {
     // Build GenUI tools
     final genUiTools = <AiTool<JsonMap>>[
-      UpdateComponentsTool(
-        handleMessage: _a2uiMessageController.add,
-        catalog: catalog,
-      ),
-      CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
-      DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
       ...additionalTools,
     ];
 
@@ -75,16 +69,9 @@ ${dartanticTools.map((tool) => tool.toJson()).join('\n\n')}
 </tools>
 
 <standard_catalog>
-${StandardCatalogEmbed.standardCatalogJson}
+${const JsonEncoder.withIndent('  ').convert(catalog.definition.toJson())}
 </standard_catalog>
 
-<standard_catalog_rules>
-${StandardCatalogEmbed.standardCatalogRules}
-</standard_catalog_rules>
-
-<output_schema>
-${_outputSchema.toJson()}
-</output_schema>
 ''';
 
     genUiLogger.info('Extra system instructions: $_extraInstructions');
@@ -109,18 +96,6 @@ ${_outputSchema.toJson()}
   final _errorController = StreamController<ContentGeneratorError>.broadcast();
   final _isProcessing = ValueNotifier<bool>(false);
   late final String _extraInstructions;
-
-  /// Structured output schema: a simple object with a required string response.
-  static final JsonSchema _outputSchema = JsonSchema.create({
-    'type': 'object',
-    'properties': {
-      'response': {
-        'type': 'string',
-        'description': 'The text response to the user.',
-      },
-    },
-    'required': ['response'],
-  });
 
   @override
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
@@ -179,17 +154,33 @@ ${_outputSchema.toJson()}
       );
       genUiLogger.fine('History contains ${dartanticHistory.length} messages');
 
-      // Use Agent.sendFor with structured output so the model returns a single
-      // response string instead of dumping JSON/tool content as text.
-      final dartantic.ChatResult<Map<String, dynamic>> result = await _agent
-          .sendFor<Map<String, dynamic>>(
-            promptAndParts.prompt,
-            outputSchema: _outputSchema,
-            history: dartanticHistory,
-            attachments: promptAndParts.parts,
-          );
+      // Use Agent.send for unstructured text output.
+      // We expect the model to include A2UI JSON in its text response.
+      final result = await _agent.send(
+        promptAndParts.prompt,
+        history: dartanticHistory,
+        attachments: promptAndParts.parts,
+      );
 
-      final String responseText = _parseResponse(result.output);
+      final String responseText = result.output;
+
+      // Parse JSON from text
+      final jsonBlock = JsonBlockParser.parseFirstJsonBlock(responseText);
+      if (jsonBlock != null) {
+        try {
+          if (jsonBlock is Map<String, dynamic>) {
+            final message = A2uiMessage.fromJson(jsonBlock);
+            _a2uiMessageController.add(message);
+            genUiLogger.info(
+              'Emitted A2UI message from prompt extraction: \${message.type}',
+            );
+          }
+        } catch (e) {
+          genUiLogger.warning(
+            'Failed to parse extracted JSON as A2uiMessage: \$e',
+          );
+        }
+      }
 
       _textResponseController.add(responseText);
       genUiLogger.info('Received response from Dartantic: $responseText');
@@ -263,18 +254,4 @@ ${_outputSchema.toJson()}
       )
       .toList();
 
-  /// Validates and extracts the response text from the structured output.
-  String _parseResponse(Map<String, dynamic> output) {
-    final Object? responseValue = output['response'];
-    if (responseValue is! String) {
-      throw StateError(
-        'Dartantic returned a non-string response: $responseValue',
-      );
-    }
-    final String responseText = responseValue.trim();
-    if (responseText.isEmpty) {
-      throw StateError('Dartantic returned an empty response string.');
-    }
-    return responseText;
-  }
 }

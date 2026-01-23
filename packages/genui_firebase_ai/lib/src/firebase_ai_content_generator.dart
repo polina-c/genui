@@ -136,14 +136,16 @@ class FirebaseAiContentGenerator
       final messages = [...?history, message];
       final Object? response = await _generate(
         messages: messages,
-        // This turns on forced function calling.
-        outputSchema: dsb.S.object(properties: {'response': dsb.S.string()}),
         cancellationSignal: cancellationSignal,
       );
-      // Convert any response to a text response to the user.
-      // Convert any response to a text response to the user.
-      if (response is Map && response.containsKey('response')) {
-        _textResponseController.add(response['response']! as String);
+
+      if (response != null) {
+        if (response is Map<String, Object?>) {
+          // If we got a JSON object, it might be an A2UI message or just
+          // context. For now, we assume A2UI messages are emitted via the
+          // controller during parsing in _generate, but if the return value is
+          // just the object, we might want to check it.
+        }
       }
     } on CancellationException {
       genUiLogger.info('Request cancelled');
@@ -400,22 +402,12 @@ class FirebaseAiContentGenerator
 
   Future<Object?> _generate({
     required Iterable<ChatMessage> messages,
-    dsb.Schema? outputSchema,
     CancellationSignal? cancellationSignal,
   }) async {
-    final isForcedToolCalling = outputSchema != null;
     final converter = GeminiContentConverter();
     final adapter = GeminiSchemaAdapter();
 
-    final List<AiTool<JsonMap>> availableTools = [
-      UpdateComponentsTool(
-        handleMessage: _a2uiMessageController.add,
-        catalog: catalog,
-      ),
-      CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
-      DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
-      ...additionalTools,
-    ];
+    final List<AiTool<JsonMap>> availableTools = [...additionalTools];
 
     // A local copy of the incoming messages which is updated with tool results
     // as they are generated.
@@ -427,33 +419,27 @@ class FirebaseAiContentGenerator
       :List<Tool>? generativeAiTools,
       :Set<String> allowedFunctionNames,
     ) = _setupToolsAndFunctions(
-      isForcedToolCalling: isForcedToolCalling,
+      isForcedToolCalling: false,
       availableTools: availableTools,
       adapter: adapter,
-      outputSchema: outputSchema,
+      outputSchema: null,
     );
 
     var toolUsageCycle = 0;
     const maxToolUsageCycles = 40; // Safety break for tool loops
-    Object? capturedResult;
 
+    final String catalogJson = catalog.definition.toJson(indent: '  ');
     final GeminiGenerativeModelInterface model = modelCreator(
       configuration: this,
       systemInstruction: Content('system', [
         if (systemInstruction != null) fai.TextPart(systemInstruction!),
         const fai.TextPart(StandardCatalogEmbed.standardCatalogRules),
-        const fai.TextPart(
-          'Standard Catalog:\n${StandardCatalogEmbed.standardCatalogJson}',
-        ),
+        fai.TextPart('Standard Catalog:\n$catalogJson'),
       ]),
       tools: generativeAiTools,
-      toolConfig: isForcedToolCalling
-          ? ToolConfig(
-              functionCallingConfig: FunctionCallingConfig.any(
-                allowedFunctionNames.toSet(),
-              ),
-            )
-          : ToolConfig(functionCallingConfig: FunctionCallingConfig.auto()),
+      toolConfig: ToolConfig(
+        functionCallingConfig: FunctionCallingConfig.auto(),
+      ),
     );
 
     while (toolUsageCycle < maxToolUsageCycles) {
@@ -461,10 +447,6 @@ class FirebaseAiContentGenerator
         throw const CancellationException();
       }
       genUiLogger.fine('Starting tool usage cycle ${toolUsageCycle + 1}.');
-      if (isForcedToolCalling && capturedResult != null) {
-        genUiLogger.fine('Captured result found, exiting tool usage loop.');
-        break;
-      }
       toolUsageCycle++;
 
       final String concatenatedContents = mutableContent
@@ -506,7 +488,7 @@ With functions:
         genUiLogger.warning(
           'Response has no candidates: ${response.promptFeedback}',
         );
-        return isForcedToolCalling ? null : '';
+        return '';
       }
 
       final Candidate candidate = response.candidates.first;
@@ -516,29 +498,30 @@ With functions:
 
       if (functionCalls.isEmpty) {
         genUiLogger.fine('Model response contained no function calls.');
-        if (isForcedToolCalling) {
-          genUiLogger.warning(
-            'Model did not call any function. FinishReason: '
-            '${candidate.finishReason}. Text: "${candidate.text}" ',
-          );
-          if (candidate.text != null && candidate.text!.trim().isNotEmpty) {
+        final String text = candidate.text ?? '';
+        mutableContent.add(candidate.content);
+
+        // Parse JSON
+        final Object? jsonBlock = JsonBlockParser.parseFirstJsonBlock(text);
+        if (jsonBlock != null) {
+          try {
+            if (jsonBlock is Map<String, dynamic>) {
+              final message = A2uiMessage.fromJson(jsonBlock);
+              _a2uiMessageController.add(message);
+              genUiLogger.info(
+                'Emitted A2UI message from prompt extraction: \${message.type}',
+              );
+            }
+          } catch (e) {
             genUiLogger.warning(
-              'Model returned direct text instead of a tool call. This might '
-              'be an error or unexpected AI behavior for forced tool calling.',
+              'Failed to parse extracted JSON as A2uiMessage: \$e',
             );
           }
-          genUiLogger.fine(
-            'Model returned text but no function calls with forced tool '
-            'calling, so returning null.',
-          );
-          return null;
-        } else {
-          final String text = candidate.text ?? '';
-          mutableContent.add(candidate.content);
-          genUiLogger.fine('Returning text response: "$text"');
-          _textResponseController.add(text);
-          return text;
         }
+
+        genUiLogger.fine('Returning text response: "\$text"');
+        _textResponseController.add(text);
+        return text;
       }
 
       genUiLogger.fine(
@@ -556,11 +539,10 @@ With functions:
       })
       result = await _processFunctionCalls(
         functionCalls: functionCalls,
-        isForcedToolCalling: isForcedToolCalling,
+        isForcedToolCalling: false,
         availableTools: availableTools,
-        capturedResult: capturedResult,
+        capturedResult: null,
       );
-      capturedResult = result.capturedResult;
       final List<FunctionResponse> functionResponseParts =
           result.functionResponseParts;
 
@@ -571,39 +553,14 @@ With functions:
           'parts to conversation.',
         );
       }
-
-      // If the model returned a text response, we assume it's the final
-      // response and we should stop the tool calling loop.
-      if (!isForcedToolCalling &&
-          candidate.text != null &&
-          candidate.text!.trim().isNotEmpty) {
-        genUiLogger.fine(
-          'Model returned a text response of "${candidate.text!.trim()}". '
-          'Exiting tool loop.',
-        );
-        _textResponseController.add(candidate.text!);
-        return candidate.text;
-      }
     }
 
-    if (isForcedToolCalling) {
-      if (toolUsageCycle >= maxToolUsageCycles) {
-        genUiLogger.severe(
-          'Error: Tool usage cycle exceeded maximum of $maxToolUsageCycles. ',
-          'No final output was produced.',
-          StackTrace.current,
-        );
-      }
-      genUiLogger.fine('Exited tool usage loop. Returning captured result.');
-      return capturedResult;
-    } else {
-      genUiLogger.severe(
-        'Error: Tool usage cycle exceeded maximum of $maxToolUsageCycles. ',
-        'No final output was produced.',
-        StackTrace.current,
-      );
-      return '';
-    }
+    genUiLogger.severe(
+      'Error: Tool usage cycle exceeded maximum of $maxToolUsageCycles. ',
+      'No final output was produced.',
+      StackTrace.current,
+    );
+    return '';
   }
 }
 

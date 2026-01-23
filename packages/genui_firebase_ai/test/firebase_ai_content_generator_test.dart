@@ -22,9 +22,7 @@ void main() {
                 GenerateContentResponse([
                   Candidate(
                     Content.model([
-                      const FunctionCall('provideFinalOutput', {
-                        'output': {'response': 'Hello'},
-                      }),
+                      const TextPart('Hello'),
                     ]),
                     [],
                     null,
@@ -71,9 +69,7 @@ void main() {
                 GenerateContentResponse([
                   Candidate(
                     Content.model([
-                      const FunctionCall('provideFinalOutput', {
-                        'output': {'response': 'Tool called'},
-                      }),
+                      const TextPart('Tool called'),
                     ]),
                     [],
                     null,
@@ -102,9 +98,7 @@ void main() {
                 GenerateContentResponse([
                   Candidate(
                     Content.model([
-                      const FunctionCall('provideFinalOutput', {
-                        'output': {'response': 'Hello'},
-                      }),
+                      const TextPart('Hello'),
                     ]),
                     [],
                     null,

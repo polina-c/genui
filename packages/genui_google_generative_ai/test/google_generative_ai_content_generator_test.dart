@@ -142,15 +142,7 @@ void main() {
                   content: google_ai.Content(
                     role: 'model',
                     parts: [
-                      google_ai.Part(
-                        functionCall: google_ai.FunctionCall(
-                          id: '1',
-                          name: 'provideFinalOutput',
-                          args: protobuf.Struct.fromJson({
-                            'output': {'response': 'Hello'},
-                          }),
-                        ),
-                      ),
+                      google_ai.Part(text: 'Hello'),
                     ],
                   ),
                   finishReason: google_ai.Candidate_FinishReason.stop,
@@ -208,15 +200,7 @@ void main() {
                   content: google_ai.Content(
                     role: 'model',
                     parts: [
-                      google_ai.Part(
-                        functionCall: google_ai.FunctionCall(
-                          id: '2',
-                          name: 'provideFinalOutput',
-                          args: protobuf.Struct.fromJson(<String, dynamic>{
-                            'output': {'response': 'Tool called'},
-                          }),
-                        ),
-                      ),
+                      google_ai.Part(text: 'Tool called'),
                     ],
                   ),
                   finishReason: google_ai.Candidate_FinishReason.stop,
@@ -246,15 +230,7 @@ void main() {
                   content: google_ai.Content(
                     role: 'model',
                     parts: [
-                      google_ai.Part(
-                        functionCall: google_ai.FunctionCall(
-                          id: '1',
-                          name: 'provideFinalOutput',
-                          args: protobuf.Struct.fromJson({
-                            'output': {'response': 'Hello'},
-                          }),
-                        ),
-                      ),
+                      google_ai.Part(text: 'Hello'),
                     ],
                   ),
                   finishReason: google_ai.Candidate_FinishReason.stop,

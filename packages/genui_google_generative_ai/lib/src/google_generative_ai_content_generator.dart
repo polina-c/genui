@@ -143,14 +143,18 @@ class GoogleGenerativeAiContentGenerator
       final messages = [...?history, message];
       final response = await _generate(
         messages: messages,
-        // This turns on forced function calling.
-        outputSchema: dsb.S.object(properties: {'response': dsb.S.string()}),
         cancellationSignal: cancellationSignal,
       );
-      // Convert any response to a text response to the user.
-      // Convert any response to a text response to the user.
-      if (response is Map && response.containsKey('response')) {
-        _textResponseController.add(response['response']! as String);
+
+      if (response != null) {
+        if (response is Map<String, Object?>) {
+          // If we got a JSON object, it might be an A2UI message or just
+          // context. For now, we assume A2UI messages are emitted via the
+          // controller during parsing in _generate, but if the return value is
+          // just the object, we might want to check it. However, _generate now
+          // returns the *text* or the *result*. Let's assume _generate handles
+          // emitting A2UI messages.
+        }
       }
     } on CancellationException {
       genUiLogger.info('Request cancelled');
@@ -420,10 +424,8 @@ class GoogleGenerativeAiContentGenerator
 
   Future<Object?> _generate({
     required Iterable<ChatMessage> messages,
-    dsb.Schema? outputSchema,
     CancellationSignal? cancellationSignal,
   }) async {
-    final isForcedToolCalling = outputSchema != null;
     final converter = GoogleContentConverter();
     final adapter = GoogleSchemaAdapter();
 
@@ -431,19 +433,7 @@ class GoogleGenerativeAiContentGenerator
 
     try {
       // Remove default tools if they are overridden by additionalTools
-      final userToolNames = additionalTools.map((t) => t.name).toSet();
-      final availableTools = [
-        if (!userToolNames.contains('updateComponents'))
-          UpdateComponentsTool(
-            handleMessage: _a2uiMessageController.add,
-            catalog: catalog,
-          ),
-        if (!userToolNames.contains('createSurface'))
-          CreateSurfaceTool(handleMessage: _a2uiMessageController.add),
-        if (!userToolNames.contains('deleteSurface'))
-          DeleteSurfaceTool(handleMessage: _a2uiMessageController.add),
-        ...additionalTools,
-      ];
+      final availableTools = [...additionalTools];
 
       // A local copy of the incoming messages which is updated with
       // tool results
@@ -451,15 +441,14 @@ class GoogleGenerativeAiContentGenerator
       final content = converter.toGoogleAiContent(messages);
 
       final (:tools, :allowedFunctionNames) = _setupToolsAndFunctions(
-        isForcedToolCalling: isForcedToolCalling,
+        isForcedToolCalling: false,
         availableTools: availableTools,
         adapter: adapter,
-        outputSchema: outputSchema,
+        outputSchema: null,
       );
 
       var toolUsageCycle = 0;
       const maxToolUsageCycles = 40; // Safety break for tool loops
-      Object? capturedResult;
 
       // Build system instruction if provided
       // Build system instruction if provided
@@ -472,8 +461,7 @@ class GoogleGenerativeAiContentGenerator
       );
       parts.add(
         google_ai.Part(
-          text:
-              'Standard Catalog:\n${StandardCatalogEmbed.standardCatalogJson}',
+          text: 'Standard Catalog:\n${catalog.definition.toJson(indent: '  ')}',
         ),
       );
 
@@ -486,10 +474,6 @@ class GoogleGenerativeAiContentGenerator
           throw const CancellationException();
         }
         genUiLogger.fine('Starting tool usage cycle ${toolUsageCycle + 1}.');
-        if (isForcedToolCalling && capturedResult != null) {
-          genUiLogger.fine('Captured result found, exiting tool usage loop.');
-          break;
-        }
         toolUsageCycle++;
 
         final concatenatedContents = content
@@ -509,18 +493,11 @@ With functions:
             model: modelName,
             contents: [...systemInstructionContent, ...content],
             tools: tools ?? [],
-            toolConfig: isForcedToolCalling
-                ? google_ai.ToolConfig(
-                    functionCallingConfig: google_ai.FunctionCallingConfig(
-                      mode: google_ai.FunctionCallingConfig_Mode.any,
-                      allowedFunctionNames: allowedFunctionNames.toList(),
-                    ),
-                  )
-                : google_ai.ToolConfig(
-                    functionCallingConfig: google_ai.FunctionCallingConfig(
-                      mode: google_ai.FunctionCallingConfig_Mode.auto,
-                    ),
-                  ),
+            toolConfig: google_ai.ToolConfig(
+              functionCallingConfig: google_ai.FunctionCallingConfig(
+                mode: google_ai.FunctionCallingConfig_Mode.auto,
+              ),
+            ),
           );
           response = await service.generateContent(request);
           genUiLogger.finest(
@@ -555,7 +532,7 @@ With functions:
           genUiLogger.warning(
             'Response has no candidates: ${response.promptFeedback}',
           );
-          return isForcedToolCalling ? null : '';
+          return '';
         }
 
         final candidate = response.candidates.first;
@@ -570,49 +547,40 @@ With functions:
 
         if (functionCalls.isEmpty) {
           genUiLogger.fine('Model response contained no function calls.');
-          if (isForcedToolCalling) {
-            genUiLogger.warning(
-              'Model did not call any function. FinishReason: '
-              '${candidate.finishReason}.',
-            );
-            // Extract text from parts
-            String? text;
-            if (candidate.content?.parts != null) {
-              final textParts = candidate.content!.parts
-                  .where((google_ai.Part p) => p.text != null)
-                  .map((google_ai.Part p) => p.text!)
-                  .toList();
-              text = textParts.join('');
-            }
-            if (text != null && text.trim().isNotEmpty) {
+          // Extract text from parts
+          var text = '';
+          if (candidate.content?.parts != null) {
+            final textParts = candidate.content!.parts
+                .where((google_ai.Part p) => p.text != null)
+                .map((google_ai.Part p) => p.text!)
+                .toList();
+            text = textParts.join('');
+          }
+          if (candidate.content != null) {
+            content.add(candidate.content!);
+          }
+
+          // Parse JSON from text
+          final jsonBlock = JsonBlockParser.parseFirstJsonBlock(text);
+          if (jsonBlock != null) {
+            try {
+              if (jsonBlock is Map<String, dynamic>) {
+                final message = A2uiMessage.fromJson(jsonBlock);
+                _a2uiMessageController.add(message);
+                genUiLogger.info(
+                  'Emitted A2UI message from prompt extraction: $message',
+                );
+              }
+            } catch (e) {
               genUiLogger.warning(
-                'Model returned direct text instead of a tool call. '
-                'This might be an error or unexpected AI behavior for '
-                'forced tool calling.',
+                'Failed to parse extracted JSON as A2uiMessage: $e',
               );
             }
-            genUiLogger.fine(
-              'Model returned text but no function calls with forced tool '
-              'calling, so returning null.',
-            );
-            return null;
-          } else {
-            // Extract text from parts
-            var text = '';
-            if (candidate.content?.parts != null) {
-              final textParts = candidate.content!.parts
-                  .where((google_ai.Part p) => p.text != null)
-                  .map((google_ai.Part p) => p.text!)
-                  .toList();
-              text = textParts.join('');
-            }
-            if (candidate.content != null) {
-              content.add(candidate.content!);
-            }
-            genUiLogger.fine('Returning text response: "$text"');
-            _textResponseController.add(text);
-            return text;
           }
+
+          genUiLogger.fine('Returning text response: "$text"');
+          _textResponseController.add(text);
+          return text;
         }
 
         genUiLogger.fine(
@@ -629,11 +597,10 @@ With functions:
 
         final result = await _processFunctionCalls(
           functionCalls: functionCalls,
-          isForcedToolCalling: isForcedToolCalling,
+          isForcedToolCalling: false,
           availableTools: availableTools,
-          capturedResult: capturedResult,
+          capturedResult: null,
         );
-        capturedResult = result.capturedResult;
         final functionResponseParts = result.functionResponseParts;
 
         if (functionResponseParts.isNotEmpty) {
@@ -645,44 +612,14 @@ With functions:
             'parts to conversation.',
           );
         }
-
-        // If the model returned a text response, we assume it's the final
-        // response and we should stop the tool calling loop.
-        if (!isForcedToolCalling && candidate.content?.parts != null) {
-          final textParts = candidate.content!.parts
-              .where((google_ai.Part p) => p.text != null)
-              .map((google_ai.Part p) => p.text!)
-              .toList();
-          final text = textParts.join('');
-          if (text.trim().isNotEmpty) {
-            genUiLogger.fine(
-              'Model returned a text response of "${text.trim()}". '
-              'Exiting tool loop.',
-            );
-            _textResponseController.add(text);
-            return text;
-          }
-        }
       }
 
-      if (isForcedToolCalling) {
-        if (toolUsageCycle >= maxToolUsageCycles) {
-          genUiLogger.severe(
-            'Error: Tool usage cycle exceeded maximum of $maxToolUsageCycles. ',
-            'No final output was produced.',
-            StackTrace.current,
-          );
-        }
-        genUiLogger.fine('Exited tool usage loop. Returning captured result.');
-        return capturedResult;
-      } else {
-        genUiLogger.severe(
-          'Error: Tool usage cycle exceeded maximum of $maxToolUsageCycles. ',
-          'No final output was produced.',
-          StackTrace.current,
-        );
-        return '';
-      }
+      genUiLogger.severe(
+        'Error: Tool usage cycle exceeded maximum of $maxToolUsageCycles. ',
+        'No final output was produced.',
+        StackTrace.current,
+      );
+      return '';
     } finally {
       service.close();
     }
