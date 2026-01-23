@@ -428,9 +428,9 @@ class FirebaseAiContentGenerator
     var toolUsageCycle = 0;
     const maxToolUsageCycles = 40; // Safety break for tool loops
 
-    final String catalogJson = const JsonEncoder.withIndent(
-      '  ',
-    ).convert(A2uiMessage.a2uiMessageSchema(catalog).toJson());
+    final String catalogJson = A2uiMessage.a2uiMessageSchema(
+      catalog,
+    ).toJson(indent: '  ');
     final GeminiGenerativeModelInterface model = modelCreator(
       configuration: this,
       systemInstruction: Content('system', [
@@ -501,7 +501,7 @@ With functions:
 
       if (functionCalls.isEmpty) {
         genUiLogger.fine('Model response contained no function calls.');
-        final String text = candidate.text ?? '';
+        String text = candidate.text ?? '';
         mutableContent.add(candidate.content);
 
         // Parse JSON
@@ -512,17 +512,20 @@ With functions:
               final message = A2uiMessage.fromJson(jsonBlock);
               _a2uiMessageController.add(message);
               genUiLogger.info(
-                'Emitted A2UI message from prompt extraction: \${message.type}',
+                'Emitted A2UI message from prompt extraction: '
+                '${message.runtimeType}',
               );
+              // remove the JSON from the text response
+              text = JsonBlockParser.stripJsonBlock(text);
             }
           } catch (e) {
             genUiLogger.warning(
-              'Failed to parse extracted JSON as A2uiMessage: \$e',
+              'Failed to parse extracted JSON as A2uiMessage: $e',
             );
           }
         }
 
-        genUiLogger.fine('Returning text response: "\$text"');
+        genUiLogger.fine('Returning text response: "$text"');
         _textResponseController.add(text);
         return text;
       }

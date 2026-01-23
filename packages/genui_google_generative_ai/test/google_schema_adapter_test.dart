@@ -101,13 +101,13 @@ void main() {
     test('adapt adds error for unsupported keyword', () {
       final schema = dsb.Schema.fromMap({
         'type': 'string',
-        '\$ref': '#/definitions/something',
+        r'$ref': '#/definitions/something',
       });
       final result = adapter.adapt(schema);
 
       expect(result.schema, isNotNull);
       expect(result.errors, isNotEmpty);
-      expect(result.errors.any((e) => e.message.contains('\$ref')), isTrue);
+      expect(result.errors.any((e) => e.message.contains(r'$ref')), isTrue);
     });
 
     test('adapt handles string with enum values', () {

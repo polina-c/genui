@@ -5,7 +5,6 @@
 // ignore_for_file: specify_nonobvious_local_variable_types
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:dartantic_ai/dartantic_ai.dart' as dartantic;
 import 'package:flutter/foundation.dart';
@@ -69,7 +68,7 @@ ${dartanticTools.map((tool) => tool.toJson()).join('\n\n')}
 </tools>
 
 <a2ui_schema>
-${const JsonEncoder.withIndent('  ').convert(A2uiMessage.a2uiMessageSchema(catalog).toJson())}
+${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
 </a2ui_schema>
 
 ''';
@@ -162,8 +161,7 @@ ${const JsonEncoder.withIndent('  ').convert(A2uiMessage.a2uiMessageSchema(catal
         attachments: promptAndParts.parts,
       );
 
-      final String responseText = result.output;
-
+      var responseText = result.output;
       // Parse JSON from text
       final jsonBlock = JsonBlockParser.parseFirstJsonBlock(responseText);
       if (jsonBlock != null) {
@@ -172,12 +170,15 @@ ${const JsonEncoder.withIndent('  ').convert(A2uiMessage.a2uiMessageSchema(catal
             final message = A2uiMessage.fromJson(jsonBlock);
             _a2uiMessageController.add(message);
             genUiLogger.info(
-              'Emitted A2UI message from prompt extraction: \${message.type}',
+              'Emitted A2UI message from prompt extraction: '
+              '${message.runtimeType}',
             );
+            // remove the JSON from the text response
+            responseText = JsonBlockParser.stripJsonBlock(responseText);
           }
         } catch (e) {
           genUiLogger.warning(
-            'Failed to parse extracted JSON as A2uiMessage: \$e',
+            'Failed to parse extracted JSON as A2uiMessage: $e',
           );
         }
       }

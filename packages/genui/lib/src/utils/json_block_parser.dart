@@ -113,4 +113,23 @@ class JsonBlockParser {
     }
     return null;
   }
+
+  /// Removes the first found JSON block from the text.
+  static String stripJsonBlock(String text) {
+    // 1. Try markdown block
+    final markdownRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
+    if (markdownRegex.hasMatch(text)) {
+      return text.replaceFirst(markdownRegex, '').trim();
+    }
+
+    // 2. Try balanced JSON
+    // We reuse _extractBalancedJson to find the *string* content, then replace
+    // it. This is slightly inefficient but safe.
+    final String? jsonString = _extractBalancedJson(text);
+    if (jsonString != null) {
+      return text.replaceFirst(jsonString, '').trim();
+    }
+
+    return text;
+  }
 }

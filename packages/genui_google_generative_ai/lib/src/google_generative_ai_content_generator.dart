@@ -459,11 +459,11 @@ class GoogleGenerativeAiContentGenerator
       parts.add(
         google_ai.Part(text: StandardCatalogEmbed.standardCatalogRules),
       );
+      final catalogJson = A2uiMessage.a2uiMessageSchema(
+        catalog,
+      ).toJson(indent: '  ');
       parts.add(
-        google_ai.Part(
-          text:
-              'A2UI Message Schema:\n${const JsonEncoder.withIndent('  ').convert(A2uiMessage.a2uiMessageSchema(catalog).toJson())}',
-        ),
+        google_ai.Part(text: 'A2UI Message Schema:\n$catalogJson'),
       );
 
       final systemInstructionContent = parts.isNotEmpty
@@ -573,6 +573,8 @@ With functions:
                 genUiLogger.info(
                   'Emitted A2UI message from prompt extraction: $message',
                 );
+                // remove the JSON from the text response
+                text = JsonBlockParser.stripJsonBlock(text);
               }
             } catch (e) {
               genUiLogger.warning(

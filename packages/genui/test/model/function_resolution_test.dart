@@ -57,7 +57,7 @@ void main() {
       dataModel.update(DataPath('/name'), 'World');
       final Map<String, Object> input = {
         'func': 'formatString',
-        'args': ['Hello \${/name}'],
+        'args': [r'Hello ${/name}'],
       };
       expect(context.resolve(input), 'Hello World');
     });
