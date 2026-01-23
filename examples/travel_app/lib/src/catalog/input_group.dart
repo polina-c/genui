@@ -116,8 +116,9 @@ final inputGroup = CatalogItem(
 
     final List<String> children = inputGroupData.children;
     final JsonMap actionData = inputGroupData.action;
-    final name = actionData['name'] as String;
-    final contextDefinition = actionData['context'] as JsonMap?;
+    final event = actionData['event'] as JsonMap?;
+    final String name = event?['name'] as String? ?? 'unknown';
+    final contextDefinition = event?['context'] as JsonMap?;
 
     return Card(
       color: Theme.of(itemContext.buildContext).colorScheme.primaryContainer,

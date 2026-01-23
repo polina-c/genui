@@ -35,7 +35,7 @@ extension type _TextInputChipData.fromMap(Map<String, Object?> _json) {
   });
 
   String get label => _json['label'] as String;
-  JsonMap? get value => _json['value'] as JsonMap?;
+  Object? get value => _json['value'];
   bool get obscured => _json['obscured'] as bool? ?? false;
 }
 
@@ -71,8 +71,10 @@ final textInputChip = CatalogItem(
       context.data as Map<String, Object?>,
     );
 
-    final JsonMap? valueRef = textInputChipData.value;
-    final path = valueRef?['path'] as String?;
+    final Object? valueRef = textInputChipData.value;
+    final String? path = valueRef is Map && valueRef.containsKey('path')
+        ? valueRef['path'] as String
+        : null;
     final ValueNotifier<String?> notifier = context.dataContext
         .subscribeToString(valueRef);
 

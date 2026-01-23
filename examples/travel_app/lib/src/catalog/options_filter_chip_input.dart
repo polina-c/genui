@@ -56,7 +56,9 @@ extension type _OptionsFilterChipInputData.fromMap(Map<String, Object?> _json) {
   String get chipLabel => _json['chipLabel'] as String;
   List<String> get options => (_json['options'] as List).cast<String>();
   String? get iconName => _json['iconName'] as String?;
-  JsonMap? get value => _json['value'] as JsonMap?;
+  JsonMap? get value =>
+      _json['value'] is Map ? _json['value'] as JsonMap : null;
+  Object? get rawValue => _json['value'];
 }
 
 /// An interactive chip that allows the user to select a single option from a
@@ -106,8 +108,10 @@ final optionsFilterChipInput = CatalogItem(
       }
     }
 
-    final JsonMap? valueRef = optionsFilterChipData.value;
-    final path = valueRef?['path'] as String?;
+    final Object? valueRef = optionsFilterChipData.rawValue;
+    final String? path = valueRef is Map && valueRef.containsKey('path')
+        ? valueRef['path'] as String
+        : null;
     final ValueNotifier<String?> notifier = context.dataContext
         .subscribeToString(valueRef);
 

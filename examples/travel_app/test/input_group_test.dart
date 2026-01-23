@@ -15,7 +15,9 @@ void main() {
         final Map<String, Object> data = {
           'submitLabel': {'literalString': 'Submit'},
           'children': ['child1', 'child2'],
-          'action': {'name': 'submitAction'},
+          'action': {
+            'event': {'name': 'submitAction'},
+          },
         };
         UiEvent? dispatchedEvent;
 
@@ -68,7 +70,9 @@ void main() {
       final Map<String, Object> data = {
         'submitLabel': {'literalString': 'Submit'},
         'children': <String>[],
-        'action': {'name': 'submitAction'},
+        'action': {
+          'event': {'name': 'submitAction'},
+        },
       };
 
       await tester.pumpWidget(

@@ -33,6 +33,7 @@ export 'src/model/gen_ui_events.dart';
 export 'src/model/standard_catalog_embed.dart';
 export 'src/model/tools.dart';
 export 'src/model/ui_models.dart';
+export 'src/primitives/constants.dart';
 export 'src/primitives/logging.dart';
 export 'src/primitives/simple_items.dart';
 export 'src/utils/json_block_parser.dart';

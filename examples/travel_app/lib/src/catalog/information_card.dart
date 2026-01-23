@@ -42,9 +42,9 @@ extension type _InformationCardData.fromMap(Map<String, Object?> _json) {
   });
 
   String? get imageChildId => _json['imageChildId'] as String?;
-  JsonMap get title => _json['title'] as JsonMap;
-  JsonMap? get subtitle => _json['subtitle'] as JsonMap?;
-  JsonMap get body => _json['body'] as JsonMap;
+  Object get title => _json['title'] as Object;
+  Object? get subtitle => _json['subtitle'];
+  Object get body => _json['body'] as Object;
 }
 
 final informationCard = CatalogItem(

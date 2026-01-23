@@ -19,12 +19,16 @@ void main() {
             {
               'description': {'literalString': 'Item 1'},
               'imageChildId': 'imageId1',
-              'action': {'name': 'selectItem'},
+              'action': {
+                'event': {'name': 'selectItem'},
+              },
             },
             {
               'description': {'literalString': 'Item 2'},
               'imageChildId': 'imageId2',
-              'action': {'name': 'selectItem'},
+              'action': {
+                'event': {'name': 'selectItem'},
+              },
             },
           ],
         };
@@ -85,12 +89,16 @@ void main() {
               'description': {'literalString': 'Item 1'},
               'imageChildId': 'imageId1',
               'listingSelectionId': 'listing1',
-              'action': {'name': 'selectItem'},
+              'action': {
+                'event': {'name': 'selectItem'},
+              },
             },
             {
               'description': {'literalString': 'Item 2'},
               'imageChildId': 'imageId2',
-              'action': {'name': 'selectItem'},
+              'action': {
+                'event': {'name': 'selectItem'},
+              },
             },
           ],
         };

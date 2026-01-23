@@ -120,8 +120,9 @@ class _Trailhead extends StatelessWidget {
               return InputChip(
                 label: Text(topic),
                 onPressed: () {
-                  final name = action['name'] as String;
-                  final contextDefinition = action['context'] as JsonMap?;
+                  final event = action['event'] as JsonMap?;
+                  final name = event?['name'] as String? ?? 'unknown';
+                  final contextDefinition = event?['context'] as JsonMap?;
                   final JsonMap resolvedContext = resolveContext(
                     dataContext,
                     contextDefinition,

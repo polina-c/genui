@@ -14,7 +14,9 @@ void main() {
     ) async {
       final Map<String, Object> data = {
         'topics': ['Topic A', 'Topic B'],
-        'action': {'name': 'selectTopic'},
+        'action': {
+          'event': {'name': 'selectTopic'},
+        },
       };
       UiEvent? dispatchedEvent;
 
@@ -62,7 +64,9 @@ void main() {
     ) async {
       final Map<String, Object> data = {
         'topics': <Map<String, String>>[],
-        'action': {'name': 'selectTopic'},
+        'action': {
+          'event': {'name': 'selectTopic'},
+        },
       };
 
       await tester.pumpWidget(

@@ -30,7 +30,6 @@ class ListHotelsTool extends AiTool<Map<String, Object?>> {
             ),
             'guests': S.integer(
               description: 'The number of guests.',
-              minimum: 1,
             ),
           },
           required: ['query', 'checkIn', 'checkOut', 'guests'],
