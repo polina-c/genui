@@ -19,8 +19,11 @@ class A2uiContentGenerator
   /// If optional `connector` is not supplied, then one will be created with the
   /// given `serverUrl`.
   A2uiContentGenerator({required Uri serverUrl, A2uiAgentConnector? connector})
-    : connector = connector ?? A2uiAgentConnector(url: serverUrl) {
-    this.connector.errorStream.listen((Object error) {
+    : connector = connector ?? A2uiAgentConnector(url: serverUrl),
+      _ownsConnector = connector == null {
+    _errorStreamSubscription = this.connector.errorStream.listen((
+      Object error,
+    ) {
       _errorResponseController.add(
         ContentGeneratorError(error, StackTrace.current),
       );
@@ -29,6 +32,8 @@ class A2uiContentGenerator
 
   /// The connector used to communicate with the A2A server.
   final A2uiAgentConnector connector;
+  final bool _ownsConnector;
+  StreamSubscription<Object>? _errorStreamSubscription;
   final _textResponseController = StreamController<String>.broadcast();
   final _errorResponseController =
       StreamController<ContentGeneratorError>.broadcast();
@@ -51,7 +56,10 @@ class A2uiContentGenerator
   void dispose() {
     disposeMixin();
     _textResponseController.close();
-    connector.dispose();
+    if (_ownsConnector) {
+      connector.dispose();
+    }
+    _errorStreamSubscription?.cancel();
     _isProcessing.dispose();
   }
 

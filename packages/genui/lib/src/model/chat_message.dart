@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -177,6 +178,12 @@ final class UserUiInteractionMessage extends ChatMessage {
   /// Creates a [UserUiInteractionMessage] with the given [text].
   factory UserUiInteractionMessage.text(String text) =>
       UserUiInteractionMessage([TextPart(text)]);
+
+  /// Creates a [UserUiInteractionMessage] from a structured action event.
+  ///
+  /// This wraps the event map in an 'action' property and encodes it as JSON.
+  factory UserUiInteractionMessage.fromAction(UiEvent event) =>
+      UserUiInteractionMessage.text(jsonEncode({'action': event.toMap()}));
 
   /// The parts of the user's message.
   final List<MessagePart> parts;

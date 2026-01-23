@@ -59,6 +59,10 @@ class SurfaceRemoved extends GenUiUpdate {
 /// listen for updates, and notify the host of user interactions.
 abstract interface class GenUiHost {
   /// A stream of updates for the surfaces managed by this host.
+  ///
+  /// Implementations may choose to filter redundant updates. Consumers should
+  /// rely on [getSurfaceNotifier] for the current state of a specific
+  /// surface.
   Stream<GenUiUpdate> get surfaceUpdates;
 
   /// Returns a [ValueNotifier] for the surface with the given [surfaceId].
@@ -165,9 +169,8 @@ class A2uiMessageProcessor implements GenUiHost {
     }
 
     // v0.9 uses 'action' instead of 'userAction'
-    final String eventJsonString = jsonEncode({'action': event.toMap()});
     // TODO: Include attached data models if requested
-    _onSubmit.add(UserUiInteractionMessage.text(eventJsonString));
+    _onSubmit.add(UserUiInteractionMessage.fromAction(event));
   }
 
   @override
