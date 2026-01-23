@@ -142,6 +142,7 @@ class FakeA2uiAgentConnector implements A2uiAgentConnector {
   Future<String?> connectAndSend(
     genui.ChatMessage chatMessage, {
     genui.A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     lastConnectAndSendChatMessage = chatMessage;
     lastClientCapabilities = clientCapabilities;

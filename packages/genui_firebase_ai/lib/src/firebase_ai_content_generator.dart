@@ -32,7 +32,9 @@ typedef GenerativeModelFactory =
 /// This generator utilizes a [GeminiGenerativeModelInterface] to interact with
 /// the Firebase AI API. The actual model instance is created by the
 /// [modelCreator] function, which defaults to [defaultGenerativeModelFactory].
-class FirebaseAiContentGenerator implements ContentGenerator {
+class FirebaseAiContentGenerator
+    with ContentGeneratorMixin
+    implements ContentGenerator {
   /// Creates a [FirebaseAiContentGenerator] instance with specified
   /// configurations.
   ///
@@ -112,6 +114,7 @@ class FirebaseAiContentGenerator implements ContentGenerator {
 
   @override
   void dispose() {
+    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
     _errorController.close();
@@ -123,9 +126,11 @@ class FirebaseAiContentGenerator implements ContentGenerator {
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     _isProcessing.value = true;
     try {
+      // TODO: Include clientDataModel in the request/prompt if needed.
       final messages = [...?history, message];
       final Object? response = await _generate(
         messages: messages,
@@ -292,6 +297,31 @@ class FirebaseAiContentGenerator implements ContentGenerator {
       genUiLogger.fine(
         'Processing function call: ${call.name} with args: ${call.args}',
       );
+
+      final Map<String, Object?> argsMap = call.args;
+
+      // Intercept tool call
+      final ToolAction toolAction = await interceptToolCall(call.name, argsMap);
+
+      if (toolAction is ToolActionCancel) {
+        genUiLogger.info('Tool call ${call.name} cancelled by interceptor.');
+        functionResponseParts.add(
+          FunctionResponse(call.name, {
+            'error': 'Tool call cancelled by client.',
+          }),
+        );
+        continue;
+      } else if (toolAction is ToolActionMock) {
+        genUiLogger.info(
+          'Tool call ${call.name} mocked by interceptor '
+          'with result: ${toolAction.result}',
+        );
+        functionResponseParts.add(
+          FunctionResponse(call.name, toolAction.result),
+        );
+        continue;
+      }
+
       if (isForcedToolCalling && call.name == outputToolName) {
         try {
           capturedResult = call.args['output'];
@@ -316,7 +346,12 @@ class FirebaseAiContentGenerator implements ContentGenerator {
         (t) => t.name == call.name || t.fullName == call.name,
         orElse: () => throw Exception('Unknown tool ${call.name} called.'),
       );
+
+      // Emit ToolStartEvent
+      emitEvent(ToolStartEvent(toolName: aiTool.name, args: argsMap));
+
       Map<String, Object?> toolResult;
+      final startTime = DateTime.now();
       try {
         genUiLogger.fine('Invoking tool: ${aiTool.name}');
         toolResult = await aiTool.invoke(call.args);
@@ -334,6 +369,17 @@ class FirebaseAiContentGenerator implements ContentGenerator {
           'error': 'Tool ${aiTool.name} failed to execute: $exception',
         };
       }
+      final Duration duration = DateTime.now().difference(startTime);
+
+      // Emit ToolEndEvent
+      emitEvent(
+        ToolEndEvent(
+          toolName: aiTool.name,
+          result: toolResult,
+          duration: duration,
+        ),
+      );
+
       functionResponseParts.add(FunctionResponse(call.name, toolResult));
     }
     genUiLogger.fine(
@@ -428,6 +474,12 @@ With functions:
       if (response.usageMetadata != null) {
         inputTokenUsage += response.usageMetadata!.promptTokenCount ?? 0;
         outputTokenUsage += response.usageMetadata!.candidatesTokenCount ?? 0;
+        emitEvent(
+          TokenUsageEvent(
+            inputTokens: response.usageMetadata!.promptTokenCount ?? 0,
+            outputTokens: response.usageMetadata!.candidatesTokenCount ?? 0,
+          ),
+        );
       }
       genUiLogger.info(
         '****** Completed Inference ******\n'

@@ -9,7 +9,10 @@ import 'package:flutter/foundation.dart';
 import '../genui.dart';
 
 /// A fake [ContentGenerator] for use in tests.
-class FakeContentGenerator implements ContentGenerator {
+/// A fake [ContentGenerator] for use in tests.
+class FakeContentGenerator
+    with ContentGeneratorMixin
+    implements ContentGenerator {
   FakeContentGenerator();
 
   final _a2uiMessageController = StreamController<A2uiMessage>.broadcast();
@@ -34,6 +37,9 @@ class FakeContentGenerator implements ContentGenerator {
   /// The last client capabilities passed to [sendRequest].
   A2UiClientCapabilities? lastClientCapabilities;
 
+  /// The last client data model passed to [sendRequest].
+  Map<String, Object?>? lastClientDataModel;
+
   @override
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
 
@@ -48,6 +54,7 @@ class FakeContentGenerator implements ContentGenerator {
 
   @override
   void dispose() {
+    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
     _errorController.close();
@@ -59,6 +66,7 @@ class FakeContentGenerator implements ContentGenerator {
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     _isProcessing.value = true;
     try {
@@ -66,6 +74,7 @@ class FakeContentGenerator implements ContentGenerator {
       lastMessage = message;
       lastHistory = history;
       lastClientCapabilities = clientCapabilities;
+      lastClientDataModel = clientDataModel;
       if (sendRequestCompleter != null) {
         await sendRequestCompleter!.future;
       }

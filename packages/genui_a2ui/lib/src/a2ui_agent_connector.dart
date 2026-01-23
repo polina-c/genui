@@ -78,6 +78,7 @@ class A2uiAgentConnector {
   Future<String?> connectAndSend(
     genui.ChatMessage chatMessage, {
     genui.A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     final List<genui.MessagePart> parts = switch (chatMessage) {
       genui.UserMessage(parts: final p) => p,
@@ -133,10 +134,16 @@ class A2uiAgentConnector {
     if (contextId != null) {
       messageToSend = messageToSend.copyWith(contextId: contextId);
     }
+
+    final metadata = <String, Object?>{};
     if (clientCapabilities != null) {
-      messageToSend = messageToSend.copyWith(
-        metadata: {'a2uiClientCapabilities': clientCapabilities.toJson()},
-      );
+      metadata['a2uiClientCapabilities'] = clientCapabilities.toJson();
+    }
+    if (clientDataModel != null) {
+      metadata['a2uiClientDataModel'] = clientDataModel;
+    }
+    if (metadata.isNotEmpty) {
+      messageToSend = messageToSend.copyWith(metadata: metadata);
     }
 
     _log.info('--- OUTGOING REQUEST ---');

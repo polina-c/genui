@@ -9,6 +9,31 @@ import 'package:flutter/foundation.dart';
 import 'model/a2ui_client_capabilities.dart';
 import 'model/a2ui_message.dart';
 import 'model/chat_message.dart';
+import 'model/gen_ui_events.dart';
+
+/// Represents an action to take for an intercepted tool call.
+sealed class ToolAction {}
+
+/// Proceed with the tool execution as normal.
+class ToolActionProceed extends ToolAction {}
+
+/// Cancel the tool execution. The AI will receive an error or a cancellation message.
+class ToolActionCancel extends ToolAction {
+  final String reason;
+  ToolActionCancel(this.reason);
+}
+
+/// Skip execution and provide a mock result to the AI.
+class ToolActionMock extends ToolAction {
+  final Map<String, Object?> result;
+  ToolActionMock(this.result);
+}
+
+/// A function that intercepts a tool call.
+/// [toolName]: The name of the tool being called.
+/// [args]: The arguments passed by the AI.
+typedef ToolInterceptor =
+    Future<ToolAction> Function(String toolName, Map<String, Object?> args);
 
 /// An error produced by a [ContentGenerator].
 final class ContentGeneratorError implements Exception {
@@ -36,6 +61,9 @@ abstract interface class ContentGenerator {
   /// A stream of text responses from the agent.
   Stream<String> get textResponseStream;
 
+  /// A stream of events related to the generation process (tool calls, usage, etc.).
+  Stream<GenUiEvent> get eventStream;
+
   /// A stream of errors from the agent.
   Stream<ContentGeneratorError> get errorStream;
 
@@ -51,7 +79,14 @@ abstract interface class ContentGenerator {
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   });
+
+  /// Adds a tool interceptor.
+  void addInterceptor(ToolInterceptor interceptor);
+
+  /// Removes a tool interceptor.
+  void removeInterceptor(ToolInterceptor interceptor);
 
   /// Disposes of the resources used by this generator.
   void dispose();

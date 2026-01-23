@@ -27,7 +27,9 @@ import 'dartantic_schema_adapter.dart';
 /// This implementation is **stateless** - it does not maintain internal
 /// conversation history. Instead, it uses the history provided by
 /// [GenUiConversation] via the [sendRequest] method's `history` parameter.
-class DartanticContentGenerator implements ContentGenerator {
+class DartanticContentGenerator
+    with ContentGeneratorMixin
+    implements ContentGenerator {
   /// Creates a [DartanticContentGenerator] instance.
   ///
   /// - [provider]: The dartantic AI provider to use (e.g., `Providers.google`,
@@ -126,6 +128,7 @@ ${_outputSchema.toJson()}
 
   @override
   void dispose() {
+    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
     _errorController.close();
@@ -137,6 +140,7 @@ ${_outputSchema.toJson()}
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     _isProcessing.value = true;
     try {
@@ -189,10 +193,48 @@ ${_outputSchema.toJson()}
           description: aiTool.description,
           inputSchema: adaptSchema(aiTool.parameters),
           onCall: (Map<String, dynamic> args) async {
+            // Intercept tool call
+            final toolAction = await interceptToolCall(aiTool.name, args);
+
+            if (toolAction is ToolActionCancel) {
+              genUiLogger.info(
+                'Tool call ${aiTool.name} cancelled by interceptor.',
+              );
+              return {'error': 'Tool call cancelled by client.'};
+            } else if (toolAction is ToolActionMock) {
+              genUiLogger.info(
+                'Tool call ${aiTool.name} mocked by interceptor '
+                'with result: ${toolAction.result}',
+              );
+              return toolAction.result as Map<String, dynamic>;
+            }
+
             genUiLogger.fine('Invoking tool: ${aiTool.name} with args: $args');
-            final JsonMap result = await aiTool.invoke(args);
-            genUiLogger.fine('Tool ${aiTool.name} returned: $result');
-            return result;
+
+            // Emit ToolStartEvent
+            emitEvent(ToolStartEvent(toolName: aiTool.name, args: args));
+
+            dynamic result;
+            final startTime = DateTime.now();
+            try {
+              result = await aiTool.invoke(args);
+              genUiLogger.fine('Tool ${aiTool.name} returned: $result');
+            } catch (e, st) {
+              genUiLogger.severe('Tool ${aiTool.name} failed', e, st);
+              result = {'error': e.toString()};
+            }
+            final duration = DateTime.now().difference(startTime);
+
+            // Emit ToolEndEvent
+            emitEvent(
+              ToolEndEvent(
+                toolName: aiTool.name,
+                result: result,
+                duration: duration,
+              ),
+            );
+
+            return result is Map<String, dynamic> ? result : {'result': result};
           },
         ),
       )

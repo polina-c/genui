@@ -11,6 +11,7 @@ import '../core/a2ui_message_processor.dart';
 import '../model/a2ui_client_capabilities.dart';
 import '../model/a2ui_message.dart';
 import '../model/chat_message.dart';
+import '../model/gen_ui_events.dart';
 import '../model/ui_models.dart';
 
 /// A high-level abstraction to manage a generative UI conversation.
@@ -145,6 +146,10 @@ class GenUiConversation {
   /// processing a request.
   ValueListenable<bool> get isProcessing => contentGenerator.isProcessing;
 
+  /// A stream of events related to the generation process (tool calls, usage,
+  /// etc.).
+  Stream<GenUiEvent> get processingEvents => contentGenerator.eventStream;
+
   /// Returns a [ValueNotifier] for the given [surfaceId].
   ValueNotifier<UiDefinition?> surface(String surfaceId) {
     return a2uiMessageProcessor.getSurfaceNotifier(surfaceId);
@@ -163,10 +168,16 @@ class GenUiConversation {
           .cast<String>()
           .toList(),
     );
+
+    // Retrieve client data model for attached surfaces
+    final Map<String, Object?> clientDataModel = a2uiMessageProcessor
+        .getClientDataModel();
+
     return contentGenerator.sendRequest(
       message,
       history: history,
       clientCapabilities: clientCapabilities,
+      clientDataModel: clientDataModel.isNotEmpty ? clientDataModel : null,
     );
   }
 

@@ -10,7 +10,10 @@ import 'package:genui/genui.dart';
 import 'a2ui_agent_connector.dart';
 
 /// A content generator that connects to an A2UI server.
-class A2uiContentGenerator implements ContentGenerator {
+/// A content generator that connects to an A2UI server.
+class A2uiContentGenerator
+    with ContentGeneratorMixin
+    implements ContentGenerator {
   /// Creates an [A2uiContentGenerator] instance.
   ///
   /// If optional `connector` is not supplied, then one will be created with the
@@ -46,6 +49,7 @@ class A2uiContentGenerator implements ContentGenerator {
 
   @override
   void dispose() {
+    disposeMixin();
     _textResponseController.close();
     connector.dispose();
     _isProcessing.dispose();
@@ -56,6 +60,7 @@ class A2uiContentGenerator implements ContentGenerator {
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     _isProcessing.value = true;
     try {
@@ -67,6 +72,7 @@ class A2uiContentGenerator implements ContentGenerator {
       final String? responseText = await connector.connectAndSend(
         message,
         clientCapabilities: clientCapabilities,
+        clientDataModel: clientDataModel,
       );
       if (responseText != null && responseText.isNotEmpty) {
         _textResponseController.add(responseText);

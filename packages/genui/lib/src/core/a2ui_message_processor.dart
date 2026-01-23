@@ -85,19 +85,58 @@ abstract interface class GenUiHost {
 /// `updateDataModel`, `deleteSurface`) that the AI uses to manipulate the UI.
 /// It exposes a stream of `GenUiUpdate` events so that the application can
 /// react to changes.
+/// Policies for cleaning up old surfaces when new ones are created.
+enum SurfaceCleanupPolicy {
+  /// Surfaces are only removed when explicitly deleted by the AI.
+  manual,
+
+  /// Only the most recently updated/created surface is kept.
+  keepLatest,
+
+  /// The last N surfaces are kept.
+  keepLastN,
+}
+
+/// Manages the state of all dynamic UI surfaces.
+///
+/// This class is the core state manager for the dynamic UI. It maintains a map
+/// of all active UI "surfaces", where each surface is represented by a
+/// `UiDefinition`. It provides the tools (`createSurface`, `updateComponents`,
+/// `updateDataModel`, `deleteSurface`) that the AI uses to manipulate the UI.
+/// It exposes a stream of `GenUiUpdate` events so that the application can
+/// react to changes.
 class A2uiMessageProcessor implements GenUiHost {
   /// Creates a new [A2uiMessageProcessor] with a list of supported widget
   /// catalogs.
-  A2uiMessageProcessor({required this.catalogs});
+  A2uiMessageProcessor({
+    required this.catalogs,
+    this.cleanupPolicy = SurfaceCleanupPolicy.manual,
+    this.maxSurfaces = 1,
+    this.pendingUpdateTimeout = const Duration(minutes: 1),
+  });
 
   @override
   final Iterable<Catalog> catalogs;
 
+  /// The policy to use for cleaning up old surfaces.
+  final SurfaceCleanupPolicy cleanupPolicy;
+
+  /// The maximum number of surfaces to keep when using [SurfaceCleanupPolicy.keepLastN].
+  final int maxSurfaces;
+
+  /// The duration to wait for a [CreateSurface] message before discarding pending updates.
+  final Duration pendingUpdateTimeout;
+
   final _surfaces = <String, ValueNotifier<UiDefinition?>>{};
+  // Track creation/update order for cleanup policies
+  final _surfaceOrder = <String>[];
   final _surfaceUpdates = StreamController<GenUiUpdate>.broadcast();
   final _onSubmit = StreamController<UserUiInteractionMessage>.broadcast();
 
   final _dataModels = <String, DataModel>{};
+  final _pendingUpdates = <String, List<A2uiMessage>>{};
+  final _pendingUpdateTimers = <String, Timer>{};
+  final _attachedSurfaces = <String>{};
 
   @override
   Map<String, DataModel> get dataModels => Map.unmodifiable(_dataModels);
@@ -123,7 +162,9 @@ class A2uiMessageProcessor implements GenUiHost {
       return;
     }
 
-    final String eventJsonString = jsonEncode({'userAction': event.toMap()});
+    // v0.9 uses 'action' instead of 'userAction'
+    final String eventJsonString = jsonEncode({'action': event.toMap()});
+    // TODO: Include attached data models if requested
     _onSubmit.add(UserUiInteractionMessage.text(eventJsonString));
   }
 
@@ -150,35 +191,42 @@ class A2uiMessageProcessor implements GenUiHost {
     for (final DataModel model in _dataModels.values) {
       model.dispose();
     }
+    for (final Timer timer in _pendingUpdateTimers.values) {
+      timer.cancel();
+    }
+    _pendingUpdateTimers.clear();
   }
 
   /// Handles an [A2uiMessage] and updates the UI accordingly.
   void handleMessage(A2uiMessage message) {
+    try {
+      _handleMessageInternal(message);
+    } on GenUiValidationException catch (e) {
+      genUiLogger.warning('Validation failed for surface ${e.surfaceId}: $e');
+      final Map<String, Map<String, String>> errorMsg = {
+        'error': {
+          'code': 'VALIDATION_FAILED',
+          'surfaceId': e.surfaceId,
+          'path': e.path,
+          'message': e.message,
+        },
+      };
+      _onSubmit.add(UserUiInteractionMessage.text(jsonEncode(errorMsg)));
+    } catch (e, stack) {
+      genUiLogger.severe('Error handling message: $message', e, stack);
+      // Optionally send a generic error back to the AI?
+    }
+  }
+
+  void _handleMessageInternal(A2uiMessage message) {
     switch (message) {
-      case UpdateComponents():
-        final String surfaceId = message.surfaceId;
-        final ValueNotifier<UiDefinition?> notifier = getSurfaceNotifier(
-          surfaceId,
-        );
-
-        UiDefinition uiDefinition =
-            notifier.value ?? UiDefinition(surfaceId: surfaceId);
-        final Map<String, Component> newComponents = Map.of(
-          uiDefinition.components,
-        );
-        for (final Component component in message.components) {
-          newComponents[component.id] = component;
-        }
-        uiDefinition = uiDefinition.copyWith(components: newComponents);
-        notifier.value = uiDefinition;
-
-        genUiLogger.info(
-          '''Updating surface $surfaceId with ${message.components.length} components''',
-        );
-        _surfaceUpdates.add(ComponentsUpdated(surfaceId, uiDefinition));
-
       case CreateSurface():
         final String surfaceId = message.surfaceId;
+
+        // Check buffer first
+        final List<A2uiMessage>? pending = _pendingUpdates.remove(surfaceId);
+        _pendingUpdateTimers.remove(surfaceId)?.cancel();
+
         dataModelForSurface(surfaceId);
         final ValueNotifier<UiDefinition?> notifier = getSurfaceNotifier(
           surfaceId,
@@ -187,50 +235,174 @@ class A2uiMessageProcessor implements GenUiHost {
         // Create or update definition with theme/catalog
         final UiDefinition uiDefinition =
             notifier.value ?? UiDefinition(surfaceId: surfaceId);
+
+        // v0.9: attachDataModel support
+        if (message.attachDataModel) {
+          _attachedSurfaces.add(surfaceId);
+        } else {
+          _attachedSurfaces.remove(surfaceId);
+        }
+
         final UiDefinition newUiDefinition = uiDefinition.copyWith(
           catalogId: message.catalogId,
           theme: message.theme,
         );
         notifier.value = newUiDefinition;
 
+        _updateSurfaceOrder(surfaceId);
+        _enforceCleanupPolicy();
+
         genUiLogger.info('Created new surface $surfaceId');
         _surfaceUpdates.add(SurfaceAdded(surfaceId, newUiDefinition));
 
+        // Process pending updates
+        if (pending != null) {
+          genUiLogger.info(
+            'Processing ${pending.length} pending updates for $surfaceId',
+          );
+          for (final A2uiMessage msg in pending) {
+            _handleMessageInternal(msg);
+          }
+        }
+
+      case UpdateComponents():
+        final String surfaceId = message.surfaceId;
+        if (!_surfaces.containsKey(surfaceId)) {
+          _bufferMessage(surfaceId, message);
+          return;
+        }
+
+        final ValueNotifier<UiDefinition?> notifier = getSurfaceNotifier(
+          surfaceId,
+        );
+
+        UiDefinition uiDefinition =
+            notifier.value ?? UiDefinition(surfaceId: surfaceId);
+
+        final Map<String, Component> newComponents = Map.of(
+          uiDefinition.components,
+        );
+        for (final Component component in message.components) {
+          newComponents[component.id] = component;
+        }
+        uiDefinition = uiDefinition.copyWith(components: newComponents);
+
+        // Validate before applying? Or validate inside copyWith/Components?
+        // Phase 1 implementation added validate(Schema).
+        // We need the schema to validate.
+        // For now, we assume implicit validation or call validate if schema available.
+
+        notifier.value = uiDefinition;
+
+        _updateSurfaceOrder(surfaceId);
+
+        genUiLogger.info(
+          '''Updating surface $surfaceId with ${message.components.length} components''',
+        );
+        _surfaceUpdates.add(ComponentsUpdated(surfaceId, uiDefinition));
+
       case UpdateDataModel():
+        final String surfaceId = message.surfaceId;
+        if (!_surfaces.containsKey(surfaceId)) {
+          _bufferMessage(surfaceId, message);
+          return;
+        }
+
         final String path = message.path;
         genUiLogger.info(
-          'Updating data model for surface ${message.surfaceId} at path '
+          'Updating data model for surface $surfaceId at path '
           '$path with contents:\n'
           '${const JsonEncoder.withIndent('  ').convert(message.value)}',
         );
-        final DataModel dataModel = dataModelForSurface(message.surfaceId);
+        final DataModel dataModel = dataModelForSurface(surfaceId);
         dataModel.update(DataPath(path), message.value);
 
         // Notify UI of an update if the surface exists
         final ValueNotifier<UiDefinition?> notifier = getSurfaceNotifier(
-          message.surfaceId,
+          surfaceId,
         );
         final UiDefinition? uiDefinition = notifier.value;
         if (uiDefinition != null) {
-          // Check if we have components to render, otherwise it's just data
-          // update
           _surfaceUpdates.add(
-            ComponentsUpdated(message.surfaceId, uiDefinition),
+            ComponentsUpdated(surfaceId, uiDefinition),
           );
         }
 
       case DeleteSurface():
         final String surfaceId = message.surfaceId;
-        if (_surfaces.containsKey(surfaceId)) {
-          genUiLogger.info('Deleting surface $surfaceId');
-          final ValueNotifier<UiDefinition?>? notifier = _surfaces.remove(
-            surfaceId,
-          );
-          notifier?.dispose();
-          final DataModel? dataModel = _dataModels.remove(surfaceId);
-          dataModel?.dispose();
-          _surfaceUpdates.add(SurfaceRemoved(surfaceId));
-        }
+        // Also clear pending if any
+        _pendingUpdates.remove(surfaceId);
+        _pendingUpdateTimers.remove(surfaceId)?.cancel();
+        _deleteSurface(surfaceId);
     }
+  }
+
+  void _bufferMessage(String surfaceId, A2uiMessage message) {
+    genUiLogger.info(
+      'Buffering message for unknown surface $surfaceId: $message',
+    );
+    _pendingUpdates.putIfAbsent(surfaceId, () => []).add(message);
+
+    // Schedule timeout
+    if (!_pendingUpdateTimers.containsKey(surfaceId)) {
+      _pendingUpdateTimers[surfaceId] = Timer(pendingUpdateTimeout, () {
+        genUiLogger.warning(
+          'Timeout waiting for CreateSurface for $surfaceId. Discarding pending updates.',
+        );
+        _pendingUpdates.remove(surfaceId);
+        _pendingUpdateTimers.remove(surfaceId);
+      });
+    }
+  }
+
+  void _updateSurfaceOrder(String surfaceId) {
+    _surfaceOrder.remove(surfaceId);
+    _surfaceOrder.add(surfaceId); // Move to end (most recent)
+  }
+
+  void _enforceCleanupPolicy() {
+    if (cleanupPolicy == SurfaceCleanupPolicy.manual) return;
+
+    int keepCount;
+    if (cleanupPolicy == SurfaceCleanupPolicy.keepLatest) {
+      keepCount = 1;
+    } else {
+      keepCount = maxSurfaces;
+    }
+
+    if (_surfaceOrder.length > keepCount) {
+      // Remove oldest
+      final int removeCount = _surfaceOrder.length - keepCount;
+      final List<String> toRemove = _surfaceOrder.sublist(0, removeCount);
+      for (final id in toRemove) {
+        _deleteSurface(id);
+      }
+    }
+  }
+
+  void _deleteSurface(String surfaceId) {
+    if (_surfaces.containsKey(surfaceId)) {
+      genUiLogger.info('Deleting surface $surfaceId');
+      final ValueNotifier<UiDefinition?>? notifier = _surfaces.remove(
+        surfaceId,
+      );
+      notifier?.dispose();
+      final DataModel? dataModel = _dataModels.remove(surfaceId);
+      dataModel?.dispose();
+      _surfaceOrder.remove(surfaceId);
+      _attachedSurfaces.remove(surfaceId);
+      _surfaceUpdates.add(SurfaceRemoved(surfaceId));
+    }
+  }
+
+  /// Returns the current client data model for all attached surfaces.
+  Map<String, Object?> getClientDataModel() {
+    final result = <String, Object?>{};
+    for (final String surfaceId in _attachedSurfaces) {
+      if (_dataModels.containsKey(surfaceId)) {
+        result[surfaceId] = _dataModels[surfaceId]!.data;
+      }
+    }
+    return {'surfaces': result};
   }
 }

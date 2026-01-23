@@ -26,7 +26,11 @@ typedef GenerativeServiceFactory =
 
 /// A [ContentGenerator] that uses the Google Cloud Generative Language API to
 /// generate content.
-class GoogleGenerativeAiContentGenerator implements ContentGenerator {
+/// A [ContentGenerator] that uses the Google Cloud Generative Language API to
+/// generate content.
+class GoogleGenerativeAiContentGenerator
+    with ContentGeneratorMixin
+    implements ContentGenerator {
   /// Creates a [GoogleGenerativeAiContentGenerator] instance with specified
   /// configurations.
   ///
@@ -118,6 +122,7 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
 
   @override
   void dispose() {
+    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
     _errorController.close();
@@ -129,9 +134,11 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
     ChatMessage message, {
     Iterable<ChatMessage>? history,
     A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
   }) async {
     _isProcessing.value = true;
     try {
+      // TODO: Include clientDataModel in the request/prompt if needed.
       final messages = [...?history, message];
       final response = await _generate(
         messages: messages,
@@ -282,11 +289,55 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
       genUiLogger.fine(
         'Processing function call: ${call.name} with args: ${call.args}',
       );
+
+      // Convert Struct args to Map for easier handling
+      final argsMap = call.args?.toJson() as Map<String, Object?>? ?? {};
+
+      // Intercept tool call
+      final toolAction = await interceptToolCall(call.name, argsMap);
+
+      if (toolAction is ToolActionCancel) {
+        genUiLogger.info('Tool call ${call.name} cancelled by interceptor.');
+        // Return an error/cancellation message to the model so it knows what happened.
+        functionResponseParts.add(
+          google_ai.Part(
+            functionResponse: google_ai.FunctionResponse(
+              id: call.id,
+              name: call.name,
+              response: protobuf.Struct.fromJson({
+                'error': 'Tool call cancelled by client.',
+              }),
+            ),
+          ),
+        );
+        continue;
+      } else if (toolAction is ToolActionMock) {
+        genUiLogger.info(
+          'Tool call ${call.name} mocked by interceptor '
+          'with result: ${toolAction.result}',
+        );
+        functionResponseParts.add(
+          google_ai.Part(
+            functionResponse: google_ai.FunctionResponse(
+              id: call.id,
+              name: call.name,
+              // Ensure result is a Map for Struct conversion if possible,
+              // otherwise wrap it or handle it.
+              // protobuf.Struct expects Map<String, dynamic>.
+              response: protobuf.Struct.fromJson(
+                toolAction.result as Map<String, dynamic>,
+              ),
+            ),
+          ),
+        );
+        continue;
+      }
+
+      // ToolActionProceed falls through here
+
       if (isForcedToolCalling && call.name == outputToolName) {
         try {
-          // Convert Struct args to Map to extract output
-          final argsMap = call.args?.toJson() as Map<String, Object?>?;
-          capturedResult = argsMap?['output'];
+          capturedResult = argsMap['output'];
           genUiLogger.fine(
             'Captured final output from tool "$outputToolName".',
           );
@@ -308,11 +359,14 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
         (t) => t.name == call.name || t.fullName == call.name,
         orElse: () => throw Exception('Unknown tool ${call.name} called.'),
       );
+
+      // Emit ToolStartEvent
+      emitEvent(ToolStartEvent(toolName: aiTool.name, args: argsMap));
+
       Map<String, Object?> toolResult;
+      final startTime = DateTime.now();
       try {
         genUiLogger.fine('Invoking tool: ${aiTool.name}');
-        // Convert Struct args to Map for tool invocation
-        final argsMap = call.args?.toJson() as Map<String, Object?>? ?? {};
         toolResult = await aiTool.invoke(argsMap);
         genUiLogger.info(
           'Invoked tool ${aiTool.name} with args $argsMap. '
@@ -328,6 +382,17 @@ class GoogleGenerativeAiContentGenerator implements ContentGenerator {
           'error': 'Tool ${aiTool.name} failed to execute: $exception',
         };
       }
+      final duration = DateTime.now().difference(startTime);
+
+      // Emit ToolEndEvent
+      emitEvent(
+        ToolEndEvent(
+          toolName: aiTool.name,
+          result: toolResult,
+          duration: duration,
+        ),
+      );
+
       functionResponseParts.add(
         google_ai.Part(
           functionResponse: google_ai.FunctionResponse(
@@ -446,6 +511,12 @@ With functions:
         if (response.usageMetadata != null) {
           inputTokenUsage += response.usageMetadata!.promptTokenCount;
           outputTokenUsage += response.usageMetadata!.candidatesTokenCount;
+          emitEvent(
+            TokenUsageEvent(
+              inputTokens: response.usageMetadata!.promptTokenCount,
+              outputTokens: response.usageMetadata!.candidatesTokenCount,
+            ),
+          );
         }
         genUiLogger.info(
           '****** Completed Inference ******\n'
