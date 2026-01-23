@@ -15,7 +15,7 @@ import 'a2a/a2a.dart';
 export 'a2a/a2a.dart' show AgentCard;
 
 final Uri a2uiExtensionUri = Uri.parse(
-  'https://a2ui.org/a2a-extension/a2ui/v0.8',
+  'https://a2ui.org/a2a-extension/a2ui/v0.9',
 );
 
 final Logger _log = genui.genUiLogger;
@@ -46,12 +46,18 @@ class A2uiAgentConnector {
 
   final _controller = StreamController<genui.A2uiMessage>.broadcast();
   final _errorController = StreamController<Object>.broadcast();
+
+  /// The underlying A2A client.
   @visibleForTesting
   late A2AClient client;
+
+  /// The ID of the current A2A task.
   @visibleForTesting
   String? taskId;
 
   String? _contextId;
+
+  /// The ID of the current A2A context.
   String? get contextId => _contextId;
 
   /// The stream of A2UI protocol lines.
@@ -136,7 +142,7 @@ class A2uiAgentConnector {
     }
 
     _log.info('--- OUTGOING REQUEST ---');
-    _log.info('URL: ${url.toString()}');
+    _log.info('URL: $url');
     _log.info('Method: message/stream');
     _log.info(
       'Payload: '
@@ -279,11 +285,8 @@ class A2uiAgentConnector {
       'Processing a2ui messages from data part:\n'
       '${const JsonEncoder.withIndent('  ').convert(data)}',
     );
-    if (data.containsKey('surfaceUpdate') ||
-        data.containsKey('updateComponents') ||
-        data.containsKey('dataModelUpdate') ||
+    if (data.containsKey('updateComponents') ||
         data.containsKey('updateDataModel') ||
-        data.containsKey('beginRendering') ||
         data.containsKey('createSurface') ||
         data.containsKey('deleteSurface')) {
       if (!_controller.isClosed) {
