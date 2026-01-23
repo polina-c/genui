@@ -34,7 +34,7 @@ class DartanticContentGenerator implements ContentGenerator {
   ///   `Providers.openai`, `Providers.anthropic`).
   /// - [catalog]: The catalog of UI components available to the AI.
   /// - [systemInstruction]: Optional system instruction for the AI model.
-
+  /// - [modelName]: The name of the model to use (specific to the provider).
   /// - [additionalTools]: Additional GenUI [AiTool] instances to make
   ///   available.
   DartanticContentGenerator({

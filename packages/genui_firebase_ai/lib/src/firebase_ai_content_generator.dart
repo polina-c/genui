@@ -35,6 +35,20 @@ typedef GenerativeModelFactory =
 class FirebaseAiContentGenerator implements ContentGenerator {
   /// Creates a [FirebaseAiContentGenerator] instance with specified
   /// configurations.
+  ///
+  /// The [catalog] is the registry of components that can be dynamically
+  /// rendered.
+  ///
+  /// [systemInstruction] is an optional instruction to guide the model's
+  /// behavior.
+  ///
+  /// [outputToolName] allows customizing the name of the internal tool used for
+  /// final output. Defaults to 'provideFinalOutput'.
+  ///
+  /// [modelCreator] is an optional factory for creating the
+  /// [GeminiGenerativeModelInterface].
+  ///
+  /// [additionalTools] allows providing extra [AiTool]s to the model.
   FirebaseAiContentGenerator({
     required this.catalog,
     this.systemInstruction,

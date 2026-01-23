@@ -29,6 +29,24 @@ typedef GenerativeServiceFactory =
 class GoogleGenerativeAiContentGenerator implements ContentGenerator {
   /// Creates a [GoogleGenerativeAiContentGenerator] instance with specified
   /// configurations.
+  ///
+  /// The [catalog] is the registry of components that can be dynamically
+  /// rendered.
+  ///
+  /// [systemInstruction] is an optional instruction to guide the model's
+  /// behavior.
+  ///
+  /// [outputToolName] allows customizing the name of the internal tool used for
+  /// final output. Defaults to 'provideFinalOutput'.
+  ///
+  /// [serviceFactory] is an optional factory for creating the
+  /// [GoogleGenerativeServiceInterface].
+  ///
+  /// [additionalTools] allows providing extra [AiTool]s to the model.
+  ///
+  /// [modelName] is the name of the model to use (e.g., 'models/gemini-pro').
+  ///
+  /// [apiKey] is the API key to use for authentication.
   GoogleGenerativeAiContentGenerator({
     required this.catalog,
     this.systemInstruction,

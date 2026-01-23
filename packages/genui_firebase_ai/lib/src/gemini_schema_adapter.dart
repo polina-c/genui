@@ -75,10 +75,11 @@ class GeminiSchemaAdapter {
     );
   }
 
-  /// Recursively adapts a sub-schema.
+  /// Recursively adapts a sub-schema at the given [path].
   ///
-  /// This method is called by [adapt] and recursively traverses the schema,
-  /// converting each part to the `firebase_ai` format.
+  /// This method is called by [adapt] and recursively traverses the [schema],
+  /// converting each part to the `firebase_ai` format, logging any errors
+  /// encountered to [_errors].
   firebase_ai.Schema? _adapt(dsb.Schema schema, List<String> path) {
     checkUnsupportedGlobalKeywords(schema, path);
 

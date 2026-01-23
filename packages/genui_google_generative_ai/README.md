@@ -29,7 +29,7 @@ Create an instance of `GoogleGenerativeAiContentGenerator` and pass it to your `
 import 'package:genui/genui.dart';
 import 'package:genui_google_generative_ai/genui_google_generative_ai.dart';
 
-final catalog = Catalog(components: [...]);
+final catalog = CoreCatalogItems.asCatalog();
 
 final contentGenerator = GoogleGenerativeAiContentGenerator(
   catalog: catalog,
@@ -40,6 +40,7 @@ final contentGenerator = GoogleGenerativeAiContentGenerator(
 
 final conversation = GenUiConversation(
   contentGenerator: contentGenerator,
+  a2uiMessageProcessor: A2uiMessageProcessor(catalog: catalog),
 );
 ```
 

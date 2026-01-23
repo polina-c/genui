@@ -31,8 +31,10 @@ class ContentConverterException implements Exception {
 /// simple text representation of the URL (e.g., "Image at {url}"). The image
 /// data is not automatically fetched from the URL by this converter.
 class GeminiContentConverter {
-  /// Converts a list of `ChatMessage` objects to a list of
-  /// `firebase_ai.Content` objects.
+  /// Converts a list of [ChatMessage]s to a list of [firebase_ai.Content]s.
+  ///
+  /// This method iterates through the provided [messages] and converts each one
+  /// into a format suitable for the Firebase AI SDK.
   List<firebase_ai.Content> toFirebaseAiContent(
     Iterable<ChatMessage> messages,
   ) {

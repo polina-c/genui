@@ -29,8 +29,10 @@ class GoogleAiClientException implements Exception {
 /// representation into the concrete `google_ai.Content` representation
 /// required by the `google_cloud_ai_generativelanguage_v1beta` package.
 class GoogleContentConverter {
-  /// Converts a list of `ChatMessage` objects to a list of
-  /// `google_ai.Content` objects.
+  /// Converts a list of [ChatMessage]s to a list of [google_ai.Content]s.
+  ///
+  /// This method iterates through the provided [messages] and converts each one
+  /// into a format suitable for the Google Cloud Generative Language API.
   List<google_ai.Content> toGoogleAiContent(Iterable<ChatMessage> messages) {
     final result = <google_ai.Content>[];
     for (final message in messages) {

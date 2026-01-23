@@ -34,7 +34,7 @@ import 'package:genui/genui.dart';
 import 'package:genui_dartantic/genui_dartantic.dart';
 
 final catalog = CoreCatalogItems.asCatalog();
-final genUiManager = GenUiManager(catalog: catalog);
+final a2uiMessageProcessor = A2uiMessageProcessor(catalog: catalog);
 
 // Example of a custom tool
 final myCustomTool = DynamicAiTool<Map<String, Object?>>(
@@ -57,7 +57,7 @@ final contentGenerator = DartanticContentGenerator(
 );
 
 final genUiConversation = GenUiConversation(
-  genUiManager: genUiManager,
+  a2uiMessageProcessor: a2uiMessageProcessor,
   contentGenerator: contentGenerator,
   ...
 );

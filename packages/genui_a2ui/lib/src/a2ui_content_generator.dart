@@ -24,6 +24,7 @@ class A2uiContentGenerator implements ContentGenerator {
     });
   }
 
+  /// The connector used to communicate with the A2A server.
   final A2uiAgentConnector connector;
   final _textResponseController = StreamController<String>.broadcast();
   final _errorResponseController =

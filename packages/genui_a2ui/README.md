@@ -5,7 +5,7 @@ An integration package for [`genui`](https://pub.dev/packages/genui) and the [A2
 ## Features
 
 -   **A2A Server Connection:** Establishes and manages a WebSocket connection to any server implementing the A2A protocol.
--   **A2UI Message Processing:** Receives and parses A2UI messages (like `SurfaceUpdate`, `DataModelUpdate`, `BeginRendering`) from the A2A stream.
+-   **A2UI Message Processing:** Receives and parses A2UI messages (like `UpdateComponents`, `UpdateDataModel`, `CreateSurface`) from the A2A stream.
 -   **Dynamic UI Rendering:** Integrates seamlessly with `genui`'s `GenUiSurface` to render UIs based on the received A2UI messages.
 -   **Content Generator Implementation:** Provides `A2uiContentGenerator`, a specialized `ContentGenerator` for `genui`'s `GenUiConversation` to handle the A2A communication flow.
 -   **Event Handling:** Captures UI events from `genui` and sends them back to the A2A server as A2A messages.
