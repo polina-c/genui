@@ -437,9 +437,10 @@ class FirebaseAiContentGenerator
         fai.TextPart('Standard Catalog:\n$catalogJson'),
       ]),
       tools: generativeAiTools,
-      toolConfig: ToolConfig(
-        functionCallingConfig: FunctionCallingConfig.auto(),
-      ),
+      toolConfig: (generativeAiTools?.isNotEmpty ?? false)
+          ? ToolConfig(functionCallingConfig: FunctionCallingConfig.auto(),
+            )
+          : null,
     );
 
     while (toolUsageCycle < maxToolUsageCycles) {

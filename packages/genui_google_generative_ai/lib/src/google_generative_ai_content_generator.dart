@@ -493,11 +493,13 @@ With functions:
             model: modelName,
             contents: [...systemInstructionContent, ...content],
             tools: tools ?? [],
-            toolConfig: google_ai.ToolConfig(
-              functionCallingConfig: google_ai.FunctionCallingConfig(
-                mode: google_ai.FunctionCallingConfig_Mode.auto,
-              ),
-            ),
+            toolConfig: (tools?.isNotEmpty ?? false)
+                ? google_ai.ToolConfig(
+                    functionCallingConfig: google_ai.FunctionCallingConfig(
+                      mode: google_ai.FunctionCallingConfig_Mode.auto,
+                    ),
+                  )
+                : null,
           );
           response = await service.generateContent(request);
           genUiLogger.finest(
