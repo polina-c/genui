@@ -141,9 +141,7 @@ void main() {
                 google_ai.Candidate(
                   content: google_ai.Content(
                     role: 'model',
-                    parts: [
-                      google_ai.Part(text: 'Hello'),
-                    ],
+                    parts: [google_ai.Part(text: 'Hello')],
                   ),
                   finishReason: google_ai.Candidate_FinishReason.stop,
                 ),
@@ -199,9 +197,7 @@ void main() {
                 google_ai.Candidate(
                   content: google_ai.Content(
                     role: 'model',
-                    parts: [
-                      google_ai.Part(text: 'Tool called'),
-                    ],
+                    parts: [google_ai.Part(text: 'Tool called')],
                   ),
                   finishReason: google_ai.Candidate_FinishReason.stop,
                 ),
@@ -229,9 +225,7 @@ void main() {
                 google_ai.Candidate(
                   content: google_ai.Content(
                     role: 'model',
-                    parts: [
-                      google_ai.Part(text: 'Hello'),
-                    ],
+                    parts: [google_ai.Part(text: 'Hello')],
                   ),
                   finishReason: google_ai.Candidate_FinishReason.stop,
                 ),

@@ -462,9 +462,7 @@ class GoogleGenerativeAiContentGenerator
       final catalogJson = A2uiMessage.a2uiMessageSchema(
         catalog,
       ).toJson(indent: '  ');
-      parts.add(
-        google_ai.Part(text: 'A2UI Message Schema:\n$catalogJson'),
-      );
+      parts.add(google_ai.Part(text: 'A2UI Message Schema:\n$catalogJson'));
 
       final systemInstructionContent = parts.isNotEmpty
           ? [google_ai.Content(role: 'user', parts: parts)]
@@ -491,9 +489,7 @@ With functions:
           ...systemInstructionContent,
           ...content,
         ].map((c) => c.parts.map((p) => p.text).join('')).join('\n---\n');
-        genUiLogger.fine(
-          'Full prompt content: $instructionText',
-        );
+        genUiLogger.fine('Full prompt content: $instructionText');
         final inferenceStartTime = DateTime.now();
         google_ai.GenerateContentResponse response;
         try {

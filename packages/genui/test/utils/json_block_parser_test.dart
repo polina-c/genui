@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/src/utils/json_block_parser.dart';
 
@@ -25,10 +24,13 @@ Here is some JSON:
 ```
 ''';
       final Object? result = JsonBlockParser.parseFirstJsonBlock(text);
-      expect(result, equals({
-        'foo': 'bar',
-        'baz': [1, 2, 3]
-      }));
+      expect(
+        result,
+        equals({
+          'foo': 'bar',
+          'baz': [1, 2, 3],
+        }),
+      );
     });
 
     test('parses JSON block without language tag', () {

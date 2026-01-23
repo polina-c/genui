@@ -46,9 +46,7 @@ class DartanticContentGenerator
     List<AiTool<JsonMap>> additionalTools = const [],
   }) {
     // Build GenUI tools
-    final genUiTools = <AiTool<JsonMap>>[
-      ...additionalTools,
-    ];
+    final genUiTools = <AiTool<JsonMap>>[...additionalTools];
 
     // Convert all tools to dartantic format
     final List<dartantic.Tool> dartanticTools = _convertTools(genUiTools);
@@ -259,5 +257,4 @@ ${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
         ),
       )
       .toList();
-
 }

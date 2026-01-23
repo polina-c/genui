@@ -48,12 +48,26 @@ final slider = CatalogItem(
   dataSchema: _schema,
   widgetBuilder: (CatalogItemContext itemContext) {
     final sliderData = _SliderData.fromMap(itemContext.data as JsonMap);
+    final Object valueRef = sliderData.value;
+    final path = (valueRef is Map && valueRef.containsKey('path'))
+        ? valueRef['path'] as String
+        : '${itemContext.id}.value';
+
     final ValueNotifier<num?> valueNotifier = itemContext.dataContext
-        .subscribeToValue<num>(sliderData.value);
+        .subscribeToValue<num>({'path': path});
 
     return ValueListenableBuilder<num?>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
+        // If value is null (nothing in DataContext yet), fall back to
+        // literal value if provided.
+        var effectiveValue = value;
+        if (effectiveValue == null) {
+          if (valueRef is num) {
+            effectiveValue = valueRef;
+          }
+        }
+
         return Padding(
           padding: const EdgeInsetsDirectional.only(end: 16.0),
           child: Row(
@@ -61,16 +75,12 @@ final slider = CatalogItem(
             children: [
               Expanded(
                 child: Slider(
-                  value: (value ?? sliderData.min).toDouble(),
+                  value: (effectiveValue ?? sliderData.min).toDouble(),
                   min: sliderData.min,
                   max: sliderData.max,
                   divisions: (sliderData.max - sliderData.min).toInt(),
                   onChanged: (newValue) {
-                    final Object val = sliderData.value;
-                    if (val is Map && val.containsKey('path')) {
-                      final path = val['path'] as String;
-                      itemContext.dataContext.update(DataPath(path), newValue);
-                    }
+                    itemContext.dataContext.update(DataPath(path), newValue);
                   },
                 ),
               ),

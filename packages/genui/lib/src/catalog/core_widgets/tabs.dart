@@ -52,12 +52,14 @@ class _TabsWidget extends StatefulWidget {
     required this.tabs,
     required this.itemContext,
     required this.activeTabNotifier,
+    this.initialTab = 0,
     required this.onTabChanged,
   });
 
   final List<JsonMap> tabs;
   final CatalogItemContext itemContext;
   final ValueNotifier<num?> activeTabNotifier;
+  final int initialTab;
   final ValueChanged<int> onTabChanged;
 
   @override
@@ -71,10 +73,20 @@ class _TabsWidgetState extends State<_TabsWidget>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: widget.tabs.length, vsync: this);
+    final int initialIndex =
+        (widget.activeTabNotifier.value?.toInt() ?? widget.initialTab).clamp(
+          0,
+          widget.tabs.length - 1,
+        );
+    _tabController = TabController(
+      length: widget.tabs.length,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
     _tabController.addListener(_handleTabSelection);
     widget.activeTabNotifier.addListener(_handleExternalChange);
-    _handleExternalChange(); // Initial sync
+    // Sync external change immediately if present?
+    // Not needed if we used it for initialIndex, unless notifier changes later.
   }
 
   @override
@@ -82,13 +94,15 @@ class _TabsWidgetState extends State<_TabsWidget>
     super.didUpdateWidget(oldWidget);
     if (widget.tabs.length != oldWidget.tabs.length) {
       _tabController.dispose();
+      final int initialIndex =
+          (widget.activeTabNotifier.value?.toInt() ?? widget.initialTab).clamp(
+            0,
+            widget.tabs.length - 1,
+          );
       _tabController = TabController(
         length: widget.tabs.length,
         vsync: this,
-        initialIndex: (widget.activeTabNotifier.value?.toInt() ?? 0).clamp(
-          0,
-          widget.tabs.length - 1,
-        ),
+        initialIndex: initialIndex,
       );
       _tabController.addListener(_handleTabSelection);
     }
@@ -176,21 +190,34 @@ final tabs = CatalogItem(
   dataSchema: _schema,
   widgetBuilder: (itemContext) {
     final tabsData = _TabsData.fromMap(itemContext.data as JsonMap);
-    final ValueNotifier<num?> activeTabNotifier = itemContext.dataContext
-        .subscribeToNumber(tabsData.activeTab);
+    final Object? activeTabRef = tabsData.activeTab;
+    final path = (activeTabRef is Map && activeTabRef.containsKey('path'))
+        ? activeTabRef['path'] as String
+        : '${itemContext.id}.activeTab';
 
-    return _TabsWidget(
-      tabs: tabsData.tabs,
-      itemContext: itemContext,
-      activeTabNotifier: activeTabNotifier,
-      onTabChanged: (newIndex) {
-        final Object? activeTabRef = tabsData.activeTab;
-        if (activeTabRef is Map && activeTabRef.containsKey('path')) {
-          itemContext.dataContext.update(
-            DataPath(activeTabRef['path'] as String),
-            newIndex,
-          );
+    final ValueNotifier<num?> activeTabNotifier = itemContext.dataContext
+        .subscribeToNumber({'path': path});
+
+    return ValueListenableBuilder<num?>(
+      valueListenable: activeTabNotifier,
+      builder: (context, currentActiveTab, child) {
+        // If currentActiveTab is null, fall back to literal if provided.
+        var effectiveActiveTab = currentActiveTab;
+        if (effectiveActiveTab == null) {
+          if (activeTabRef is num) {
+            effectiveActiveTab = activeTabRef;
+          }
         }
+
+        return _TabsWidget(
+          tabs: tabsData.tabs,
+          itemContext: itemContext,
+          activeTabNotifier: activeTabNotifier,
+          initialTab: activeTabRef is num ? activeTabRef.toInt() : 0,
+          onTabChanged: (newIndex) {
+            itemContext.dataContext.update(DataPath(path), newIndex);
+          },
+        );
       },
     );
   },

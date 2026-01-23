@@ -120,13 +120,29 @@ final checkboxFilterChipsInput = CatalogItem(
     }
 
     final Object selectedOptionsRef = checkboxFilterChipsData.selectedOptions;
+    final path =
+        (selectedOptionsRef is Map && selectedOptionsRef.containsKey('path'))
+        ? selectedOptionsRef['path'] as String
+        : '${context.id}.value';
+
     final ValueNotifier<List<Object?>?> notifier = context.dataContext
-        .subscribeToObjectArray(selectedOptionsRef);
+        .subscribeToObjectArray({'path': path});
 
     return ValueListenableBuilder<List<Object?>?>(
       valueListenable: notifier,
       builder: (buildContext, currentSelectedValues, child) {
-        final Set<String> selectedOptionsSet = (currentSelectedValues ?? [])
+        var effectiveSelections = currentSelectedValues;
+        if (effectiveSelections == null) {
+          if (selectedOptionsRef is List) {
+            effectiveSelections = selectedOptionsRef;
+          } else if (selectedOptionsRef is Map &&
+              selectedOptionsRef.containsKey('literalArray')) {
+            effectiveSelections =
+                selectedOptionsRef['literalArray'] as List<Object?>;
+          }
+        }
+
+        final Set<String> selectedOptionsSet = (effectiveSelections ?? [])
             .cast<String>()
             .toSet();
         return _CheckboxFilterChip(
@@ -135,14 +151,10 @@ final checkboxFilterChipsInput = CatalogItem(
           icon: icon,
           selectedOptions: selectedOptionsSet,
           onChanged: (newSelectedOptions) {
-            if (selectedOptionsRef is Map &&
-                selectedOptionsRef.containsKey('path')) {
-              final path = selectedOptionsRef['path'] as String;
-              context.dataContext.update(
-                DataPath(path),
-                newSelectedOptions.toList(),
-              );
-            }
+            context.dataContext.update(
+              DataPath(path),
+              newSelectedOptions.toList(),
+            );
           },
         );
       },

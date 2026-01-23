@@ -35,10 +35,7 @@ void main() {
         UpdateComponents(surfaceId: surfaceId, components: components),
       );
       manager.handleMessage(
-        const CreateSurface(
-          surfaceId: surfaceId,
-          catalogId: standardCatalogId,
-        ),
+        const CreateSurface(surfaceId: surfaceId, catalogId: standardCatalogId),
       );
 
       await tester.pumpWidget(
@@ -87,10 +84,7 @@ void main() {
         UpdateComponents(surfaceId: surfaceId, components: components),
       );
       manager.handleMessage(
-        const CreateSurface(
-          surfaceId: surfaceId,
-          catalogId: standardCatalogId,
-        ),
+        const CreateSurface(surfaceId: surfaceId, catalogId: standardCatalogId),
       );
       await tester.pumpWidget(
         MaterialApp(

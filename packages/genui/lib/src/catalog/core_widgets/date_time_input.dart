@@ -91,6 +91,7 @@ extension type _DateTimeInputData.fromMap(JsonMap _json) {
 class _DateTimeInput extends StatefulWidget {
   const _DateTimeInput({
     required this.value,
+    required this.path,
     required this.data,
     required this.dataContext,
     required this.onChanged,
@@ -101,6 +102,7 @@ class _DateTimeInput extends StatefulWidget {
   });
 
   final String? value;
+  final String path;
   final _DateTimeInputData data;
   final DataContext dataContext;
   final VoidCallback onChanged;
@@ -153,15 +155,6 @@ class _DateTimeInputState extends State<_DateTimeInput> {
   }
 
   Future<void> _handleTap(BuildContext context) async {
-    final Object val = widget.data.value;
-    final String? path = (val is Map && val.containsKey('path'))
-        ? val['path'] as String?
-        : null;
-
-    if (path == null) {
-      return;
-    }
-
     final DateTime initialDate =
         DateTime.tryParse(widget.value ?? '') ??
         DateTime.tryParse('1970-01-01T${widget.value}') ??
@@ -210,7 +203,7 @@ class _DateTimeInputState extends State<_DateTimeInput> {
       formattedValue = finalDateTime.toIso8601String();
     }
 
-    widget.dataContext.update(DataPath(path), formattedValue);
+    widget.dataContext.update(DataPath(widget.path), formattedValue);
     widget.onChanged();
   }
 
@@ -297,8 +290,13 @@ final dateTimeInput = CatalogItem(
     final dateTimeInputData = _DateTimeInputData.fromMap(
       itemContext.data as JsonMap,
     );
+    final Object valueRef = dateTimeInputData.value;
+    final path = (valueRef is Map && valueRef.containsKey('path'))
+        ? valueRef['path'] as String
+        : '${itemContext.id}.value';
+
     final ValueNotifier<String?> valueNotifier = itemContext.dataContext
-        .subscribeToString(dateTimeInputData.value);
+        .subscribeToString({'path': path});
     final ValueNotifier<String?> labelNotifier = itemContext.dataContext
         .subscribeToString(dateTimeInputData.label);
 
@@ -307,11 +305,22 @@ final dateTimeInput = CatalogItem(
     return ValueListenableBuilder<String?>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
+        // If value is null (nothing in DataContext yet), fall back to
+        // literal value if provided.
+        var effectiveValue = value;
+        if (effectiveValue == null) {
+          final Object val = dateTimeInputData.value;
+          if (val is! Map || !val.containsKey('path')) {
+            effectiveValue = val as String?;
+          }
+        }
+
         return ValueListenableBuilder<String?>(
           valueListenable: labelNotifier,
           builder: (context, label, child) {
             return _DateTimeInput(
-              value: value,
+              value: effectiveValue,
+              path: path,
               data: dateTimeInputData,
               dataContext: itemContext.dataContext,
               onChanged: () {

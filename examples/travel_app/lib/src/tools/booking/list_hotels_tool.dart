@@ -28,9 +28,7 @@ class ListHotelsTool extends AiTool<Map<String, Object?>> {
                   'The check-out date in ISO 8601 format (YYYY-MM-DD).',
               format: 'date',
             ),
-            'guests': S.integer(
-              description: 'The number of guests.',
-            ),
+            'guests': S.integer(description: 'The number of guests.'),
           },
           required: ['query', 'checkIn', 'checkOut', 'guests'],
         ),

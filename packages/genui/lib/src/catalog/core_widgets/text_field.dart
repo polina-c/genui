@@ -221,11 +221,11 @@ final textField = CatalogItem(
   widgetBuilder: (itemContext) {
     final textFieldData = _TextFieldData.fromMap(itemContext.data as JsonMap);
     final Object? valueRef = textFieldData.value;
-    final String? path = (valueRef is Map && valueRef.containsKey('path'))
-        ? valueRef['path'] as String?
-        : null;
+    final path = (valueRef is Map && valueRef.containsKey('path'))
+        ? valueRef['path'] as String
+        : '${itemContext.id}.value';
     final ValueNotifier<String?> notifier = itemContext.dataContext
-        .subscribeToString(valueRef);
+        .subscribeToString({'path': path});
     final ValueNotifier<String?> labelNotifier = itemContext.dataContext
         .subscribeToString(textFieldData.label);
 
@@ -237,17 +237,18 @@ final textField = CatalogItem(
         return ValueListenableBuilder(
           valueListenable: labelNotifier,
           builder: (context, label, child) {
+            final String? effectiveValue =
+                currentValue ?? (valueRef is String ? valueRef : null);
+
             return _TextField(
-              initialValue: currentValue ?? '',
+              initialValue: effectiveValue ?? '',
               label: label,
               checks: textFieldData.checks,
               parser: parser,
               textFieldType: textFieldData.variant,
               validationRegexp: textFieldData.validationRegexp,
               onChanged: (newValue) {
-                if (path != null) {
-                  itemContext.dataContext.update(DataPath(path), newValue);
-                }
+                itemContext.dataContext.update(DataPath(path), newValue);
               },
               onSubmitted: (newValue) {
                 final JsonMap? actionData = textFieldData.onSubmittedAction;

@@ -440,8 +440,7 @@ class FirebaseAiContentGenerator
       ]),
       tools: generativeAiTools,
       toolConfig: (generativeAiTools?.isNotEmpty ?? false)
-          ? ToolConfig(functionCallingConfig: FunctionCallingConfig.auto(),
-            )
+          ? ToolConfig(functionCallingConfig: FunctionCallingConfig.auto())
           : null,
     );
 

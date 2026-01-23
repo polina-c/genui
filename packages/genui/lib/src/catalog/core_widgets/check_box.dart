@@ -45,25 +45,33 @@ final checkBox = CatalogItem(
     final checkBoxData = _CheckBoxData.fromMap(itemContext.data as JsonMap);
     final ValueNotifier<String?> labelNotifier = itemContext.dataContext
         .subscribeToString(checkBoxData.label);
+
+    final Object valueRef = checkBoxData.value;
+    final path = (valueRef is Map && valueRef.containsKey('path'))
+        ? valueRef['path'] as String
+        : '${itemContext.id}.value';
+
     final ValueNotifier<bool?> valueNotifier = itemContext.dataContext
-        .subscribeToBool(checkBoxData.value);
+        .subscribeToBool({'path': path});
+
     return ValueListenableBuilder<String?>(
       valueListenable: labelNotifier,
       builder: (context, label, child) {
         return ValueListenableBuilder<bool?>(
           valueListenable: valueNotifier,
           builder: (context, value, child) {
+            final bool effectiveValue =
+                value ?? (valueRef is bool ? valueRef : false);
+
             return CheckboxListTile(
               controlAffinity: ListTileControlAffinity.leading,
               title: Text(
                 label ?? '',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              value: value ?? false,
+              value: effectiveValue,
               onChanged: (newValue) {
-                final Object val = checkBoxData.value;
-                if (val is Map && val.containsKey('path')) {
-                  final path = val['path'] as String;
+                if (newValue != null) {
                   itemContext.dataContext.update(DataPath(path), newValue);
                 }
               },

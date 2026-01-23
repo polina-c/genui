@@ -81,13 +81,9 @@ final optionsFilterChipInput = CatalogItem(
           "id": "root",
           "component": "OptionsFilterChipInput",
           "chipLabel": "Budget",
-          "options": [
-            "\$",
-            "\$\$",
-            "\$\$\$"
-          ],
+          "options": ["Low", "Medium", "High"],
           "value": {
-            "literalString": "\$\$"
+            "literalString": "Medium"
           }
         }
       ]
@@ -109,22 +105,30 @@ final optionsFilterChipInput = CatalogItem(
     }
 
     final Object? valueRef = optionsFilterChipData.rawValue;
-    final String? path = valueRef is Map && valueRef.containsKey('path')
+    // If the value is a literal, we still want to bind to a path so that we can
+    // update the model (and the UI) when the user changes the value.
+    final path = valueRef is Map && valueRef.containsKey('path')
         ? valueRef['path'] as String
-        : null;
+        : '${context.id}.value';
+    // Always subscribe to the path, even if we have a literal value.
     final ValueNotifier<String?> notifier = context.dataContext
-        .subscribeToString(valueRef);
+        .subscribeToString({'path': path});
 
     return ValueListenableBuilder<String?>(
       valueListenable: notifier,
       builder: (builderContext, currentValue, child) {
+        // If the data model is empty at the path, fall back to the literal
+        // value provided in the component definition.
+        final String? effectiveValue =
+            currentValue ?? (valueRef is String ? valueRef : null);
+
         return _OptionsFilterChip(
           chipLabel: optionsFilterChipData.chipLabel,
           options: optionsFilterChipData.options,
           icon: icon,
-          value: currentValue,
+          value: effectiveValue,
           onChanged: (newValue) {
-            if (path != null && newValue != null) {
+            if (newValue != null) {
               context.dataContext.update(DataPath(path), newValue);
             }
           },

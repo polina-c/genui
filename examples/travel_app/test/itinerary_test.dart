@@ -37,8 +37,7 @@ void main() {
               'type': 'accommodation',
               'status': 'choiceRequired',
               'choiceRequiredAction': {
-                'name': 'testAction',
-                'context': <String, Object?>{},
+                'event': {'name': 'testAction', 'context': <String, Object?>{}},
               },
             },
           ],

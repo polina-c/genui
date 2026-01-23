@@ -121,7 +121,7 @@ class _Trailhead extends StatelessWidget {
                 label: Text(topic),
                 onPressed: () {
                   final event = action['event'] as JsonMap?;
-                  final name = event?['name'] as String? ?? 'unknown';
+                  final String name = event?['name'] as String? ?? 'unknown';
                   final contextDefinition = event?['context'] as JsonMap?;
                   final JsonMap resolvedContext = resolveContext(
                     dataContext,

@@ -56,9 +56,16 @@ final choicePicker = CatalogItem(
   dataSchema: _schema,
   widgetBuilder: (itemContext) {
     final data = _ChoicePickerData.fromMap(itemContext.data as JsonMap);
+
+    final Object valueRef = data.value;
+    final path = (valueRef is Map && valueRef.containsKey('path'))
+        ? valueRef['path'] as String
+        : '${itemContext.id}.value';
+
+    // Always subscribe to the path
     final ValueNotifier<List<Object?>?> selectionsNotifier = itemContext
         .dataContext
-        .subscribeToObjectArray(data.value);
+        .subscribeToObjectArray({'path': path});
 
     // If variant is missing, default based on something? Or assume defaults.
     // The `variant` controls it.
@@ -89,6 +96,20 @@ final choicePicker = CatalogItem(
         ValueListenableBuilder<List<Object?>?>(
           valueListenable: selectionsNotifier,
           builder: (context, currentSelections, child) {
+            var effectiveSelections = currentSelections;
+            if (effectiveSelections == null) {
+              if (valueRef is List) {
+                effectiveSelections = valueRef;
+              } else if (valueRef is String) {
+                // Handle case where single string is provided for mutually
+                // exclusive
+                effectiveSelections = [valueRef];
+              }
+            }
+            // Ensure we have a list for easier checking
+            final List<String> currentStrings =
+                effectiveSelections?.map((e) => e.toString()).toList() ?? [];
+
             return Column(
               children: data.options.map((option) {
                 final ValueNotifier<String?> labelNotifier = itemContext
@@ -101,9 +122,8 @@ final choicePicker = CatalogItem(
                   builder: (context, label, child) {
                     if (isMutuallyExclusive) {
                       // Radio behavior
-                      final Object? groupValue =
-                          currentSelections?.isNotEmpty == true
-                          ? currentSelections!.first
+                      final Object? groupValue = currentStrings.isNotEmpty
+                          ? currentStrings.first
                           : null;
 
                       return RadioListTile<String>(
@@ -118,13 +138,7 @@ final choicePicker = CatalogItem(
                         groupValue: groupValue is String ? groupValue : null,
                         // ignore: deprecated_member_use
                         onChanged: (newValue) {
-                          final Object valBinding = data.value;
-                          final String? path =
-                              (valBinding is Map &&
-                                  valBinding.containsKey('path'))
-                              ? valBinding['path'] as String?
-                              : null;
-                          if (path == null || newValue == null) {
+                          if (newValue == null) {
                             return;
                           }
                           // Mutually exclusive: replace list with single item
@@ -139,24 +153,12 @@ final choicePicker = CatalogItem(
                         title: Text(label ?? ''),
                         dense: true,
                         controlAffinity: ListTileControlAffinity.leading,
-                        value:
-                            currentSelections?.contains(optionValue) ?? false,
+                        value: currentStrings.contains(optionValue),
                         onChanged: (newValue) {
-                          final Object valBinding = data.value;
-                          final String? path =
-                              (valBinding is Map &&
-                                  valBinding.containsKey('path'))
-                              ? valBinding['path'] as String?
-                              : null;
-                          if (path == null) {
-                            return;
-                          }
                           // Create copy of list
-                          final List<String> newSelections =
-                              currentSelections
-                                  ?.map((e) => e.toString())
-                                  .toList() ??
-                              <String>[];
+                          final newSelections = List<String>.from(
+                            currentStrings,
+                          );
 
                           if (newValue == true) {
                             if (!newSelections.contains(optionValue)) {

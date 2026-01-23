@@ -72,23 +72,23 @@ final textInputChip = CatalogItem(
     );
 
     final Object? valueRef = textInputChipData.value;
-    final String? path = valueRef is Map && valueRef.containsKey('path')
+    final path = valueRef is Map && valueRef.containsKey('path')
         ? valueRef['path'] as String
-        : null;
+        : '${context.id}.value';
     final ValueNotifier<String?> notifier = context.dataContext
-        .subscribeToString(valueRef);
+        .subscribeToString({'path': path});
 
     return ValueListenableBuilder<String?>(
       valueListenable: notifier,
       builder: (builderContext, currentValue, child) {
+        final String? effectiveValue =
+            currentValue ?? (valueRef is String ? valueRef : null);
         return _TextInputChip(
           label: textInputChipData.label,
-          value: currentValue,
+          value: effectiveValue,
           obscured: textInputChipData.obscured,
           onChanged: (newValue) {
-            if (path != null) {
-              context.dataContext.update(DataPath(path), newValue);
-            }
+            context.dataContext.update(DataPath(path), newValue);
           },
         );
       },
