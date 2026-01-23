@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
+import 'package:genui/src/primitives/constants.dart';
 
 void main() {
   testWidgets('TextField with no weight in Row defaults to weight: 1 '
@@ -35,7 +36,7 @@ void main() {
     a2uiProcessor.handleMessage(
       const CreateSurface(
         surfaceId: surfaceId,
-        catalogId: 'a2ui.org:standard_catalog_0_8_0',
+        catalogId: standardCatalogId,
       ),
     );
 
@@ -90,7 +91,7 @@ void main() {
     manager.handleMessage(
       const CreateSurface(
         surfaceId: surfaceId,
-        catalogId: 'a2ui.org:standard_catalog_0_8_0',
+        catalogId: standardCatalogId,
       ),
     );
 
@@ -158,7 +159,7 @@ void main() {
     manager.handleMessage(
       const CreateSurface(
         surfaceId: surfaceId,
-        catalogId: 'a2ui.org:standard_catalog_0_8_0',
+        catalogId: standardCatalogId,
       ),
     );
 

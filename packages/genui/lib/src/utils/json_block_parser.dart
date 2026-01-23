@@ -121,6 +121,7 @@ class JsonBlockParser {
     // 1. Try markdown blocks
     final markdownRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
     final Iterable<RegExpMatch> matches = markdownRegex.allMatches(text);
+
     for (final match in matches) {
       final String? content = match.group(1);
       if (content != null) {
