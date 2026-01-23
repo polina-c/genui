@@ -114,22 +114,57 @@ class JsonBlockParser {
     return null;
   }
 
-  /// Removes the first found JSON block from the text.
-  static String stripJsonBlock(String text) {
-    // 1. Try markdown block
+  /// Parses all valid JSON objects or arrays found in [text].
+  static List<Object> parseJsonBlocks(String text) {
+    final results = <Object>[];
+
+    // 1. Try markdown blocks
     final markdownRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
-    if (markdownRegex.hasMatch(text)) {
-      return text.replaceFirst(markdownRegex, '').trim();
+    final Iterable<RegExpMatch> matches = markdownRegex.allMatches(text);
+    for (final match in matches) {
+      final String? content = match.group(1);
+      if (content != null) {
+        try {
+          results.add(jsonDecode(content) as Object);
+        } catch (_) {
+          // Ignore invalid JSON in blocks
+        }
+      }
     }
 
-    // 2. Try balanced JSON
-    // We reuse _extractBalancedJson to find the *string* content, then replace
-    // it. This is slightly inefficient but safe.
-    final String? jsonString = _extractBalancedJson(text);
-    if (jsonString != null) {
-      return text.replaceFirst(jsonString, '').trim();
+    // If we found markdown blocks, we prioritize them and ignore loose JSON
+    // to avoid double counting or parsing partial content.
+    if (results.isNotEmpty) {
+      return results;
     }
 
-    return text;
+    // 2. Fallback: parse first loose JSON block if no markdown blocks found
+    // (Existing logic for single block fallback)
+    final Object? firstBlock = parseFirstJsonBlock(text);
+    if (firstBlock != null) {
+      results.add(firstBlock);
+    }
+
+    return results;
+  }
+
+  /// Removes all found JSON blocks from the text.
+  static String stripJsonBlock(String text) {
+    // 1. Replace all markdown blocks
+    final markdownRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
+    String processed = text.replaceAll(markdownRegex, '');
+
+    // 2. If no markdown blocks were found/removed, try removing balanced JSON
+    // Only do this if the simpler regex didn't change anything, to avoid
+    // aggressive stripping of code examples that might effectively be handled
+    // by the markdown regex.
+    if (processed.length == text.length) {
+      final String? jsonString = _extractBalancedJson(text);
+      if (jsonString != null) {
+        processed = text.replaceFirst(jsonString, '');
+      }
+    }
+
+    return processed.trim();
   }
 }

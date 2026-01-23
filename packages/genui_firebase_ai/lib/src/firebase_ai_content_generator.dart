@@ -505,8 +505,8 @@ With functions:
         mutableContent.add(candidate.content);
 
         // Parse JSON
-        final Object? jsonBlock = JsonBlockParser.parseFirstJsonBlock(text);
-        if (jsonBlock != null) {
+        final List<Object> jsonBlocks = JsonBlockParser.parseJsonBlocks(text);
+        for (final jsonBlock in jsonBlocks) {
           try {
             if (jsonBlock is Map<String, dynamic>) {
               final message = A2uiMessage.fromJson(jsonBlock);
@@ -515,14 +515,17 @@ With functions:
                 'Emitted A2UI message from prompt extraction: '
                 '${message.runtimeType}',
               );
-              // remove the JSON from the text response
-              text = JsonBlockParser.stripJsonBlock(text);
             }
           } catch (e) {
             genUiLogger.warning(
               'Failed to parse extracted JSON as A2uiMessage: $e',
             );
           }
+        }
+
+        if (jsonBlocks.isNotEmpty) {
+          // remove the JSON from the text response
+          text = JsonBlockParser.stripJsonBlock(text);
         }
 
         genUiLogger.fine('Returning text response: "$text"');

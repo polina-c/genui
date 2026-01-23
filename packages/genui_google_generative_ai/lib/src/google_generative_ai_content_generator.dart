@@ -487,6 +487,13 @@ With functions:
   '${allowedFunctionNames.join(', ')}',
   ''',
         );
+        final instructionText = [
+          ...systemInstructionContent,
+          ...content,
+        ].map((c) => c.parts.map((p) => p.text).join('')).join('\n---\n');
+        genUiLogger.fine(
+          'Full prompt content: $instructionText',
+        );
         final inferenceStartTime = DateTime.now();
         google_ai.GenerateContentResponse response;
         try {
@@ -564,8 +571,8 @@ With functions:
           }
 
           // Parse JSON from text
-          final jsonBlock = JsonBlockParser.parseFirstJsonBlock(text);
-          if (jsonBlock != null) {
+          final jsonBlocks = JsonBlockParser.parseJsonBlocks(text);
+          for (final jsonBlock in jsonBlocks) {
             try {
               if (jsonBlock is Map<String, dynamic>) {
                 final message = A2uiMessage.fromJson(jsonBlock);
@@ -573,14 +580,17 @@ With functions:
                 genUiLogger.info(
                   'Emitted A2UI message from prompt extraction: $message',
                 );
-                // remove the JSON from the text response
-                text = JsonBlockParser.stripJsonBlock(text);
               }
             } catch (e) {
               genUiLogger.warning(
                 'Failed to parse extracted JSON as A2uiMessage: $e',
               );
             }
+          }
+
+          if (jsonBlocks.isNotEmpty) {
+            // remove the JSON from the text response
+            text = JsonBlockParser.stripJsonBlock(text);
           }
 
           genUiLogger.fine('Returning text response: "$text"');

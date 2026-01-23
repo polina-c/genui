@@ -163,8 +163,10 @@ ${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
 
       var responseText = result.output;
       // Parse JSON from text
-      final jsonBlock = JsonBlockParser.parseFirstJsonBlock(responseText);
-      if (jsonBlock != null) {
+      final List<Object> jsonBlocks = JsonBlockParser.parseJsonBlocks(
+        responseText,
+      );
+      for (final jsonBlock in jsonBlocks) {
         try {
           if (jsonBlock is Map<String, dynamic>) {
             final message = A2uiMessage.fromJson(jsonBlock);
@@ -173,14 +175,17 @@ ${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
               'Emitted A2UI message from prompt extraction: '
               '${message.runtimeType}',
             );
-            // remove the JSON from the text response
-            responseText = JsonBlockParser.stripJsonBlock(responseText);
           }
         } catch (e) {
           genUiLogger.warning(
             'Failed to parse extracted JSON as A2uiMessage: $e',
           );
         }
+      }
+
+      if (jsonBlocks.isNotEmpty) {
+        // remove the JSON from the text response
+        responseText = JsonBlockParser.stripJsonBlock(responseText);
       }
 
       _textResponseController.add(responseText);
