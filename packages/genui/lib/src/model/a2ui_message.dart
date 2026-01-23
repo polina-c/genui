@@ -4,6 +4,7 @@
 
 import 'package:json_schema_builder/json_schema_builder.dart';
 
+import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
 import 'a2ui_schemas.dart';
 import 'catalog.dart';
@@ -16,19 +17,28 @@ sealed class A2uiMessage {
 
   /// Creates an [A2uiMessage] from a JSON map.
   factory A2uiMessage.fromJson(JsonMap json) {
-    if (json.containsKey('createSurface')) {
-      return CreateSurface.fromJson(json['createSurface'] as JsonMap);
+    try {
+      if (json.containsKey('createSurface')) {
+        return CreateSurface.fromJson(json['createSurface'] as JsonMap);
+      }
+      if (json.containsKey('updateComponents')) {
+        return UpdateComponents.fromJson(json['updateComponents'] as JsonMap);
+      }
+      if (json.containsKey('updateDataModel')) {
+        return UpdateDataModel.fromJson(json['updateDataModel'] as JsonMap);
+      }
+      if (json.containsKey('deleteSurface')) {
+        return DeleteSurface.fromJson(json['deleteSurface'] as JsonMap);
+      }
+    } catch (e, st) {
+      genUiLogger.severe(
+        'Failed to parse A2UI message from JSON: $json',
+        e,
+        st,
+      );
+      rethrow;
     }
-    if (json.containsKey('updateComponents')) {
-      return UpdateComponents.fromJson(json['updateComponents'] as JsonMap);
-    }
-    if (json.containsKey('updateDataModel')) {
-      return UpdateDataModel.fromJson(json['updateDataModel'] as JsonMap);
-    }
-    if (json.containsKey('deleteSurface')) {
-      return DeleteSurface.fromJson(json['deleteSurface'] as JsonMap);
-    }
-    throw ArgumentError('Unknown A2UI message type: $json');
+    throw ArgumentError('Unknown A2UI message type: ${json.keys}');
   }
 
   /// Returns the JSON schema for an A2UI message.
