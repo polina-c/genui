@@ -17,7 +17,7 @@ final class _Json {
 /// An image part of a message.
 ///
 /// Use the factory constructors to create an instance from different sources.
-final class ImagePart extends BasePart {
+final class ImagePart extends Part {
   static const String type = 'Image';
 
   /// The raw image bytes. May be null if created from a URL or Base64.
@@ -81,7 +81,7 @@ final class ImagePart extends BasePart {
 
   @override
   Map<String, Object?> toJson() => {
-    BasePart.typeKey: type,
+    Part.typeKey: type,
     _Json.mimeType: mimeType,
     if (bytes != null) _Json.bytes: bytes,
     if (base64 != null) _Json.base64: base64,
