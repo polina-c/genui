@@ -34,8 +34,10 @@ extension type _ModalData.fromMap(JsonMap _json) {
     if (val is JsonMap && val.containsKey('literalString')) {
       return val['literalString'] as String;
     }
-    // Fallback if missing?
-    if (val == null) return ''; // Unexpected
+
+    if (val == null) {
+      return '';
+    }
     throw ArgumentError('Invalid trigger: $val');
   }
 

@@ -98,10 +98,6 @@ class A2uiAgentConnector {
           try {
             final Object? json = jsonDecode(uiPart.interaction);
             if (json is Map<String, Object?>) {
-              // If it's a map (e.g. {'action': ...}), send as data.
-              // Note: A2A might expect {'a2uiEvent': ...} wrapper?
-              // If the UiInteractionPart content already has it, good.
-              // If not, we might simply pass what we have.
               return Part.data(data: json);
             }
             return Part.text(text: uiPart.interaction);
@@ -109,10 +105,7 @@ class A2uiAgentConnector {
             return Part.text(text: uiPart.interaction);
           }
         } else if (part.isUiPart) {
-          // If we are sending a UI definition back to server (unlikely for user
-          // message, but possible in some flows?)
           final genui.UiPart uiPart = part.asUiPart!;
-          // A2A Part.data?
           return Part.data(data: uiPart.definition.toJson());
         } else if (part is genui.DataPart) {
           return Part.file(

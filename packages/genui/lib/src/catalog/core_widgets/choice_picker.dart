@@ -62,13 +62,10 @@ final choicePicker = CatalogItem(
         ? valueRef['path'] as String
         : '${itemContext.id}.value';
 
-    // Always subscribe to the path
     final ValueNotifier<List<Object?>?> selectionsNotifier = itemContext
         .dataContext
         .subscribeToObjectArray({'path': path});
 
-    // If variant is missing, default based on something? Or assume defaults.
-    // The `variant` controls it.
     final isMutuallyExclusive = data.variant == 'mutuallyExclusive';
 
     return Column(
@@ -101,12 +98,9 @@ final choicePicker = CatalogItem(
               if (valueRef is List) {
                 effectiveSelections = valueRef;
               } else if (valueRef is String) {
-                // Handle case where single string is provided for mutually
-                // exclusive
                 effectiveSelections = [valueRef];
               }
             }
-            // Ensure we have a list for easier checking
             final List<String> currentStrings =
                 effectiveSelections?.map((e) => e.toString()).toList() ?? [];
 
@@ -121,7 +115,6 @@ final choicePicker = CatalogItem(
                   valueListenable: labelNotifier,
                   builder: (context, label, child) {
                     if (isMutuallyExclusive) {
-                      // Radio behavior
                       final Object? groupValue = currentStrings.isNotEmpty
                           ? currentStrings.first
                           : null;
@@ -141,21 +134,18 @@ final choicePicker = CatalogItem(
                           if (newValue == null) {
                             return;
                           }
-                          // Mutually exclusive: replace list with single item
                           itemContext.dataContext.update(DataPath(path), [
                             newValue,
                           ]);
                         },
                       );
                     } else {
-                      // Checkbox behavior
                       return CheckboxListTile(
                         title: Text(label ?? ''),
                         dense: true,
                         controlAffinity: ListTileControlAffinity.leading,
                         value: currentStrings.contains(optionValue),
                         onChanged: (newValue) {
-                          // Create copy of list
                           final newSelections = List<String>.from(
                             currentStrings,
                           );

@@ -15,17 +15,14 @@ class JsonBlockParser {
   ///
   /// Returns `null` if no valid JSON is found.
   static Object? parseFirstJsonBlock(String text) {
-    // 1. Try to find markdown JSON blocks first as they are most reliable
     final String? markdownBlock = _extractMarkdownJson(text);
     if (markdownBlock != null) {
       try {
         return jsonDecode(markdownBlock);
-      } catch (_) {
-        // Continue if markdown block contained invalid JSON
+      } on FormatException catch (_) {
       }
     }
 
-    // 2. Look for the first occurrence of '{' or '['
     final int firstBrace = text.indexOf('{');
     final int firstBracket = text.indexOf('[');
 
@@ -40,23 +37,15 @@ class JsonBlockParser {
 
     if (start == -1) return null;
 
-    // 3. Attempt to parse from the found start index
-    // We'll try to find the balancing closing character.
-    // This is a naive implementation; for robust streaming/partial parsing
-    // a more complex state machine might be needed, but this suffices for
-    // complete messages.
     final String input = text.substring(start);
     try {
-      // Optimistic attempt: maybe the rest of the string is valid JSON?
       return jsonDecode(input);
-    } catch (_) {
-      // Fallback: Try to find the matching closing character manually
-      // This helps if there is strict text *after* the JSON.
+    } on FormatException catch (_) {
       final String? result = _extractBalancedJson(input);
       if (result != null) {
         try {
           return jsonDecode(result);
-        } catch (_) {
+        } on FormatException catch (_) {
           return null;
         }
       }
@@ -118,7 +107,6 @@ class JsonBlockParser {
   static List<Object> parseJsonBlocks(String text) {
     final results = <Object>[];
 
-    // 1. Try markdown blocks
     final markdownRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
     final Iterable<RegExpMatch> matches = markdownRegex.allMatches(text);
 
@@ -127,20 +115,14 @@ class JsonBlockParser {
       if (content != null) {
         try {
           results.add(jsonDecode(content) as Object);
-        } catch (_) {
-          // Ignore invalid JSON in blocks
+        } on FormatException catch (_) {
         }
       }
     }
-
-    // If we found markdown blocks, we prioritize them and ignore loose JSON
-    // to avoid double counting or parsing partial content.
     if (results.isNotEmpty) {
       return results;
     }
 
-    // 2. Fallback: parse first loose JSON block if no markdown blocks found
-    // (Existing logic for single block fallback)
     final Object? firstBlock = parseFirstJsonBlock(text);
     if (firstBlock != null) {
       results.add(firstBlock);
@@ -151,14 +133,8 @@ class JsonBlockParser {
 
   /// Removes all found JSON blocks from the text.
   static String stripJsonBlock(String text) {
-    // 1. Replace all markdown blocks
     final markdownRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
     String processed = text.replaceAll(markdownRegex, '');
-
-    // 2. If no markdown blocks were found/removed, try removing balanced JSON
-    // Only do this if the simpler regex didn't change anything, to avoid
-    // aggressive stripping of code examples that might effectively be handled
-    // by the markdown regex.
     if (processed.length == text.length) {
       final String? jsonString = _extractBalancedJson(text);
       if (jsonString != null) {

@@ -32,9 +32,7 @@ class FunctionRegistry {
     final ClientFunction? func = _functions[name];
     if (func == null) {
       genUiLogger.warning('Function not found: $name');
-      return null; // Or throw? Spec says "Client-side function calls".
-      // If it fails, maybe return null or original string?
-      // Throwing might break the UI rendering if unhandled.
+      return null;
     }
     try {
       return func(args);
@@ -173,11 +171,6 @@ class FunctionRegistry {
     }
 
     final formatter = NumberFormat.decimalPattern(); // Default locale
-    // Ideally we should use the configured locale or pass it in.
-    // Since we don't have access to context here, we rely on default or
-    // current system locale.
-
-    // Customizing
     if (!useGrouping) {
       formatter.turnOffGrouping();
     }
@@ -195,7 +188,6 @@ class FunctionRegistry {
     final Object? currencyCode = args[1];
     if (amount is! num || currencyCode is! String) return amount?.toString();
 
-    // Simple currency formatting
     final formatter = NumberFormat.simpleCurrency(name: currencyCode);
     return formatter.format(amount);
   }
@@ -222,8 +214,6 @@ class FunctionRegistry {
   }
 
   Object? _pluralize(List<Object?> args) {
-    // pluralize(count, {zero, one, other})
-    // or pluralize(count, "item", "items") - simple
     if (args.isEmpty) return '';
     final Object? count = args[0];
     if (count is! num) return '';
@@ -235,7 +225,6 @@ class FunctionRegistry {
       return options['other'] ?? '';
     }
 
-    // Fallback or simple syntax pending strict spec
     return '';
   }
 }

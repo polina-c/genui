@@ -85,8 +85,6 @@ class _TabsWidgetState extends State<_TabsWidget>
     );
     _tabController.addListener(_handleTabSelection);
     widget.activeTabNotifier.addListener(_handleExternalChange);
-    // Sync external change immediately if present?
-    // Not needed if we used it for initialIndex, unless notifier changes later.
   }
 
   @override
@@ -109,9 +107,6 @@ class _TabsWidgetState extends State<_TabsWidget>
   }
 
   void _handleTabSelection() {
-    // Only notify if index actually changed and we aren't currently switching
-    // triggered by external update (to avoid loops, though strict inequality
-    // check helps).
     if (!_tabController.indexIsChanging) {
       widget.onTabChanged(_tabController.index);
     }
@@ -201,7 +196,6 @@ final tabs = CatalogItem(
     return ValueListenableBuilder<num?>(
       valueListenable: activeTabNotifier,
       builder: (context, currentActiveTab, child) {
-        // If currentActiveTab is null, fall back to literal if provided.
         var effectiveActiveTab = currentActiveTab;
         if (effectiveActiveTab == null) {
           if (activeTabRef is num) {

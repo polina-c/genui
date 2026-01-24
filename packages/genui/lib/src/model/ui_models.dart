@@ -154,7 +154,6 @@ class UiDefinition {
   /// Validates the UI definition against a schema.
   /// Throws [GenUiValidationException] if validation fails.
   void validate(Schema schema) {
-    // schema is from json_schema_builder. Convert to Map for inspection.
     final String jsonOutput = schema.toJson();
     final schemaMap = jsonDecode(jsonOutput) as Map<String, dynamic>;
 
@@ -241,11 +240,9 @@ class UiDefinition {
     String path,
   ) {
     if (instance == null) {
-      // Check for nullable/null?
       return;
     }
 
-    // Validate const
     if (schema.containsKey('const')) {
       final Object? constVal = schema['const'];
       if (instance != constVal) {
@@ -257,7 +254,6 @@ class UiDefinition {
       }
     }
 
-    // Validate enum
     if (schema.containsKey('enum')) {
       final enums = schema['enum'] as List;
       if (!enums.contains(instance)) {
@@ -269,7 +265,6 @@ class UiDefinition {
       }
     }
 
-    // Validate required
     if (schema.containsKey('required') && instance is Map) {
       final List<String> required = (schema['required'] as List).cast<String>();
       for (final key in required) {
@@ -283,20 +278,17 @@ class UiDefinition {
       }
     }
 
-    // Validate properties
     if (schema.containsKey('properties') && instance is Map) {
       final props = schema['properties'] as Map<String, dynamic>;
       for (final MapEntry<String, dynamic> entry in props.entries) {
         final String key = entry.key;
         final propSchema = entry.value as Map<String, dynamic>;
         if (instance.containsKey(key)) {
-          // Cast ensures checking against Map, assuming schema is valid
           _validateInstance(instance[key], propSchema, '$path/$key');
         }
       }
     }
 
-    // Validate items (list)
     if (schema.containsKey('items') && instance is List) {
       final itemsSchema = schema['items'] as Map<String, dynamic>;
       for (var i = 0; i < instance.length; i++) {
@@ -304,7 +296,6 @@ class UiDefinition {
       }
     }
 
-    // Validate oneOf
     if (schema.containsKey('oneOf')) {
       final List<Map<String, dynamic>> oneOfs = (schema['oneOf'] as List)
           .cast<Map<String, dynamic>>();
@@ -344,7 +335,6 @@ final class Component {
     final rawType = json['component'] as String;
     final id = json['id'] as String;
 
-    // Remove 'id' and 'component' to get properties
     final properties = Map<String, Object?>.from(json);
     properties.remove('id');
     properties.remove('component');

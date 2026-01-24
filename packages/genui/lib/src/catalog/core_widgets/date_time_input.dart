@@ -170,7 +170,9 @@ class _DateTimeInputState extends State<_DateTimeInput> {
         firstDate: widget.data.firstDate,
         lastDate: widget.data.lastDate,
       );
-      if (pickedDate == null) return; // User cancelled.
+      if (pickedDate == null) {
+        return;
+      }
       resultDate = pickedDate;
     }
 
@@ -179,7 +181,9 @@ class _DateTimeInputState extends State<_DateTimeInput> {
         context: context,
         initialTime: TimeOfDay.fromDateTime(initialDate),
       );
-      if (pickedTime == null) return; // User cancelled.
+      if (pickedTime == null) {
+        return;
+      }
       resultTime = pickedTime;
     }
 
@@ -305,8 +309,6 @@ final dateTimeInput = CatalogItem(
     return ValueListenableBuilder<String?>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
-        // If value is null (nothing in DataContext yet), fall back to
-        // literal value if provided.
         var effectiveValue = value;
         if (effectiveValue == null) {
           final Object val = dateTimeInputData.value;
@@ -323,12 +325,7 @@ final dateTimeInput = CatalogItem(
               path: path,
               data: dateTimeInputData,
               dataContext: itemContext.dataContext,
-              onChanged: () {
-                // Trigger any parent listeners if needed?
-                // The widget itself handles updates to data model.
-                // We don't have an explicit onChanged in CatalogItem context
-                // other than dispatchEvent if configured?
-              },
+              onChanged: () {},
               label: label,
               checks: dateTimeInputData.checks,
               parser: parser,

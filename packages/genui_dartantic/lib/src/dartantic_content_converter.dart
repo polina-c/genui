@@ -53,12 +53,10 @@ class DartanticContentConverter {
   }) {
     final result = <dartantic.ChatMessage>[];
 
-    // Add system instruction first if provided
     if (systemInstruction != null) {
       result.add(dartantic.ChatMessage.system(systemInstruction));
     }
 
-    // Convert each GenUI message to dartantic format
     if (history != null) {
       for (final genui.ChatMessage message in history) {
         final dartantic.ChatMessageRole role;
@@ -90,19 +88,11 @@ class DartanticContentConverter {
       if (part is genui.TextPart) {
         textParts.add(part.text);
       } else if (part.isUiInteractionPart) {
-        // UI Interaction is technically data, but if we need it in prompt?
-        // Usually we send it as data part. But previously
-        // UserUiInteractionMessage extractText returned part.text (which was
-        // json). UiInteractionPart is DataPart. We should skip it here if we
-        // handle it in _toParts, OR return the JSON string if dartantic expects
-        // prompt to have it. The test expected "prompt: UI interaction". If
-        // UiInteractionPart contains that text, we might want to include it.
-        // But `toPromptAndParts` separates text from parts. If I put it in
-        // `parts`, I don't put it in prompt.
+        // UI Interactions are handled as data parts in _toParts.
       } else if (part is genui.DataPart) {
         // Skip data parts in text prompt
       } else if (part is genui.LinkPart) {
-        textParts.add('Image at ${part.url}'); // Legacy behavior?
+        textParts.add('Image at ${part.url}');
       } else if (part is genui.ToolPart) {
         if (part.kind == genui.ToolPartKind.call) {
           textParts.add('ToolCall(${part.toolName}): ${part.argumentsRaw}');
@@ -124,7 +114,6 @@ class DartanticContentConverter {
         converted.add(dartantic.TextPart(part.text));
       } else if (part.isUiInteractionPart) {
         final genui.UiInteractionPart uiPart = part.asUiInteractionPart!;
-        // Convert to data part with json
         converted.add(
           dartantic.DataPart(
             utf8.encode(uiPart.interaction),
@@ -133,7 +122,6 @@ class DartanticContentConverter {
         );
       } else if (part.isUiPart) {
         final genui.UiPart uiPart = part.asUiPart!;
-        // Convert to data part with json
         converted.add(
           dartantic.DataPart(
             utf8.encode(jsonEncode(uiPart.definition.toJson())),

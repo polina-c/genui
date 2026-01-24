@@ -18,10 +18,6 @@ final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['TextField']),
     'text': A2uiSchemas.stringReference(
-      // Note: The spec uses "value" usually for inputs, but spec says
-      // "text" or "value"?
-      // Spec says: "value": { "$ref": "DynamicString",
-      // "description": "The value of the text field." } AND "label".
       description: 'The initial value of the text field.',
     ),
     'value': A2uiSchemas.stringReference(
@@ -273,13 +269,11 @@ final textField = CatalogItem(
                   );
                 } else if (actionData.containsKey('functionCall')) {
                   final funcMap = actionData['functionCall'] as JsonMap;
-                  // Handle function call (e.g. closeModal)
                   final callName = funcMap['func'] as String;
                   if (callName == 'closeModal') {
                     Navigator.of(itemContext.buildContext).pop();
                     return;
                   }
-                  // Evaluate generic function
                   parser.evaluateFunctionCall(funcMap);
                 }
               },

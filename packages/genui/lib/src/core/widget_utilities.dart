@@ -44,7 +44,6 @@ class OptionalValueBuilder<T> extends StatelessWidget {
 /// Extension methods for [DataContext] to simplify data binding.
 extension DataContextExtensions on DataContext {
   /// Subscribes to a value, which can be a literal or a data-bound path.
-  /// Subscribes to a value, which can be a literal or a data-bound path.
   ValueNotifier<T?> subscribeToValue<T>(Object? value) {
     genUiLogger.info('DataContext.subscribeToValue: value=$value');
     if (value == null) return ValueNotifier<T?>(null);
@@ -52,10 +51,6 @@ extension DataContextExtensions on DataContext {
     if (value is Map) {
       if (value.containsKey('path')) {
         final path = value['path'] as String;
-        // If we supported default values in binding, we would extract them
-        // here. The spec allows initializing the path if it's empty, but
-        // usually that's done via 'value' property in binding? For now, simple
-        // binding.
         return subscribe<T>(DataPath(path));
       }
       if (value.containsKey('literalString')) {
@@ -69,8 +64,6 @@ extension DataContextExtensions on DataContext {
       }
     }
 
-    // It's a literal value (primitive or unknown Map).
-    // We assume it matches T.
     try {
       return ValueNotifier<T?>(value as T?);
     } catch (e) {
@@ -115,11 +108,9 @@ JsonMap resolveContext(DataContext dataContext, JsonMap? contextDefinition) {
   for (final MapEntry<String, Object?> entry in contextDefinition.entries) {
     final String key = entry.key;
     final Object? value = entry.value;
-    // Check for binding.
     if (value is Map && value.containsKey('path')) {
       resolved[key] = dataContext.getValue(DataPath(value['path'] as String));
     } else {
-      // Literal value.
       resolved[key] = value;
     }
   }

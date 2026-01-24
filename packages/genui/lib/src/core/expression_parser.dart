@@ -75,7 +75,7 @@ class ExpressionParser {
             // Check if it's a path or expression string
             return parse(arg);
           } else if (arg is Map) {
-            // Nested expression or data binding?
+
             if (arg.containsKey('path')) {
               return _resolvePath(arg['path'] as String);
             }
@@ -91,7 +91,6 @@ class ExpressionParser {
   Object? _parseStringWithInterpolations(String input) {
     var i = 0;
 
-    // We might have multiple parts: literals and expressions.
     final parts = <Object?>[];
 
     while (i < input.length) {
@@ -101,7 +100,6 @@ class ExpressionParser {
         break;
       }
 
-      // Check for escape
       if (startIndex > 0 && input[startIndex - 1] == r'\') {
         parts.add(input.substring(i, startIndex - 1));
         parts.add(r'${');
@@ -109,12 +107,9 @@ class ExpressionParser {
         continue;
       }
 
-      // Add text before start
       if (startIndex > i) {
         parts.add(input.substring(i, startIndex));
       }
-
-      // Parse expression content
       final (String content, int endIndex) = _extractExpressionContent(
         input,
         startIndex + 2,
@@ -124,7 +119,6 @@ class ExpressionParser {
         break;
       }
 
-      // Evaluate content
       final Object? value = _evaluateExpression(content, 0);
       parts.add(value);
 
@@ -175,7 +169,7 @@ class ExpressionParser {
 
     content = content.trim();
 
-    // Is it a function call? name(...)
+
     final RegExpMatch? funcMatch = RegExp(
       r'^([a-zA-Z0-9_]+)\((.*)\)$',
     ).firstMatch(content);
@@ -186,7 +180,7 @@ class ExpressionParser {
       return _functions.invoke(funcName, args);
     }
 
-    // Is it a path?
+
     return _resolvePath(content);
   }
 
@@ -239,7 +233,6 @@ class ExpressionParser {
 
     if (arg.startsWith("'") && arg.endsWith("'")) {
       final String val = arg.substring(1, arg.length - 1);
-      // Interpolate inside string literal!
       return _parseStringWithInterpolations(val);
     }
     if (arg.startsWith('"') && arg.endsWith('"')) {

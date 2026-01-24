@@ -231,7 +231,7 @@ class A2uiMessageProcessor implements GenUiHost {
       );
     } catch (e, stack) {
       genUiLogger.severe('Error handling message: $message', e, stack);
-      // Optionally send a generic error back to the AI?
+
     }
   }
 
@@ -311,12 +311,6 @@ class A2uiMessageProcessor implements GenUiHost {
         }
         uiDefinition = uiDefinition.copyWith(components: newComponents);
 
-        // Validate before applying? Or validate inside copyWith/Components?
-        // Phase 1 implementation added validate(Schema).
-        // We need the schema to validate.
-        // For now, we assume implicit validation or call validate if schema
-        // available.
-
         notifier.value = uiDefinition;
 
         _updateSurfaceOrder(surfaceId);
@@ -341,8 +335,6 @@ class A2uiMessageProcessor implements GenUiHost {
         );
         final DataModel dataModel = dataModelForSurface(surfaceId);
         dataModel.update(DataPath(path), message.value);
-
-        // Notify UI of an update if the surface exists
         final ValueNotifier<UiDefinition?> notifier = getSurfaceNotifier(
           surfaceId,
         );
@@ -353,7 +345,6 @@ class A2uiMessageProcessor implements GenUiHost {
 
       case DeleteSurface():
         final String surfaceId = message.surfaceId;
-        // Also clear pending if any
         _pendingUpdates.remove(surfaceId);
         _pendingUpdateTimers.remove(surfaceId)?.cancel();
         _deleteSurface(surfaceId);
@@ -366,7 +357,6 @@ class A2uiMessageProcessor implements GenUiHost {
     );
     _pendingUpdates.putIfAbsent(surfaceId, () => []).add(message);
 
-    // Schedule timeout
     if (!_pendingUpdateTimers.containsKey(surfaceId)) {
       _pendingUpdateTimers[surfaceId] = Timer(pendingUpdateTimeout, () {
         genUiLogger.warning(
@@ -381,7 +371,7 @@ class A2uiMessageProcessor implements GenUiHost {
 
   void _updateSurfaceOrder(String surfaceId) {
     _surfaceOrder.remove(surfaceId);
-    _surfaceOrder.add(surfaceId); // Move to end (most recent)
+    _surfaceOrder.add(surfaceId);
   }
 
   void _enforceCleanupPolicy() {
@@ -395,7 +385,6 @@ class A2uiMessageProcessor implements GenUiHost {
     }
 
     if (_surfaceOrder.length > keepCount) {
-      // Remove oldest
       final int removeCount = _surfaceOrder.length - keepCount;
       final List<String> toRemove = _surfaceOrder.sublist(0, removeCount);
       for (final id in toRemove) {

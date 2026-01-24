@@ -178,13 +178,7 @@ class GenUiConversation {
     }
     final List<ChatMessage> history = _conversation.value;
     // Don't add to history if it's purely a UI interaction that shouldn't be
-    // valid chat history But typically user interactions ARE history. The
-    // original code: if (message is! UserUiInteractionMessage) { ... }
-    // UserUiInteractionMessage was for UI events like button clicks which maybe
-    // shouldn't be in visible history? But they ARE in the conversation history
-    // for the model. "visible history" vs "context history". I will assume if
-    // it has UiInteractionPart, we might treat it similarly? The original code
-    // SKIPPED adding it to _conversation.value.
+    // valid chat history.
     final bool isUiInteraction = message.parts
         .whereType<UiInteractionPart>()
         .isNotEmpty;
@@ -199,7 +193,6 @@ class GenUiConversation {
           .toList(),
     );
 
-    // Retrieve client data model for attached surfaces
     final Map<String, Object?> clientDataModel = a2uiMessageProcessor
         .getClientDataModel();
 
@@ -217,8 +210,6 @@ class GenUiConversation {
   }
 
   void _handleError(ContentGeneratorError error) {
-    // Add an error representation to the conversation history so the AI can see
-    // that something failed.
     final errorResponseMessage = ChatMessage.model(
       'An error occurred: ${error.error}',
     );
