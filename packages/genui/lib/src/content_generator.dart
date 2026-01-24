@@ -127,6 +127,9 @@ abstract interface class ContentGenerator {
   /// Sends a message to the content source to generate a response, optionally
   /// including the previous conversation history.
   ///
+  /// The [clientDataModel] parameter allows passing additional data to the AI,
+  /// typically representing the current state of client-side data models.
+  ///
   /// Some implementations, particularly those that manage their own state
   /// (stateful), may ignore the `history` parameter.
   Future<void> sendRequest(

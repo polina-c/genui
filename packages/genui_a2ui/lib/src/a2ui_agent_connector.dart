@@ -74,6 +74,12 @@ class A2uiAgentConnector {
 
   /// Connects to the agent and sends a message.
   ///
+  /// The [clientCapabilities] describe the UI capabilities of the client,
+  /// specifically determining which component catalogs are supported.
+  ///
+  /// The [clientDataModel] allows passing the current state of client-side
+  /// data to the agent, enabling context-aware responses.
+  ///
   /// Returns the text response from the agent, if any.
   Future<String?> connectAndSend(
     genui.ChatMessage chatMessage, {

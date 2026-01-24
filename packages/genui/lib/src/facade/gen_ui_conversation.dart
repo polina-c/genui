@@ -139,7 +139,7 @@ class GenUiConversation {
     }
   }
 
-  /// Disposes of the resources used by this agent.
+  /// Disposes of the resources used by this conversation.
   void dispose() {
     _a2uiSubscription.cancel();
     _userEventSubscription.cancel();

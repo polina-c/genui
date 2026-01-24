@@ -10,7 +10,6 @@ import 'package:genui/genui.dart';
 import 'a2ui_agent_connector.dart';
 
 /// A content generator that connects to an A2UI server.
-/// A content generator that connects to an A2UI server.
 class A2uiContentGenerator
     with ContentGeneratorMixin
     implements ContentGenerator {

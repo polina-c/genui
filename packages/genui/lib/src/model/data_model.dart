@@ -12,6 +12,7 @@ import '../core/functions.dart';
 import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
 
+/// Represents a path in the data model, either absolute or relative.
 @immutable
 class DataPath {
   factory DataPath(String path) {

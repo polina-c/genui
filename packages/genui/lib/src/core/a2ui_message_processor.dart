@@ -81,14 +81,6 @@ abstract interface class GenUiHost {
   void handleUiEvent(UiEvent event);
 }
 
-/// Manages the state of all dynamic UI surfaces.
-///
-/// This class is the core state manager for the dynamic UI. It maintains a map
-/// of all active UI "surfaces", where each surface is represented by a
-/// `UiDefinition`. It provides the tools (`createSurface`, `updateComponents`,
-/// `updateDataModel`, `deleteSurface`) that the AI uses to manipulate the UI.
-/// It exposes a stream of `GenUiUpdate` events so that the application can
-/// react to changes.
 /// Policies for cleaning up old surfaces when new ones are created.
 enum SurfaceCleanupPolicy {
   /// Surfaces are only removed when explicitly deleted by the AI.

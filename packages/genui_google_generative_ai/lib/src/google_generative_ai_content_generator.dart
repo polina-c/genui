@@ -26,8 +26,6 @@ typedef GenerativeServiceFactory =
 
 /// A [ContentGenerator] that uses the Google Cloud Generative Language API to
 /// generate content.
-/// A [ContentGenerator] that uses the Google Cloud Generative Language API to
-/// generate content.
 class GoogleGenerativeAiContentGenerator
     with ContentGeneratorMixin
     implements ContentGenerator {
@@ -130,6 +128,9 @@ class GoogleGenerativeAiContentGenerator
   }
 
   @override
+  /// Sends a request to the AI model.
+  ///
+  /// Note: [clientDataModel] is currently ignored by this implementation.
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,

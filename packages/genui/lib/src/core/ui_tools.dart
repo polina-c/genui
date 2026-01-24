@@ -13,10 +13,6 @@ import '../primitives/simple_items.dart';
 ///
 /// This tool allows the AI to create a new UI surface or update an existing
 /// one with a new definition.
-/// An [AiTool] for adding or updating a UI surface.
-///
-/// This tool allows the AI to create a new UI surface or update an existing
-/// one with a new definition.
 class UpdateComponentsTool extends AiTool<JsonMap> {
   /// Creates an [UpdateComponentsTool].
   UpdateComponentsTool({required this.handleMessage, required Catalog catalog})

@@ -370,10 +370,16 @@ final class Component {
 
 /// Exception thrown when validation fails.
 class GenUiValidationException implements Exception {
+  /// The ID of the surface where the validation error occurred.
   final String surfaceId;
+
+  /// A descriptive message for the validation error.
   final String message;
+
+  /// The path in the data/component model where the error occurred.
   final String path;
 
+  /// Creates a [GenUiValidationException].
   GenUiValidationException({
     required this.surfaceId,
     required this.message,

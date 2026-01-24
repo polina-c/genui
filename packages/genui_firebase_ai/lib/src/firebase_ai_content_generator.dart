@@ -123,6 +123,9 @@ class FirebaseAiContentGenerator
   }
 
   @override
+  /// Sends a request to the AI model.
+  ///
+  /// Note: [clientDataModel] is currently ignored by this implementation.
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,
