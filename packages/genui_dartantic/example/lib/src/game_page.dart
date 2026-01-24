@@ -67,9 +67,7 @@ class _GamePageState extends State<GamePage> {
     // Auto-start the game
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => unawaited(
-        _conversation.sendRequest(
-          UserMessage([TextPart('Let\'s play Tic Tac Toe')]),
-        ),
+        _conversation.sendRequest(ChatMessage.user('Let\'s play Tic Tac Toe')),
       ),
     );
   }
@@ -102,9 +100,7 @@ class _GamePageState extends State<GamePage> {
           onPressed: () {
             setState(() => _statusMessage = 'Restarting game...');
             unawaited(
-              _conversation.sendRequest(
-                UserMessage([TextPart('Start a new game')]),
-              ),
+              _conversation.sendRequest(ChatMessage.user('Start a new game')),
             );
           },
           tooltip: 'Restart Game',

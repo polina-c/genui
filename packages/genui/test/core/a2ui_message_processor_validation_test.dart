@@ -16,8 +16,10 @@ void main() {
       final Future<void> future = expectLater(
         processor.onSubmit,
         emits(
-          predicate((UserUiInteractionMessage message) {
-            final json = jsonDecode(message.text) as Map<String, dynamic>;
+          predicate((ChatMessage message) {
+            final UiInteractionPart part =
+                message.parts.uiInteractionParts.first;
+            final json = jsonDecode(part.interaction) as Map<String, dynamic>;
             final error = json['error'] as Map<String, dynamic>;
             return error['code'] == 'VALIDATION_FAILED' &&
                 error['path'] == 'surfaceId';

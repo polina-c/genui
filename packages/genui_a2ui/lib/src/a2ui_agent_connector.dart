@@ -87,50 +87,49 @@ class A2uiAgentConnector {
       }
     });
 
-    final List<genui.MessagePart> parts = switch (chatMessage) {
-      genui.UserMessage(parts: final p) => p,
-      genui.UserUiInteractionMessage(parts: final p) => p,
-      _ => <genui.MessagePart>[],
-    };
-
     final message = Message(
       messageId: const Uuid().v4(),
       role: Role.user,
-      parts: parts.map<Part>((part) {
-        switch (part) {
-          case genui.TextPart():
-            return Part.text(text: part.text);
-          case genui.DataPart():
-            return Part.data(data: part.data as Map<String, Object?>? ?? {});
-          case genui.ImagePart():
-            if (part.url != null) {
-              return Part.file(
-                file: FileType.uri(
-                  uri: part.url.toString(),
-                  mimeType: part.mimeType,
-                ),
-              );
-            } else {
-              String base64Data;
-              if (part.bytes != null) {
-                base64Data = base64Encode(part.bytes!);
-              } else if (part.base64 != null) {
-                base64Data = part.base64!;
-              } else {
-                _log.warning('ImagePart has no data (url, bytes, or base64)');
-                return const Part.text(text: '[Empty Image]');
-              }
-              return Part.file(
-                file: FileType.bytes(
-                  bytes: base64Data,
-                  mimeType: part.mimeType,
-                ),
-              );
+      parts: chatMessage.parts.map<Part>((part) {
+        if (part is genui.TextPart) {
+          return Part.text(text: part.text);
+        } else if (part.isUiInteractionPart) {
+          final genui.UiInteractionPart uiPart = part.asUiInteractionPart!;
+          try {
+            final Object? json = jsonDecode(uiPart.interaction);
+            if (json is Map<String, Object?>) {
+              // If it's a map (e.g. {'action': ...}), send as data.
+              // Note: A2A might expect {'a2uiEvent': ...} wrapper?
+              // If the UiInteractionPart content already has it, good.
+              // If not, we might simply pass what we have.
+              return Part.data(data: json);
             }
-          default:
-            _log.warning('Unknown message part type: ${part.runtimeType}');
-            return const Part.text(text: '[Unknown Part]');
+            return Part.text(text: uiPart.interaction);
+          } catch (e) {
+            return Part.text(text: uiPart.interaction);
+          }
+        } else if (part.isUiPart) {
+          // If we are sending a UI definition back to server (unlikely for user
+          // message, but possible in some flows?)
+          final genui.UiPart uiPart = part.asUiPart!;
+          // A2A Part.data?
+          return Part.data(data: uiPart.definition.toJson());
+        } else if (part is genui.DataPart) {
+          return Part.file(
+            file: FileType.bytes(
+              bytes: base64Encode(part.bytes),
+              mimeType: part.mimeType,
+            ),
+          );
+        } else if (part is genui.LinkPart) {
+          return Part.file(
+            file: FileType.uri(
+              uri: part.url.toString(),
+              mimeType: part.mimeType ?? 'application/octet-stream',
+            ),
+          );
         }
+        return const Part.text(text: '');
       }).toList(),
     );
 

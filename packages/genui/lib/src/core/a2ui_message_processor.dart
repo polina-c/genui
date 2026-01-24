@@ -137,7 +137,7 @@ class A2uiMessageProcessor implements GenUiHost {
   // Track creation/update order for cleanup policies
   final _surfaceOrder = <String>[];
   final _surfaceUpdates = StreamController<GenUiUpdate>.broadcast();
-  final _onSubmit = StreamController<UserUiInteractionMessage>.broadcast();
+  final _onSubmit = StreamController<ChatMessage>.broadcast();
 
   final _dataModels = <String, DataModel>{};
   final _pendingUpdates = <String, List<A2uiMessage>>{};
@@ -159,7 +159,7 @@ class A2uiMessageProcessor implements GenUiHost {
   Stream<GenUiUpdate> get surfaceUpdates => _surfaceUpdates.stream;
 
   /// A stream of user input messages generated from UI interactions.
-  Stream<UserUiInteractionMessage> get onSubmit => _onSubmit.stream;
+  Stream<ChatMessage> get onSubmit => _onSubmit.stream;
 
   @override
   void handleUiEvent(UiEvent event) {
@@ -170,7 +170,14 @@ class A2uiMessageProcessor implements GenUiHost {
 
     // v0.9 uses 'action' instead of 'userAction'
     // TODO: Include attached data models if requested
-    _onSubmit.add(UserUiInteractionMessage.fromAction(event));
+    _onSubmit.add(
+      ChatMessage.user(
+        '',
+        parts: [
+          UiInteractionPart.create(jsonEncode({'action': event.toMap()})),
+        ],
+      ),
+    );
   }
 
   @override
@@ -216,7 +223,12 @@ class A2uiMessageProcessor implements GenUiHost {
           'message': e.message,
         },
       };
-      _onSubmit.add(UserUiInteractionMessage.text(jsonEncode(errorMsg)));
+      _onSubmit.add(
+        ChatMessage.user(
+          '',
+          parts: [UiInteractionPart.create(jsonEncode(errorMsg))],
+        ),
+      );
     } catch (e, stack) {
       genUiLogger.severe('Error handling message: $message', e, stack);
       // Optionally send a generic error back to the AI?

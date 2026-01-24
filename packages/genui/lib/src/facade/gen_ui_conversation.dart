@@ -91,20 +91,32 @@ class GenUiConversation {
       case SurfaceAdded():
         _conversation.value = [
           ..._conversation.value,
-          AiUiMessage(
-            definition: update.definition,
-            surfaceId: update.surfaceId,
+          ChatMessage.model(
+            '',
+            parts: [
+              UiPart.create(
+                definition: update.definition,
+                surfaceId: update.surfaceId,
+              ),
+            ],
           ),
         ];
         onSurfaceAdded?.call(update);
       case ComponentsUpdated():
         final newConversation = List<ChatMessage>.from(_conversation.value);
         final int index = newConversation.lastIndexWhere(
-          (m) => m is AiUiMessage && m.surfaceId == update.surfaceId,
+          (m) =>
+              m.role == ChatMessageRole.model &&
+              m.parts.uiParts.any((p) => p.surfaceId == update.surfaceId),
         );
-        final newMessage = AiUiMessage(
-          definition: update.definition,
-          surfaceId: update.surfaceId,
+        final newMessage = ChatMessage.model(
+          '',
+          parts: [
+            UiPart.create(
+              definition: update.definition,
+              surfaceId: update.surfaceId,
+            ),
+          ],
         );
         if (index != -1) {
           newConversation[index] = newMessage;
@@ -118,7 +130,9 @@ class GenUiConversation {
       case SurfaceRemoved():
         final newConversation = List<ChatMessage>.from(_conversation.value);
         newConversation.removeWhere(
-          (m) => m is AiUiMessage && m.surfaceId == update.surfaceId,
+          (m) =>
+              m.role == ChatMessageRole.model &&
+              m.parts.uiParts.any((p) => p.surfaceId == update.surfaceId),
         );
         _conversation.value = newConversation;
         onSurfaceDeleted?.call(update);
@@ -163,7 +177,18 @@ class GenUiConversation {
       );
     }
     final List<ChatMessage> history = _conversation.value;
-    if (message is! UserUiInteractionMessage) {
+    // Don't add to history if it's purely a UI interaction that shouldn't be
+    // valid chat history But typically user interactions ARE history. The
+    // original code: if (message is! UserUiInteractionMessage) { ... }
+    // UserUiInteractionMessage was for UI events like button clicks which maybe
+    // shouldn't be in visible history? But they ARE in the conversation history
+    // for the model. "visible history" vs "context history". I will assume if
+    // it has UiInteractionPart, we might treat it similarly? The original code
+    // SKIPPED adding it to _conversation.value.
+    final bool isUiInteraction = message.parts
+        .whereType<UiInteractionPart>()
+        .isNotEmpty;
+    if (!isUiInteraction) {
       _conversation.value = [...history, message];
     }
     final clientCapabilities = A2UiClientCapabilities(
@@ -187,14 +212,14 @@ class GenUiConversation {
   }
 
   void _handleTextResponse(String text) {
-    _conversation.value = [..._conversation.value, AiTextMessage.text(text)];
+    _conversation.value = [..._conversation.value, ChatMessage.model(text)];
     onTextResponse?.call(text);
   }
 
   void _handleError(ContentGeneratorError error) {
     // Add an error representation to the conversation history so the AI can see
     // that something failed.
-    final errorResponseMessage = AiTextMessage.text(
+    final errorResponseMessage = ChatMessage.model(
       'An error occurred: ${error.error}',
     );
     _conversation.value = [..._conversation.value, errorResponseMessage];

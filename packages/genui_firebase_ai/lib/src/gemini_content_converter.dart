@@ -21,83 +21,78 @@ class ContentConverterException implements Exception {
 
 /// A class to convert between the generic `ChatMessage` and the `firebase_ai`
 /// specific `Content` classes.
-///
-/// This class is responsible for translating the abstract [ChatMessage]
-/// representation into the concrete `firebase_ai.Content` representation
-/// required by the `firebase_ai` package.
-///
-/// **Note on Image Handling:** [ImagePart] instances that are provided with
-/// only a `url` (and no `bytes` or `base64` data) will be converted to a
-/// simple text representation of the URL (e.g., "Image at {url}"). The image
-/// data is not automatically fetched from the URL by this converter.
 class GeminiContentConverter {
   /// Converts a list of [ChatMessage]s to a list of [firebase_ai.Content]s.
-  ///
-  /// This method iterates through the provided [messages] and converts each one
-  /// into a format suitable for the Firebase AI SDK.
   List<firebase_ai.Content> toFirebaseAiContent(
     Iterable<ChatMessage> messages,
   ) {
     final result = <firebase_ai.Content>[];
     for (final message in messages) {
-      final (String? role, List<firebase_ai.Part> parts) = switch (message) {
-        UserMessage() => ('user', _convertParts(message.parts)),
-        UserUiInteractionMessage() => ('user', _convertParts(message.parts)),
-        AiTextMessage() => ('model', _convertParts(message.parts)),
-        ToolResponseMessage() => ('user', _convertParts(message.results)),
-        AiUiMessage() => ('model', _convertParts(message.parts)),
-        InternalMessage() => (null, <firebase_ai.Part>[]), // Not sent to model
+      final String? role = switch (message.role) {
+        ChatMessageRole.user => 'user',
+        ChatMessageRole.model => 'model',
+        ChatMessageRole.system => null, // Skip system messages
       };
 
-      if (role != null && parts.isNotEmpty) {
+      if (role == null) continue;
+
+      final List<firebase_ai.Part> parts = _convertParts(message.parts);
+      if (parts.isNotEmpty) {
         result.add(firebase_ai.Content(role, parts));
       }
     }
     return result;
   }
 
-  List<firebase_ai.Part> _convertParts(List<MessagePart> parts) {
+  List<firebase_ai.Part> _convertParts(List<StandardPart> parts) {
     final result = <firebase_ai.Part>[];
     for (final part in parts) {
       switch (part) {
-        case TextPart():
-          result.add(firebase_ai.TextPart(part.text));
+        case TextPart(:final text):
+          result.add(firebase_ai.TextPart(text));
         case DataPart():
-          result.add(
-            firebase_ai.InlineDataPart(
-              'application/json',
-              utf8.encode(jsonEncode(part.data)),
-            ),
-          );
-        case ImagePart():
-          if (part.bytes != null) {
-            result.add(firebase_ai.InlineDataPart(part.mimeType, part.bytes!));
-          } else if (part.base64 != null) {
+          if (part.isUiPart) {
+            final UiPart uiPart = part.asUiPart!;
             result.add(
-              firebase_ai.InlineDataPart(
-                part.mimeType,
-                base64.decode(part.base64!),
+              firebase_ai.TextPart(
+                uiPart.definition.asContextDescriptionText(),
               ),
             );
-          } else if (part.url != null) {
-            result.add(firebase_ai.TextPart('Image at ${part.url}'));
           } else {
-            throw ContentConverterException('ImagePart has no data.');
+            result.add(firebase_ai.InlineDataPart(part.mimeType, part.bytes));
           }
-        case ToolCallPart():
-          result.add(firebase_ai.FunctionCall(part.toolName, part.arguments));
-        case ToolResultPart():
-          result.add(
-            firebase_ai.FunctionResponse(
-              part.callId,
-              // The result from ToolResultPart is a JSON string, but
-              // FunctionResponse expects a Map.
-              jsonDecode(part.result) as JsonMap,
-            ),
-          );
-        case ThinkingPart():
-          // Represent thoughts as text.
-          result.add(firebase_ai.TextPart('Thinking: ${part.text}'));
+        case LinkPart(:final url):
+          result.add(firebase_ai.TextPart('Image at $url'));
+        case ToolPart(
+          :final callId,
+          :final toolName,
+          :final arguments,
+          result: final toolResult,
+        ):
+          if (toolResult != null) {
+            // Tool Result
+            Map<String, Object?> mapResult;
+            if (toolResult is String) {
+              try {
+                mapResult = jsonDecode(toolResult) as Map<String, Object?>;
+              } catch (_) {
+                mapResult = {'result': toolResult};
+              }
+            } else if (toolResult is Map) {
+              mapResult = toolResult as Map<String, Object?>;
+            } else {
+              mapResult = {'result': toolResult};
+            }
+
+            result.add(firebase_ai.FunctionResponse(callId, mapResult));
+          } else {
+            // Tool Call
+            result.add(
+              firebase_ai.FunctionCall(toolName, arguments ?? {}),
+            );
+          }
+        case ThinkingPart(:final text):
+          result.add(firebase_ai.TextPart('Thinking: $text'));
       }
     }
     return result;

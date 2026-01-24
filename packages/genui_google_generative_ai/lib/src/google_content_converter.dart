@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:genui/genui.dart';
 import 'package:google_cloud_ai_generativelanguage_v1beta/generativelanguage.dart'
@@ -12,7 +11,7 @@ import 'package:google_cloud_protobuf/protobuf.dart' as protobuf;
 
 /// An exception thrown by this package.
 class GoogleAiClientException implements Exception {
-  /// Creates a [GoogleAiClientException] with the given [message].
+  /// Creates an [GoogleAiClientException] with the given [message].
   GoogleAiClientException(this.message);
 
   /// The message associated with the exception.
@@ -24,126 +23,102 @@ class GoogleAiClientException implements Exception {
 
 /// A class to convert between the generic `ChatMessage` and the `google_ai`
 /// specific `Content` classes.
-///
-/// This class is responsible for translating the abstract [ChatMessage]
-/// representation into the concrete `google_ai.Content` representation
-/// required by the `google_cloud_ai_generativelanguage_v1beta` package.
 class GoogleContentConverter {
   /// Converts a list of [ChatMessage]s to a list of [google_ai.Content]s.
-  ///
-  /// This method iterates through the provided [messages] and converts each one
-  /// into a format suitable for the Google Cloud Generative Language API.
   List<google_ai.Content> toGoogleAiContent(Iterable<ChatMessage> messages) {
     final result = <google_ai.Content>[];
     for (final message in messages) {
-      final (String? role, List<google_ai.Part> parts) = switch (message) {
-        UserMessage() => ('user', _convertParts(message.parts)),
-        UserUiInteractionMessage() => ('user', _convertParts(message.parts)),
-        AiTextMessage() => ('model', _convertParts(message.parts)),
-        ToolResponseMessage() => ('user', _convertToolResults(message.results)),
-        AiUiMessage() => ('model', _convertParts(message.parts)),
-        InternalMessage() => (null, <google_ai.Part>[]), // Not sent to model
+      final role = switch (message.role) {
+        ChatMessageRole.user => 'user',
+        ChatMessageRole.model => 'model',
+        ChatMessageRole.system => null,
       };
 
-      if (role != null && parts.isNotEmpty) {
+      if (role == null) continue;
+
+      final parts = _convertParts(message.parts);
+      if (parts.isNotEmpty) {
         result.add(google_ai.Content(role: role, parts: parts));
       }
     }
     return result;
   }
 
-  List<google_ai.Part> _convertParts(List<MessagePart> parts) {
+  List<google_ai.Part> _convertParts(List<StandardPart> parts) {
     final result = <google_ai.Part>[];
     for (final part in parts) {
       switch (part) {
-        case TextPart():
-          result.add(google_ai.Part(text: part.text));
-        case ImagePart():
-          if (part.bytes != null) {
+        case TextPart(:final text):
+          result.add(google_ai.Part(text: text));
+        case DataPart():
+          if (part.isUiPart) {
+            final uiPart = part.asUiPart!;
             result.add(
               google_ai.Part(
-                inlineData: google_ai.Blob(
-                  mimeType: part.mimeType,
-                  data: part
-                      .bytes!, // Assuming bytes is not null here as per logic
-                ),
-              ),
-            );
-          } else if (part.base64 != null) {
-            result.add(
-              google_ai.Part(
-                inlineData: google_ai.Blob(
-                  mimeType: part.mimeType,
-                  data: Uint8List.fromList(base64.decode(part.base64!)),
-                ),
-              ),
-            );
-          } else if (part.url != null) {
-            // Google Cloud API supports file URIs
-            result.add(
-              google_ai.Part(
-                fileData: google_ai.FileData(fileUri: part.url.toString()),
+                text: uiPart.definition.asContextDescriptionText(),
               ),
             );
           } else {
-            throw GoogleAiClientException('ImagePart has no data.');
-          }
-        case ToolCallPart():
-          result.add(
-            google_ai.Part(
-              functionCall: google_ai.FunctionCall(
-                id: part.id,
-                name: part.toolName,
-                args: protobuf.Struct.fromJson(part.arguments),
-              ),
-            ),
-          );
-        case ToolResultPart():
-          result.add(
-            google_ai.Part(
-              functionResponse: google_ai.FunctionResponse(
-                id: part.callId,
-                // ToolResultPart will be removed in the future.
-                // Function calling history is managed within the
-                // Content Generator.
-                name: '',
-                // The result from ToolResultPart is a JSON string
-                response: protobuf.Struct.fromJson(
-                  jsonDecode(part.result) as Map<String, Object?>,
+            // Treat as Blob (image or other)
+            result.add(
+              google_ai.Part(
+                inlineData: google_ai.Blob(
+                  mimeType: part.mimeType,
+                  data: part.bytes,
                 ),
               ),
+            );
+          }
+        case LinkPart(:final url):
+          result.add(
+            google_ai.Part(
+              fileData: google_ai.FileData(fileUri: url.toString()),
             ),
           );
-        case ThinkingPart():
-          // Represent thoughts as text.
-          result.add(google_ai.Part(text: 'Thinking: ${part.text}'));
-        case DataPart():
-          throw GoogleAiClientException(
-            'DataPart is not supported for Google AI conversion.',
-          );
-      }
-    }
-    return result;
-  }
+        case ToolPart(
+          :final callId,
+          :final toolName,
+          :final arguments,
+          result: final toolResult,
+        ):
+          if (toolResult != null) {
+            // Tool Result
+            Map<String, Object?> mapResult;
+            if (toolResult is String) {
+              try {
+                mapResult = jsonDecode(toolResult) as Map<String, Object?>;
+              } catch (_) {
+                mapResult = {'result': toolResult};
+              }
+            } else if (toolResult is Map) {
+              mapResult = toolResult as Map<String, Object?>;
+            } else {
+              mapResult = {'result': toolResult};
+            }
 
-  List<google_ai.Part> _convertToolResults(List<MessagePart> parts) {
-    final result = <google_ai.Part>[];
-    for (final part in parts) {
-      if (part is ToolResultPart) {
-        result.add(
-          google_ai.Part(
-            functionResponse: google_ai.FunctionResponse(
-              id: part.callId,
-              // ToolResultPart will be removed in the future.
-              // Function calling history is managed within the
-              // Content Generator.
-              name: '',
-              response: protobuf.Struct.fromJson(
-                jsonDecode(part.result) as Map<String, Object?>,
+            result.add(
+              google_ai.Part(
+                functionResponse: google_ai.FunctionResponse(
+                  id: callId,
+                  name: '',
+                  response: protobuf.Struct.fromJson(mapResult),
+                ),
               ),
-            ),
-          ),
-        );
+            );
+          } else {
+            // Tool Call
+            result.add(
+              google_ai.Part(
+                functionCall: google_ai.FunctionCall(
+                  id: callId,
+                  name: toolName,
+                  args: protobuf.Struct.fromJson(arguments ?? {}),
+                ),
+              ),
+            );
+          }
+        case ThinkingPart(:final text):
+          result.add(google_ai.Part(text: 'Thinking: $text'));
       }
     }
     return result;

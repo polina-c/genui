@@ -18,8 +18,8 @@ void main() {
       converter = GeminiContentConverter();
     });
 
-    test('toFirebaseAiContent converts $UserMessage with $TextPart', () {
-      final messages = [UserMessage.text('Hello')];
+    test('toFirebaseAiContent converts ChatMessage.user with TextPart', () {
+      final messages = [ChatMessage.user('Hello')];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
@@ -31,8 +31,8 @@ void main() {
       expect((result.first.parts.first as firebase_ai.TextPart).text, 'Hello');
     });
 
-    test('toFirebaseAiContent converts $AiTextMessage with $TextPart', () {
-      final messages = [AiTextMessage.text('Hi there')];
+    test('toFirebaseAiContent converts ChatMessage.model with TextPart', () {
+      final messages = [ChatMessage.model('Hi there')];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
@@ -47,9 +47,16 @@ void main() {
       );
     });
 
-    test('toFirebaseAiContent converts $AiUiMessage', () {
+    test('toFirebaseAiContent converts UiPart to text description', () {
       final definition = UiDefinition(surfaceId: 'testSurface');
-      final messages = [AiUiMessage(definition: definition)];
+      final messages = [
+        ChatMessage.model(
+          '',
+          parts: [
+            UiPart.create(definition: definition, surfaceId: 'testSurface'),
+          ],
+        ),
+      ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
@@ -63,20 +70,23 @@ void main() {
       );
     });
 
-    test('toFirebaseAiContent ignores $InternalMessage', () {
-      final messages = [const InternalMessage('Thinking...')];
+    test('toFirebaseAiContent ignores ChatMessage.system', () {
+      final messages = [ChatMessage.system('Thinking...')];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
       expect(result, isEmpty);
     });
 
-    test('toFirebaseAiContent converts multi-part $UserMessage', () {
+    test('toFirebaseAiContent converts multi-part user message', () {
       final messages = [
-        UserMessage([
-          const TextPart('Look at this image'),
-          ImagePart.fromBytes(Uint8List(0), mimeType: 'image/png'),
-        ]),
+        ChatMessage.user(
+          '',
+          parts: [
+            const TextPart('Look at this image'),
+            DataPart(Uint8List(0), mimeType: 'image/png'),
+          ],
+        ),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
@@ -89,23 +99,26 @@ void main() {
       expect(result.first.parts[1], isA<firebase_ai.InlineDataPart>());
     });
 
-    test('toFirebaseAiContent converts $DataPart', () {
-      final data = {'key': 'value'};
+    test('toFirebaseAiContent converts DataPart', () {
+      final String data = jsonEncode({'key': 'value'});
       final messages = [
-        UserMessage([DataPart(data)]),
+        ChatMessage.user(
+          '',
+          parts: [DataPart(utf8.encode(data), mimeType: 'application/json')],
+        ),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
       );
       final part = result.first.parts.first as firebase_ai.InlineDataPart;
       expect(part.mimeType, 'application/json');
-      expect(utf8.decode(part.bytes), jsonEncode(data));
+      expect(utf8.decode(part.bytes), data);
     });
 
-    test('toFirebaseAiContent converts $ImagePart from bytes', () {
+    test('toFirebaseAiContent converts DataPart (image)', () {
       final bytes = Uint8List.fromList([1, 2, 3]);
       final messages = [
-        UserMessage([ImagePart.fromBytes(bytes, mimeType: 'image/jpeg')]),
+        ChatMessage.user('', parts: [DataPart(bytes, mimeType: 'image/jpeg')]),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
@@ -115,25 +128,10 @@ void main() {
       expect(part.bytes, bytes);
     });
 
-    test('toFirebaseAiContent converts $ImagePart from base64', () {
-      const base64String = 'AQID'; // base64 for [1, 2, 3]
-      final messages = [
-        UserMessage([
-          const ImagePart.fromBase64(base64String, mimeType: 'image/png'),
-        ]),
-      ];
-      final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
-        messages,
-      );
-      final part = result.first.parts.first as firebase_ai.InlineDataPart;
-      expect(part.mimeType, 'image/png');
-      expect(part.bytes, base64.decode(base64String));
-    });
-
-    test('toFirebaseAiContent converts $ImagePart from URL', () {
+    test('toFirebaseAiContent converts LinkPart', () {
       final Uri url = Uri.parse('http://example.com/image.jpg');
       final messages = [
-        UserMessage([ImagePart.fromUrl(url, mimeType: 'image/jpeg')]),
+        ChatMessage.user('', parts: [LinkPart(url, mimeType: 'image/jpeg')]),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
@@ -142,15 +140,18 @@ void main() {
       expect(part.text, 'Image at $url');
     });
 
-    test('toFirebaseAiContent converts $ToolCallPart', () {
+    test('toFirebaseAiContent converts ToolCallPart', () {
       final messages = [
-        AiTextMessage([
-          const ToolCallPart(
-            id: 'call1',
-            toolName: 'doSomething',
-            arguments: {'arg': 'value'},
-          ),
-        ]),
+        ChatMessage.model(
+          '',
+          parts: [
+            const ToolPart.call(
+              callId: 'call1',
+              toolName: 'doSomething',
+              arguments: {'arg': 'value'},
+            ),
+          ],
+        ),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
@@ -160,11 +161,18 @@ void main() {
       expect(part.args, {'arg': 'value'});
     });
 
-    test('toFirebaseAiContent converts $ToolResponseMessage', () {
+    test('toFirebaseAiContent converts ToolResultPart', () {
       final messages = [
-        ToolResponseMessage([
-          ToolResultPart(callId: 'call1', result: jsonEncode({'data': 'ok'})),
-        ]),
+        ChatMessage.user(
+          '',
+          parts: [
+            const ToolPart.result(
+              callId: 'call1',
+              toolName: 'test',
+              result: {'data': 'ok'},
+            ),
+          ],
+        ),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
@@ -175,9 +183,9 @@ void main() {
       expect(part.response, {'data': 'ok'});
     });
 
-    test('toFirebaseAiContent converts $ThinkingPart', () {
+    test('toFirebaseAiContent converts ThinkingPart', () {
       final messages = [
-        AiTextMessage([const ThinkingPart('working on it')]),
+        ChatMessage.model('', parts: [const ThinkingPart('working on it')]),
       ];
       final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
         messages,
@@ -189,10 +197,10 @@ void main() {
     test(
       'toFirebaseAiContent handles multiple messages of different types',
       () {
-        final List<ChatMessage> messages = [
-          UserMessage.text('First message'),
-          AiTextMessage.text('Second message'),
-          UserMessage.text('Third message'),
+        final messages = <ChatMessage>[
+          ChatMessage.user('First message'),
+          ChatMessage.model('Second message'),
+          ChatMessage.user('Third message'),
         ];
         final List<firebase_ai.Content> result = converter.toFirebaseAiContent(
           messages,

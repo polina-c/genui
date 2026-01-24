@@ -16,8 +16,8 @@ void main() {
       converter = GoogleContentConverter();
     });
 
-    test('toGoogleAiContent converts UserMessage with TextPart', () {
-      final messages = [UserMessage.text('Hello')];
+    test('toGoogleAiContent converts ChatMessage.user with TextPart', () {
+      final messages = [ChatMessage.user('Hello')];
       final result = converter.toGoogleAiContent(messages);
 
       expect(result, hasLength(1));
@@ -26,8 +26,8 @@ void main() {
       expect(result.first.parts.first.text, 'Hello');
     });
 
-    test('toGoogleAiContent converts AiTextMessage with TextPart', () {
-      final messages = [AiTextMessage.text('Hi there')];
+    test('toGoogleAiContent converts ChatMessage.model with TextPart', () {
+      final messages = [ChatMessage.model('Hi there')];
       final result = converter.toGoogleAiContent(messages);
 
       expect(result, hasLength(1));
@@ -36,32 +36,46 @@ void main() {
       expect(result.first.parts.first.text, 'Hi there');
     });
 
-    test('toGoogleAiContent converts AiUiMessage', () {
+    test('toGoogleAiContent converts UiPart to text', () {
       final definition = UiDefinition(surfaceId: 'testSurface');
-      final messages = [AiUiMessage(definition: definition)];
+      final messages = [
+        ChatMessage.model(
+          '',
+          parts: [
+            UiPart.create(definition: definition, surfaceId: 'testSurface'),
+          ],
+        ),
+      ];
       final result = converter.toGoogleAiContent(messages);
       expect(result, hasLength(1));
       expect(result.first.role, 'model');
+      expect(
+        result.first.parts.first.text,
+        definition.asContextDescriptionText(),
+      );
     });
 
-    test('toGoogleAiContent skips InternalMessage', () {
+    test('toGoogleAiContent skips ChatMessage.system', () {
       final messages = [
-        UserMessage.text('Hello'),
-        const InternalMessage('Internal note'),
-        AiTextMessage.text('Response'),
+        ChatMessage.user('Hello'),
+        ChatMessage.system('Internal note'),
+        ChatMessage.model('Response'),
       ];
       final result = converter.toGoogleAiContent(messages);
 
-      // Should only have 2 messages (user and ai), internal is skipped
+      // Should only have 2 messages (user and ai), system is skipped
       expect(result, hasLength(2));
       expect(result[0].role, 'user');
       expect(result[1].role, 'model');
     });
 
-    test('toGoogleAiContent converts ImagePart with bytes', () {
+    test('toGoogleAiContent converts DataPart (image) with bytes', () {
       final imageBytes = Uint8List.fromList([1, 2, 3, 4]);
       final messages = [
-        UserMessage([ImagePart.fromBytes(imageBytes, mimeType: 'image/png')]),
+        ChatMessage.user(
+          '',
+          parts: [DataPart(imageBytes, mimeType: 'image/png')],
+        ),
       ];
       final result = converter.toGoogleAiContent(messages);
 
@@ -72,14 +86,14 @@ void main() {
       expect(part.inlineData!.mimeType, 'image/png');
     });
 
-    test('toGoogleAiContent converts ImagePart with URL', () {
+    test('toGoogleAiContent converts LinkPart with URL', () {
       final messages = [
-        UserMessage([
-          ImagePart.fromUrl(
-            Uri.parse('gs://bucket/image.png'),
-            mimeType: 'image/png',
-          ),
-        ]),
+        ChatMessage.user(
+          '',
+          parts: [
+            LinkPart(Uri.parse('gs://bucket/image.png'), mimeType: 'image/png'),
+          ],
+        ),
       ];
       final result = converter.toGoogleAiContent(messages);
 
@@ -92,13 +106,16 @@ void main() {
 
     test('toGoogleAiContent converts ToolCallPart', () {
       final messages = [
-        AiTextMessage([
-          const ToolCallPart(
-            id: 'call-1',
-            toolName: 'calculator',
-            arguments: {'operation': 'add', 'a': 1, 'b': 2},
-          ),
-        ]),
+        ChatMessage.model(
+          '',
+          parts: [
+            const ToolPart.call(
+              callId: 'call-1',
+              toolName: 'calculator',
+              arguments: {'operation': 'add', 'a': 1, 'b': 2},
+            ),
+          ],
+        ),
       ];
       final result = converter.toGoogleAiContent(messages);
 

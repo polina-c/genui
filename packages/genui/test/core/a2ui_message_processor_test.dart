@@ -172,8 +172,7 @@ void main() {
       messageProcessor
           .dataModelForSurface('testSurface')
           .update(DataPath('/myValue'), 'testValue');
-      final Future<UserUiInteractionMessage> future =
-          messageProcessor.onSubmit.first;
+      final Future<ChatMessage> future = messageProcessor.onSubmit.first;
       final now = DateTime.now();
       final event = UserActionEvent(
         surfaceId: 'testSurface',
@@ -183,8 +182,11 @@ void main() {
         context: {'key': 'value'},
       );
       messageProcessor.handleUiEvent(event);
-      final UserUiInteractionMessage message = await future;
-      expect(message, isA<UserUiInteractionMessage>());
+      final ChatMessage message = await future;
+      expect(message, isA<ChatMessage>());
+      expect(message.role, ChatMessageRole.user);
+      expect(message.parts.uiInteractionParts, hasLength(1));
+
       final String expectedJson = jsonEncode({
         'action': {
           'surfaceId': 'testSurface',
@@ -195,7 +197,11 @@ void main() {
           'context': {'key': 'value'},
         },
       });
-      expect(message.text, expectedJson);
+      final UiInteractionPart part = message.parts.uiInteractionParts.first;
+      // Depending on implementation, part.interaction might be the string or
+      // data map. UiInteractionPart.create took jsonEncode string.
+      // UiInteractionPart.interaction is String.
+      expect(part.interaction, expectedJson);
     });
   });
 }

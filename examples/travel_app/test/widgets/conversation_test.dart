@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
+
 import 'package:travel_app/src/widgets/conversation.dart';
 
 void main() {
@@ -17,11 +18,16 @@ void main() {
 
     testWidgets('renders a list of messages', (WidgetTester tester) async {
       const surfaceId = 's1';
-      final List<ChatMessage> messages = [
-        UserMessage.text('Hello'),
-        AiUiMessage(
-          surfaceId: surfaceId,
-          definition: UiDefinition(surfaceId: surfaceId),
+      final messages = <ChatMessage>[
+        ChatMessage.user('Hello'),
+        ChatMessage.model(
+          '',
+          parts: [
+            UiPart.create(
+              definition: UiDefinition(surfaceId: surfaceId),
+              surfaceId: surfaceId,
+            ),
+          ],
         ),
       ];
       final components = [
@@ -51,9 +57,7 @@ void main() {
       expect(find.text('Hi there!'), findsOneWidget);
     });
     testWidgets('renders UserPrompt correctly', (WidgetTester tester) async {
-      final messages = [
-        UserMessage([const TextPart('Hello')]),
-      ];
+      final messages = [ChatMessage.user('Hello')];
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -68,9 +72,14 @@ void main() {
     testWidgets('renders UiResponse correctly', (WidgetTester tester) async {
       const surfaceId = 's1';
       final messages = [
-        AiUiMessage(
-          surfaceId: surfaceId,
-          definition: UiDefinition(surfaceId: surfaceId),
+        ChatMessage.model(
+          '',
+          parts: [
+            UiPart.create(
+              definition: UiDefinition(surfaceId: surfaceId),
+              surfaceId: surfaceId,
+            ),
+          ],
         ),
       ];
       final components = [
@@ -99,9 +108,7 @@ void main() {
     });
 
     testWidgets('uses custom userPromptBuilder', (WidgetTester tester) async {
-      final messages = [
-        UserMessage(const [TextPart('Hello')]),
-      ];
+      final messages = [ChatMessage.user('Hello')];
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

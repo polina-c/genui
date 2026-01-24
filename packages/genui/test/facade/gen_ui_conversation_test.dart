@@ -54,19 +54,23 @@ void main() {
 
       // Send first request
       final Future<void> future = conversation.sendRequest(
-        UserUiInteractionMessage.text('hi'),
+        ChatMessage.user('', parts: [UiInteractionPart.create('hi')]),
       );
 
       // Expect second request to fail
       expect(
-        () => conversation.sendRequest(UserUiInteractionMessage.text('second')),
+        () => conversation.sendRequest(
+          ChatMessage.user('', parts: [UiInteractionPart.create('second')]),
+        ),
         throwsStateError,
       );
 
       await future;
 
       // Should succeed now
-      await conversation.sendRequest(UserUiInteractionMessage.text('third'));
+      await conversation.sendRequest(
+        ChatMessage.user('', parts: [UiInteractionPart.create('third')]),
+      );
     });
   });
 }
