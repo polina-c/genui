@@ -19,8 +19,7 @@ class JsonBlockParser {
     if (markdownBlock != null) {
       try {
         return jsonDecode(markdownBlock);
-      } on FormatException catch (_) {
-      }
+      } on FormatException catch (_) {}
     }
 
     final int firstBrace = text.indexOf('{');
@@ -115,8 +114,7 @@ class JsonBlockParser {
       if (content != null) {
         try {
           results.add(jsonDecode(content) as Object);
-        } on FormatException catch (_) {
-        }
+        } on FormatException catch (_) {}
       }
     }
     if (results.isNotEmpty) {

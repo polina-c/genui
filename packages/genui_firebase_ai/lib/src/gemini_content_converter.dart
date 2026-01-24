@@ -87,9 +87,7 @@ class GeminiContentConverter {
             result.add(firebase_ai.FunctionResponse(callId, mapResult));
           } else {
             // Tool Call
-            result.add(
-              firebase_ai.FunctionCall(toolName, arguments ?? {}),
-            );
+            result.add(firebase_ai.FunctionCall(toolName, arguments ?? {}));
           }
         case ThinkingPart(:final text):
           result.add(firebase_ai.TextPart('Thinking: $text'));

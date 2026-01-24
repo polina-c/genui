@@ -75,7 +75,6 @@ class ExpressionParser {
             // Check if it's a path or expression string
             return parse(arg);
           } else if (arg is Map) {
-
             if (arg.containsKey('path')) {
               return _resolvePath(arg['path'] as String);
             }
@@ -169,7 +168,6 @@ class ExpressionParser {
 
     content = content.trim();
 
-
     final RegExpMatch? funcMatch = RegExp(
       r'^([a-zA-Z0-9_]+)\((.*)\)$',
     ).firstMatch(content);
@@ -179,7 +177,6 @@ class ExpressionParser {
       final List<Object?> args = _parseArgs(argsStr, depth + 1);
       return _functions.invoke(funcName, args);
     }
-
 
     return _resolvePath(content);
   }

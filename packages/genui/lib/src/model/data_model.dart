@@ -128,9 +128,7 @@ class DataContext {
         value.containsKey('func') &&
         value.containsKey('args')) {
       final funcName = value['func'] as String;
-      final List<Object?> args = (value['args'] as List)
-          .map(resolve)
-          .toList();
+      final List<Object?> args = (value['args'] as List).map(resolve).toList();
       return FunctionRegistry().invoke(funcName, args);
     }
     return value;
@@ -323,8 +321,7 @@ class DataModel {
         if (value == null) {
           current.remove(segment);
         } else {
-          current[segment] =
-              value;
+          current[segment] = value;
         }
         return;
       }

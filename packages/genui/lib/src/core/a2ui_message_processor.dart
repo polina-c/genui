@@ -231,7 +231,6 @@ class A2uiMessageProcessor implements GenUiHost {
       );
     } catch (e, stack) {
       genUiLogger.severe('Error handling message: $message', e, stack);
-
     }
   }
 
