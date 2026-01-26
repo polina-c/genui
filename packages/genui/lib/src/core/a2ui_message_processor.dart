@@ -307,7 +307,7 @@ class A2uiMessageProcessor implements GenUiHost {
         _updateSurfaceOrder(surfaceId);
 
         genUiLogger.info(
-          '''Updating surface $surfaceId with ${message.components.length} components''',
+          '''Updating surface $surfaceId with ${message.components.length} components: ${message.components.map((c) => c.id).join(', ')}''',
         );
         _surfaceUpdates.add(ComponentsUpdated(surfaceId, uiDefinition));
 

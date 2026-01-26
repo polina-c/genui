@@ -36,6 +36,8 @@ export 'src/model/ui_models.dart';
 export 'src/primitives/constants.dart';
 export 'src/primitives/logging.dart';
 export 'src/primitives/simple_items.dart';
+export 'src/transport/a2ui_parser_transformer.dart';
+export 'src/transport/gen_ui_controller.dart';
 export 'src/utils/json_block_parser.dart';
 export 'src/widgets/gen_ui_fallback.dart';
 export 'src/widgets/gen_ui_surface_manager.dart';
