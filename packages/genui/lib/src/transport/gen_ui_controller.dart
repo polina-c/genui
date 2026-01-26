@@ -4,11 +4,15 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../core/a2ui_message_processor.dart';
 import '../model/a2ui_message.dart';
 import '../model/catalog.dart';
 import '../model/chat_message.dart';
+import '../model/data_model.dart';
 import '../model/gen_ui_events.dart';
+import '../model/ui_models.dart';
 import 'a2ui_parser_transformer.dart';
 
 export '../model/gen_ui_events.dart'
@@ -21,7 +25,7 @@ typedef GenUiState = GenUiUpdate;
 ///
 /// It wraps the [A2uiParserTransformer] to provide an imperative, push-based
 /// interface that is easier to integrate into imperative loops.
-class GenUiController {
+class GenUiController implements GenUiHost {
   /// Creates a [GenUiController].
   GenUiController({
     Iterable<Catalog>? catalogs,
@@ -81,4 +85,26 @@ class GenUiController {
     _pipelineSubscription.cancel();
     _processor.dispose();
   }
+
+  // GenUiHost implementation
+
+  @override
+  Stream<GenUiUpdate> get surfaceUpdates => _processor.surfaceUpdates;
+
+  @override
+  ValueNotifier<UiDefinition?> getSurfaceNotifier(String surfaceId) =>
+      _processor.getSurfaceNotifier(surfaceId);
+
+  @override
+  Iterable<Catalog> get catalogs => _processor.catalogs;
+
+  @override
+  Map<String, DataModel> get dataModels => _processor.dataModels;
+
+  @override
+  DataModel dataModelForSurface(String surfaceId) =>
+      _processor.dataModelForSurface(surfaceId);
+
+  @override
+  void handleUiEvent(UiEvent event) => _processor.handleUiEvent(event);
 }

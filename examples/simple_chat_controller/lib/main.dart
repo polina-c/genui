@@ -45,11 +45,10 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   late final GenUiController _genUiController;
-  late final A2uiMessageProcessor _processor;
   late final dartantic.GoogleProvider _provider;
   late final dartantic.Agent _agent;
   final List<dartantic.ChatMessage> _chatHistory = [];
-  final ValueNotifier<bool> _isProcessing = ValueNotifier(false);
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -58,8 +57,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Initialize GenUiController
     // Initialize GenUiController
-    _processor = A2uiMessageProcessor(catalogs: [catalog]);
-    _genUiController = GenUiController(messageProcessor: _processor);
+    _genUiController = GenUiController(catalogs: [catalog]);
 
     // Listen to UI state updates from the controller
     _genUiController.stateStream.listen((update) {
@@ -141,7 +139,7 @@ ${GenUiPromptFragments.basicChat}''';
                   final MessageController message = _messages[index];
                   // Pass the processor as the host.
                   return ListTile(
-                    title: MessageView(message, _processor),
+                    title: MessageView(message, _genUiController),
                     tileColor: message.isUser
                         ? Colors.blue.withValues(alpha: 0.1)
                         : null,
@@ -150,16 +148,11 @@ ${GenUiPromptFragments.basicChat}''';
               ),
             ),
 
-            ValueListenableBuilder(
-              valueListenable: _isProcessing,
-              builder: (_, isProcessing, _) {
-                if (!isProcessing) return Container();
-                return const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                );
-              },
-            ),
+            if (_isProcessing)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
 
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -171,13 +164,13 @@ ${GenUiPromptFragments.basicChat}''';
                       decoration: const InputDecoration(
                         hintText: 'Type your message...',
                       ),
-                      enabled: !_isProcessing.value,
+                      enabled: !_isProcessing,
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.send),
-                    onPressed: _isProcessing.value ? null : _sendMessage,
+                    onPressed: _isProcessing ? null : _sendMessage,
                   ),
                 ],
               ),
@@ -195,9 +188,9 @@ ${GenUiPromptFragments.basicChat}''';
 
     setState(() {
       _messages.add(MessageController(isUser: true, text: 'You: $text'));
+      _isProcessing = true;
     });
     _scrollToBottom();
-    _isProcessing.value = true;
 
     try {
       _chatHistory.add(dartantic.ChatMessage.user(text));
@@ -253,7 +246,9 @@ ${GenUiPromptFragments.basicChat}''';
       }
     } finally {
       if (mounted) {
-        _isProcessing.value = false;
+        setState(() {
+          _isProcessing = false;
+        });
       }
     }
   }
