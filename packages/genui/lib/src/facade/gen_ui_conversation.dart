@@ -14,10 +14,10 @@ import '../transport/gen_ui_controller.dart';
 /// A high-level abstraction to manage a generative UI conversation.
 ///
 /// This class simplifies the process of creating a generative UI by managing
-/// the conversation loop. It uses a [GenUiController] to handle the UI updates
-/// and leaves the transport layer to the user via the
-/// [GenUiConversation.onSend] callback. A callback for sending a message to the
-/// LLM.
+/// the conversation loop.
+///
+/// It uses a [GenUiController] to handle the UI updates and leaves the
+/// transport layer to the user via the [GenUiConversation.onSend] callback.
 typedef OnSendCallback =
     Future<void> Function(ChatMessage message, Iterable<ChatMessage> history);
 
@@ -46,15 +46,14 @@ class GenUiConversation {
   /// The [GenUiController] managing the UI state.
   final GenUiController controller;
 
-  /// A callback to send a user message to the AI.
+  /// The callback to call when the user sends a message.
   ///
   /// The user of this class is responsible for sending the message to their LLM
   /// and piping the response back into the [controller] via
-  /// [GenUiController.addChunk]. The callback to call when the user sends a
-  /// message.
+  /// [GenUiController.addChunk].
   ///
-  /// This callback should invoke the LLM with the given `message` and history`,
-  /// and stream the response back to the [controller] via
+  /// This callback should invoke the LLM with the given `message` and
+  /// `history`, and stream the response back to the [controller] via
   /// [GenUiController.addChunk].
   final OnSendCallback onSend;
 

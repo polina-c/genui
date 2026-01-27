@@ -11,8 +11,10 @@ import '../model/a2ui_message.dart';
 import '../model/catalog.dart';
 import '../model/chat_message.dart';
 import '../model/data_model.dart';
+import '../model/tools.dart';
 import '../model/ui_models.dart';
 import '../primitives/logging.dart';
+import 'ui_tools.dart';
 
 /// A sealed class representing an update to the UI managed by
 /// [A2uiMessageProcessor].
@@ -408,5 +410,30 @@ class A2uiMessageProcessor implements GenUiHost {
       }
     }
     return {'surfaces': result};
+  }
+
+  /// Returns the default tools for managing surfaces.
+  ///
+  /// This implementation includes [CreateSurfaceTool], [UpdateComponentsTool],
+  /// and [DeleteSurfaceTool].
+  ///
+  /// If [catalogs] contains more than one catalog, the [UpdateComponentsTool]
+  /// will be created for the first catalog. If you need tools for multiple
+  /// catalogs, you may need to construct [UpdateComponentsTool] manually or
+  /// extend this class.
+  Iterable<AiTool> getTools() {
+    // TODO(gspencergoog): Support multiple catalogs in UpdateComponentsTool?
+    // Currently UpdateComponentsTool takes a single catalog.
+    // Ideally it should take a merged catalog or look up by ID?
+    // For now, we use the first one if available.
+    final Catalog mainCatalog = catalogs.isNotEmpty
+        ? catalogs.first
+        : const Catalog([], catalogId: '');
+
+    return [
+      CreateSurfaceTool(handleMessage: handleMessage),
+      UpdateComponentsTool(handleMessage: handleMessage, catalog: mainCatalog),
+      DeleteSurfaceTool(handleMessage: handleMessage),
+    ];
   }
 }
