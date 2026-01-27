@@ -58,6 +58,9 @@ class GoogleContentConverter {
                 text: uiPart.definition.asContextDescriptionText(),
               ),
             );
+          } else if (part.mimeType ==
+              'application/vnd.genui.interaction+json') {
+            result.add(google_ai.Part(text: utf8.decode(part.bytes)));
           } else {
             // Treat as Blob (image or other)
             result.add(

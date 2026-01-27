@@ -477,11 +477,19 @@ class GoogleGenerativeAiClient {
       const maxToolUsageCycles = 40; // Safety break for tool loops
 
       // Build system instruction if provided
-      // Build system instruction if provided
       final parts = <google_ai.Part>[];
       if (systemInstruction != null) {
         parts.add(google_ai.Part(text: systemInstruction));
       }
+      parts.add(
+        google_ai.Part(
+          text:
+              'Current Date: '
+              '${DateTime.now().toIso8601String().split('T').first}\n'
+              'You do not have the ability to execute code. If you need to '
+              'perform calculations, do them yourself.',
+        ),
+      );
       parts.add(
         google_ai.Part(text: StandardCatalogEmbed.standardCatalogRules),
       );
