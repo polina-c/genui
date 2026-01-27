@@ -13,11 +13,11 @@ import 'package:google_cloud_protobuf/protobuf.dart' as protobuf;
 import 'package:json_schema_builder/json_schema_builder.dart' as dsb;
 
 void main() {
-  group('GoogleGenerativeAiContentGenerator', () {
+  group('GoogleGenerativeAiClient', () {
     test('constructor creates instance with required parameters', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         apiKey: 'test-api-key',
       );
@@ -31,7 +31,7 @@ void main() {
     test('constructor accepts custom model name', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         modelName: 'models/gemini-2.5-pro',
         apiKey: 'test-api-key',
@@ -43,7 +43,7 @@ void main() {
     test('constructor accepts custom output tool name', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         outputToolName: 'customOutput',
         apiKey: 'test-api-key',
@@ -55,7 +55,7 @@ void main() {
     test('constructor accepts system instruction', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         systemInstruction: 'You are a helpful assistant',
         apiKey: 'test-api-key',
@@ -72,7 +72,7 @@ void main() {
         invokeFunction: (args) async => {},
       );
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         additionalTools: [tool],
         apiKey: 'test-api-key',
@@ -85,7 +85,7 @@ void main() {
     test('streams are accessible', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         apiKey: 'test-api-key',
       );
@@ -99,7 +99,7 @@ void main() {
     test('isProcessing starts as false', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         apiKey: 'test-api-key',
       );
@@ -110,7 +110,7 @@ void main() {
     test('dispose closes all streams', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         apiKey: 'test-api-key',
       );
@@ -122,7 +122,7 @@ void main() {
     test('token usage starts at zero', () {
       final catalog = const genui.Catalog(<genui.CatalogItem>[]);
 
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: catalog,
         apiKey: 'test-api-key',
       );
@@ -132,7 +132,7 @@ void main() {
     });
 
     test('isProcessing is true during request', () async {
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: const genui.Catalog({}),
         serviceFactory: ({required configuration}) {
           return FakeGoogleGenerativeService([
@@ -161,7 +161,7 @@ void main() {
     });
 
     test('can call a tool and return a result', () async {
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: const genui.Catalog({}),
         additionalTools: [
           genui.DynamicAiTool<Map<String, Object?>>(
@@ -219,7 +219,7 @@ void main() {
     });
 
     test('returns a simple text response', () async {
-      final generator = GoogleGenerativeAiContentGenerator(
+      final generator = GoogleGenerativeAiClient(
         catalog: const genui.Catalog({}),
         serviceFactory: ({required configuration}) {
           return FakeGoogleGenerativeService([

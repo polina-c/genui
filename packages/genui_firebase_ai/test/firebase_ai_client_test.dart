@@ -7,14 +7,14 @@ import 'dart:async';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart' as genui;
-import 'package:genui_firebase_ai/src/firebase_ai_content_generator.dart';
-import 'package:genui_firebase_ai/src/gemini_generative_model.dart';
+import 'package:genui_firebase_ai/genui_firebase_ai.dart';
+
 import 'package:json_schema_builder/json_schema_builder.dart' as dsb;
 
 void main() {
-  group('FirebaseAiContentGenerator', () {
+  group('FirebaseAiClient', () {
     test('isProcessing is true during request', () async {
-      final generator = FirebaseAiContentGenerator(
+      final generator = FirebaseAiClient(
         catalog: const genui.Catalog({}),
         modelCreator:
             ({required configuration, systemInstruction, tools, toolConfig}) {
@@ -42,7 +42,7 @@ void main() {
     });
 
     test('can call a tool and return a result', () async {
-      final generator = FirebaseAiContentGenerator(
+      final generator = FirebaseAiClient(
         catalog: const genui.Catalog({}),
         additionalTools: [
           genui.DynamicAiTool<Map<String, Object?>>(
@@ -86,7 +86,7 @@ void main() {
     });
 
     test('returns a simple text response', () async {
-      final generator = FirebaseAiContentGenerator(
+      final generator = FirebaseAiClient(
         catalog: const genui.Catalog({}),
         modelCreator:
             ({required configuration, systemInstruction, tools, toolConfig}) {

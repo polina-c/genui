@@ -135,6 +135,9 @@ class FakeA2uiAgentConnector implements A2uiAgentConnector {
   @override
   late a2a.A2AClient client;
 
+  @override
+  Stream<String> get textStream => const Stream.empty();
+
   genui.ChatMessage? lastConnectAndSendChatMessage;
   genui.A2UiClientCapabilities? lastClientCapabilities;
 

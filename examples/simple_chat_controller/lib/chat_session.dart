@@ -159,7 +159,7 @@ ${GenUiPromptFragments.basicChat}''';
 
   @override
   void dispose() {
-    _genUiController.close();
+    _genUiController.dispose();
     super.dispose();
   }
 }

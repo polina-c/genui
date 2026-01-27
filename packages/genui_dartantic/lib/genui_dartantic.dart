@@ -31,6 +31,6 @@
 /// ```
 library;
 
+export 'src/dartantic_client.dart';
 export 'src/dartantic_content_converter.dart';
-export 'src/dartantic_content_generator.dart';
 export 'src/dartantic_schema_adapter.dart';

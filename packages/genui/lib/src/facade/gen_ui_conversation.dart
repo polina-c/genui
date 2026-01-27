@@ -6,56 +6,57 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../content_generator.dart';
 import '../core/a2ui_message_processor.dart';
-import '../model/a2ui_client_capabilities.dart';
-import '../model/a2ui_message.dart';
 import '../model/chat_message.dart';
-import '../model/gen_ui_events.dart';
 import '../model/ui_models.dart';
+import '../transport/gen_ui_controller.dart';
 
 /// A high-level abstraction to manage a generative UI conversation.
 ///
 /// This class simplifies the process of creating a generative UI by managing
-/// the conversation loop and the interaction with the AI. It encapsulates a
-/// `A2uiMessageProcessor` and a `ContentGenerator`, providing a single entry
-/// point for sending user requests and receiving UI updates.
-///
-/// This is a convenience facade for the specific use case of a linear
-/// conversation that can contain Gen UI surfaces.
+/// the conversation loop. It uses a [GenUiController] to handle the UI updates
+/// and leaves the transport layer to the user via the
+/// [GenUiConversation.onSend] callback. A callback for sending a message to the
+/// LLM.
+typedef OnSendCallback =
+    Future<void> Function(ChatMessage message, Iterable<ChatMessage> history);
+
 class GenUiConversation {
   /// Creates a new [GenUiConversation].
   ///
   /// Callbacks like [onSurfaceAdded], [onComponentsUpdated] and
-  /// [onSurfaceDeleted] can be provided to react to UI changes initiated by the
-  /// AI.
+  /// [onSurfaceDeleted] can be provided to react to UI changes initiated by
+  /// the AI.
   GenUiConversation({
+    required this.controller,
+    required this.onSend,
     this.onSurfaceAdded,
     this.onComponentsUpdated,
     this.onSurfaceDeleted,
     this.onTextResponse,
     this.onError,
-    required this.contentGenerator,
-    required this.a2uiMessageProcessor,
   }) {
-    _a2uiSubscription = contentGenerator.a2uiMessageStream.listen(
-      a2uiMessageProcessor.handleMessage,
-    );
-    _userEventSubscription = a2uiMessageProcessor.onSubmit.listen(sendRequest);
-    _surfaceUpdateSubscription = a2uiMessageProcessor.surfaceUpdates.listen(
+    _onClientEventSubscription = controller.onClientEvent.listen(sendRequest);
+    _surfaceUpdateSubscription = controller.stateStream.listen(
       _handleUpdateComponents,
     );
-    _textResponseSubscription = contentGenerator.textResponseStream.listen(
-      _handleTextResponse,
-    );
-    _errorSubscription = contentGenerator.errorStream.listen(_handleError);
+    _textSubscription = controller.textStream.listen(_handleTextResponse);
   }
 
-  /// The [ContentGenerator] for the conversation.
-  final ContentGenerator contentGenerator;
+  /// The [GenUiController] managing the UI state.
+  final GenUiController controller;
 
-  /// The manager for the UI surfaces in the conversation.
-  final A2uiMessageProcessor a2uiMessageProcessor;
+  /// A callback to send a user message to the AI.
+  ///
+  /// The user of this class is responsible for sending the message to their LLM
+  /// and piping the response back into the [controller] via
+  /// [GenUiController.addChunk]. The callback to call when the user sends a
+  /// message.
+  ///
+  /// This callback should invoke the LLM with the given `message` and history`,
+  /// and stream the response back to the [controller] via
+  /// [GenUiController.addChunk].
+  final OnSendCallback onSend;
 
   /// A callback for when a new surface is added by the AI.
   final ValueChanged<SurfaceAdded>? onSurfaceAdded;
@@ -69,23 +70,22 @@ class GenUiConversation {
   /// A callback for when a text response is received from the AI.
   final ValueChanged<String>? onTextResponse;
 
-  /// A callback for when an error occurs in the content generator.
-  final ValueChanged<ContentGeneratorError>? onError;
+  /// A callback for when an error occurs.
+  final ValueChanged<Object>? onError;
 
-  late final StreamSubscription<A2uiMessage> _a2uiSubscription;
-  late final StreamSubscription<ChatMessage> _userEventSubscription;
+  late final StreamSubscription<ChatMessage> _onClientEventSubscription;
   late final StreamSubscription<GenUiUpdate> _surfaceUpdateSubscription;
-  late final StreamSubscription<String> _textResponseSubscription;
-  late final StreamSubscription<ContentGeneratorError> _errorSubscription;
+  late final StreamSubscription<String> _textSubscription;
 
   final ValueNotifier<List<ChatMessage>> _conversation =
       ValueNotifier<List<ChatMessage>>([]);
+  final ValueNotifier<bool> _isProcessing = ValueNotifier<bool>(false);
 
   /// Handles updates to the UI components (add, update, remove).
   ///
   /// This method updates the local conversation history to reflect the changes
   /// in the UI. parameters to this method are supplied by the
-  /// [A2uiMessageProcessor].
+  /// [GenUiController].
   void _handleUpdateComponents(GenUiUpdate update) {
     switch (update) {
       case SurfaceAdded():
@@ -141,41 +141,30 @@ class GenUiConversation {
 
   /// Disposes of the resources used by this conversation.
   void dispose() {
-    _a2uiSubscription.cancel();
-    _userEventSubscription.cancel();
+    _onClientEventSubscription.cancel();
     _surfaceUpdateSubscription.cancel();
-    _textResponseSubscription.cancel();
-    _errorSubscription.cancel();
-    contentGenerator.dispose();
-    a2uiMessageProcessor.dispose();
+    _textSubscription.cancel();
+    controller.dispose();
+    _isProcessing.dispose();
+    _conversation.dispose();
   }
 
   /// The host for the UI surfaces managed by this agent.
-  GenUiHost get host => a2uiMessageProcessor;
+  GenUiHost get host => controller;
 
   /// A [ValueListenable] that provides the current conversation history.
   ValueListenable<List<ChatMessage>> get conversation => _conversation;
 
-  /// A [ValueListenable] that indicates whether the agent is currently
-  /// processing a request.
-  ValueListenable<bool> get isProcessing => contentGenerator.isProcessing;
-
-  /// A stream of events related to the generation process (tool calls, usage,
-  /// etc.).
-  Stream<GenUiEvent> get processingEvents => contentGenerator.eventStream;
+  /// Whether the conversation is currently processing a request.
+  ValueListenable<bool> get isProcessing => _isProcessing;
 
   /// Returns a [ValueNotifier] for the given [surfaceId].
   ValueNotifier<UiDefinition?> surface(String surfaceId) {
-    return a2uiMessageProcessor.getSurfaceNotifier(surfaceId);
+    return controller.getSurfaceNotifier(surfaceId);
   }
 
-  /// Sends a user message to the AI to generate a UI response.
+  /// Sends a user message to the AI.
   Future<void> sendRequest(ChatMessage message) async {
-    if (contentGenerator.isProcessing.value) {
-      throw StateError(
-        'Cannot send request while content generator is processing.',
-      );
-    }
     final List<ChatMessage> history = _conversation.value;
     // Don't add to history if it's purely a UI interaction that shouldn't be
     // valid chat history.
@@ -185,23 +174,19 @@ class GenUiConversation {
     if (!isUiInteraction) {
       _conversation.value = [...history, message];
     }
-    final clientCapabilities = A2UiClientCapabilities(
-      supportedCatalogIds: a2uiMessageProcessor.catalogs
-          .map((c) => c.catalogId)
-          .where((id) => id != null)
-          .cast<String>()
-          .toList(),
-    );
 
-    final Map<String, Object?> clientDataModel = a2uiMessageProcessor
-        .getClientDataModel();
+    // We don't construct clientCapabilities here anymore,
+    // the user needs to know what they are doing when they call the LLM.
+    // OR we should expose them from the controller so the user can grab them?
 
-    return contentGenerator.sendRequest(
-      message,
-      history: history,
-      clientCapabilities: clientCapabilities,
-      clientDataModel: clientDataModel.isNotEmpty ? clientDataModel : null,
-    );
+    _isProcessing.value = true;
+    try {
+      await onSend(message, history);
+    } catch (e) {
+      _handleError(e);
+    } finally {
+      _isProcessing.value = false;
+    }
   }
 
   void _handleTextResponse(String text) {
@@ -209,10 +194,8 @@ class GenUiConversation {
     onTextResponse?.call(text);
   }
 
-  void _handleError(ContentGeneratorError error) {
-    final errorResponseMessage = ChatMessage.model(
-      'An error occurred: ${error.error}',
-    );
+  void _handleError(Object error) {
+    final errorResponseMessage = ChatMessage.model('An error occurred: $error');
     _conversation.value = [..._conversation.value, errorResponseMessage];
     onError?.call(error);
   }

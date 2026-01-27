@@ -8,18 +8,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
 
+import 'package:genui_dartantic/genui_dartantic.dart';
 import 'catalog.dart';
 import 'jumping_dots.dart';
 import 'thinking_verbs.dart';
 
 class GamePage extends StatefulWidget {
-  const GamePage({
-    required this.generator,
-    required this.providerName,
-    super.key,
-  });
+  const GamePage({required this.client, required this.providerName, super.key});
 
-  final ContentGenerator generator;
+  final DartanticClient client;
   final String providerName;
 
   @override
@@ -27,7 +24,7 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
-  late final A2uiMessageProcessor _genUiManager;
+  late final GenUiController _controller;
   late final GenUiConversation _conversation;
   String? _latestSurfaceId;
   String? _statusMessage;
@@ -47,19 +44,18 @@ class _GamePageState extends State<GamePage> {
   void initState() {
     super.initState();
 
-    _genUiManager = A2uiMessageProcessor(catalogs: [ticTacToeCatalog]);
+    _controller = GenUiController(catalogs: [ticTacToeCatalog]);
+    widget.client.a2uiMessageStream.listen(_controller.addMessage);
+    widget.client.textResponseStream.listen(_controller.addChunk);
+
     _conversation = GenUiConversation(
-      contentGenerator: widget.generator,
-      a2uiMessageProcessor: _genUiManager,
+      controller: _controller,
+      onSend: (message, history) =>
+          widget.client.sendRequest(message, history: history),
       onSurfaceAdded: _handleSurfaceAdded,
       onTextResponse: _onTextResponse,
       onError: (error) {
-        debugPrint('Error: ${error.error}');
-        // NOTE: the lack of output doesn't impact the experience
-        // if (!mounted) return;
-        // ScaffoldMessenger.of(
-        //   context,
-        // ).showSnackBar(SnackBar(content: Text('Error: ${error.error}')));
+        debugPrint('Error: $error');
       },
     );
     _conversation.isProcessing.addListener(_updateThinkingVerb);
@@ -167,7 +163,7 @@ class _GamePageState extends State<GamePage> {
                         ),
                       ),
                       child: GenUiSurface(
-                        host: _genUiManager,
+                        host: _controller.processor,
                         surfaceId: _latestSurfaceId!,
                         defaultBuilder: (context) =>
                             const Center(child: CircularProgressIndicator()),

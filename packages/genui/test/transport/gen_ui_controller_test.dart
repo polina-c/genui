@@ -16,7 +16,7 @@ void main() {
     });
 
     tearDown(() {
-      controller.close();
+      controller.dispose();
     });
 
     test('addChunk flows text to textStream', () async {

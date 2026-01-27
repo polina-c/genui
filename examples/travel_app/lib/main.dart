@@ -8,8 +8,6 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
-import 'package:genui_firebase_ai/genui_firebase_ai.dart'
-    show FirebaseAiContentGenerator;
 import 'package:logging/logging.dart';
 
 import 'src/catalog.dart';
@@ -59,11 +57,11 @@ const _title = 'Agentic Travel Inc';
 class TravelApp extends StatelessWidget {
   /// Creates a new [TravelApp].
   ///
-  /// The optional [contentGenerator] can be used to inject a specific AI
+  /// The optional [aiClient] can be used to inject a specific AI
   /// client, which is useful for testing with a mock implementation.
-  const TravelApp({this.contentGenerator, super.key});
+  const TravelApp({this.aiClient, super.key});
 
-  final ContentGenerator? contentGenerator;
+  final Object? aiClient;
 
   @override
   Widget build(BuildContext context) {
@@ -73,24 +71,24 @@ class TravelApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: _TravelAppBody(contentGenerator: contentGenerator),
+      home: _TravelAppBody(aiClient: aiClient),
     );
   }
 }
 
 class _TravelAppBody extends StatelessWidget {
-  const _TravelAppBody({this.contentGenerator});
+  const _TravelAppBody({this.aiClient});
 
   /// The AI client to use for the application.
   ///
-  /// If null, a default [FirebaseAiContentGenerator] will be created by the
+  /// If null, a default client will be created by the
   /// [TravelPlannerPage].
-  final ContentGenerator? contentGenerator;
+  final Object? aiClient;
 
   @override
   Widget build(BuildContext context) {
     final Map<String, StatefulWidget> tabs = {
-      'Travel': TravelPlannerPage(contentGenerator: contentGenerator),
+      'Travel': TravelPlannerPage(aiClient: aiClient),
       'Widget Catalog': const CatalogTab(),
     };
     return DefaultTabController(

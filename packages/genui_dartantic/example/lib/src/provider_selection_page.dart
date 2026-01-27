@@ -53,7 +53,7 @@ class _ProviderSelectionPageState extends State<ProviderSelectionPage> {
       ),
     };
 
-    final generator = DartanticContentGenerator(
+    final client = DartanticClient(
       provider: provider,
       modelName: _selectedProvider.modelName,
       catalog: ticTacToeCatalog,
@@ -63,7 +63,7 @@ class _ProviderSelectionPageState extends State<ProviderSelectionPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) =>
-            GamePage(generator: generator, providerName: provider.displayName),
+            GamePage(client: client, providerName: provider.displayName),
       ),
     );
   }

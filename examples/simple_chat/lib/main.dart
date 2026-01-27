@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
 import 'package:genui_firebase_ai/genui_firebase_ai.dart';
 import 'package:genui_google_generative_ai/genui_google_generative_ai.dart';
+
 import 'package:logging/logging.dart';
 
 // If you want to convert to using Firebase AI, run:
@@ -66,57 +67,51 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final GenUiController _controller = GenUiController(
+    catalogs: [CoreCatalogItems.asCatalog()],
+  );
+  late final GoogleGenerativeAiClient _client;
+  late final GenUiConversation _conversation;
   final TextEditingController _textController = TextEditingController();
   final List<MessageController> _messages = [];
-  late final GenUiConversation _genUiConversation;
-  late final A2uiMessageProcessor _a2uiMessageProcessor;
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     final Catalog catalog = CoreCatalogItems.asCatalog();
-    _a2uiMessageProcessor = A2uiMessageProcessor(catalogs: [catalog]);
-
-    final systemInstruction =
-        '''You are a helpful assistant who chats with a user,
-giving exactly one response for each user message.
-Your responses should contain acknowledgment
-of the user message.
-
-
-IMPORTANT: When you generate UI in a response, you MUST always create
-a new surface with a unique `surfaceId`. Do NOT reuse or update
-existing `surfaceId`s. Each UI response must be in its own new surface.
-
-${GenUiPromptFragments.basicChat}''';
 
     // Create the appropriate content generator based on configuration
-    final ContentGenerator contentGenerator = switch (aiBackend) {
-      AiBackend.googleGenerativeAi => () {
-        return GoogleGenerativeAiContentGenerator(
-          catalog: catalog,
-          systemInstruction: systemInstruction,
-          apiKey: getApiKey(),
-        );
-      }(),
-      AiBackend.firebase => FirebaseAiContentGenerator(
+    final Object client = switch (aiBackend) {
+      AiBackend.googleGenerativeAi => GoogleGenerativeAiClient(
+        catalog: catalog,
+        systemInstruction: systemInstruction,
+        apiKey: getApiKey(),
+      ),
+      AiBackend.firebase => FirebaseAiClient(
         catalog: catalog,
         systemInstruction: systemInstruction,
       ),
     };
 
-    _genUiConversation = GenUiConversation(
-      a2uiMessageProcessor: _a2uiMessageProcessor,
-      contentGenerator: contentGenerator,
+    if (client is GoogleGenerativeAiClient) {
+      _client = client;
+      client.a2uiMessageStream.listen(_controller.addMessage);
+      client.textResponseStream.listen(_controller.addChunk);
+    } else {
+      throw UnimplementedError(
+        'Only Google AI supported for this example currently',
+      );
+    }
+
+    _conversation = GenUiConversation(
+      controller: _controller,
+      onSend: (message, history) =>
+          _client.sendRequest(message, history: history),
       onSurfaceAdded: _handleSurfaceAdded,
       onTextResponse: _onTextResponse,
       onError: (error) {
-        genUiLogger.severe(
-          'Error from content generator',
-          error.error,
-          error.stackTrace,
-        );
+        genUiLogger.severe('Error from content generator', error);
       },
     );
   }
@@ -156,14 +151,14 @@ ${GenUiPromptFragments.basicChat}''';
                 itemBuilder: (context, index) {
                   final MessageController message = _messages[index];
                   return ListTile(
-                    title: MessageView(message, _genUiConversation.host),
+                    title: MessageView(message, _conversation.host),
                   );
                 },
               ),
             ),
 
             ValueListenableBuilder(
-              valueListenable: _genUiConversation.isProcessing,
+              valueListenable: _client.isProcessing,
               builder: (_, isProcessing, _) {
                 if (!isProcessing) return Container();
                 return const Padding(
@@ -212,7 +207,7 @@ ${GenUiPromptFragments.basicChat}''';
 
     _scrollToBottom();
 
-    unawaited(_genUiConversation.sendRequest(ChatMessage.user(text)));
+    unawaited(_conversation.sendRequest(ChatMessage.user(text)));
   }
 
   void _scrollToBottom() {
@@ -229,7 +224,8 @@ ${GenUiPromptFragments.basicChat}''';
 
   @override
   void dispose() {
-    _genUiConversation.dispose();
+    _conversation.dispose();
+    _client.dispose();
     super.dispose();
   }
 }

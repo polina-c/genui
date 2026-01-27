@@ -45,6 +45,7 @@ class A2uiAgentConnector {
   final Uri url;
 
   final _controller = StreamController<genui.A2uiMessage>.broadcast();
+  final _textController = StreamController<String>.broadcast();
   final _errorController = StreamController<Object>.broadcast();
   @visibleForTesting
   late A2AClient client;
@@ -58,10 +59,11 @@ class A2uiAgentConnector {
   /// The current context ID from the A2A server.
   String? get contextId => _contextId;
 
-  /// The stream of A2UI protocol lines.
-  ///
-  /// This stream emits the JSONL messages from the A2UI protocol.
+  /// The stream of A2UI messages.
   Stream<genui.A2uiMessage> get stream => _controller.stream;
+
+  /// The stream of text responses.
+  Stream<String> get textStream => _textController.stream;
 
   /// A stream of errors from the A2A connection.
   Stream<Object> get errorStream => _errorController.stream;
@@ -198,6 +200,10 @@ class A2uiAgentConnector {
             for (final Part part in message.parts) {
               if (part is DataPart) {
                 _processA2uiMessages(part.data);
+              } else if (part is TextPart) {
+                if (!_textController.isClosed) {
+                  _textController.add(part.text);
+                }
               }
             }
           }
@@ -229,6 +235,10 @@ class A2uiAgentConnector {
             for (final Part part in message.parts) {
               if (part is DataPart) {
                 _processA2uiMessages(part.data);
+              } else if (part is TextPart) {
+                if (!_textController.isClosed) {
+                  _textController.add(part.text);
+                }
               }
             }
           }
@@ -318,6 +328,9 @@ class A2uiAgentConnector {
   void dispose() {
     if (!_controller.isClosed) {
       _controller.close();
+    }
+    if (!_textController.isClosed) {
+      _textController.close();
     }
     if (!_errorController.isClosed) {
       _errorController.close();

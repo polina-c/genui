@@ -14,3 +14,6 @@ enum AiBackend {
 /// Configuration for which AI backend to use.
 /// Change this value to switch between backends.
 const AiBackend aiBackend = AiBackend.googleGenerativeAi;
+
+/// The system instruction to use for the AI.
+const String systemInstruction = 'You are a helpful assistant.';

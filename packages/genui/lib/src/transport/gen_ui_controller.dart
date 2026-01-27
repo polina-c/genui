@@ -80,7 +80,7 @@ class GenUiController implements GenUiHost {
   Stream<ChatMessage> get onClientEvent => _processor.onSubmit;
 
   /// Closes the controller and cleans up resources.
-  void close() {
+  void dispose() {
     _inputStream.close();
     _pipelineSubscription.cancel();
     _processor.dispose();

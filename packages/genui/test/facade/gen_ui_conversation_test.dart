@@ -4,73 +4,76 @@
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
 
-class FakeContentGenerator implements ContentGenerator {
-  @override
-  final ValueNotifier<bool> isProcessing = ValueNotifier(false);
-
-  @override
-  Stream<A2uiMessage> get a2uiMessageStream => const Stream.empty();
-  @override
-  Stream<ContentGeneratorError> get errorStream => const Stream.empty();
-  @override
-  Stream<GenUiEvent> get eventStream => const Stream.empty();
-  @override
-  Stream<String> get textResponseStream => const Stream.empty();
-
-  @override
-  Future<void> sendRequest(
-    ChatMessage message, {
-    Iterable<ChatMessage>? history,
-    A2UiClientCapabilities? clientCapabilities,
-    Map<String, Object?>? clientDataModel,
-    CancellationSignal? cancellationSignal,
-  }) async {
-    isProcessing.value = true;
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    isProcessing.value = false;
-  }
-
-  @override
-  void addInterceptor(ToolInterceptor interceptor) {}
-  @override
-  void dispose() {}
-  @override
-  void removeInterceptor(ToolInterceptor interceptor) {}
-}
-
 void main() {
   group('GenUiConversation', () {
-    test('prevents concurrent requests', () async {
-      final generator = FakeContentGenerator();
-      final processor = A2uiMessageProcessor(catalogs: []);
+    late GenUiController controller;
+
+    setUp(() {
+      controller = GenUiController(catalogs: []);
+    });
+
+    tearDown(() {
+      controller.dispose();
+    });
+
+    test('updates isProcessing state during request', () async {
+      final completer = Completer<void>();
       final conversation = GenUiConversation(
-        contentGenerator: generator,
-        a2uiMessageProcessor: processor,
+        controller: controller,
+        onSend: (message, history) async {
+          await completer.future;
+        },
       );
 
-      // Send first request
+      expect(conversation.isProcessing.value, isFalse);
+
       final Future<void> future = conversation.sendRequest(
         ChatMessage.user('', parts: [UiInteractionPart.create('hi')]),
       );
 
-      // Expect second request to fail
-      expect(
-        () => conversation.sendRequest(
-          ChatMessage.user('', parts: [UiInteractionPart.create('second')]),
-        ),
-        throwsStateError,
-      );
+      expect(conversation.isProcessing.value, isTrue);
 
+      completer.complete();
       await future;
 
-      // Should succeed now
-      await conversation.sendRequest(
-        ChatMessage.user('', parts: [UiInteractionPart.create('third')]),
+      expect(conversation.isProcessing.value, isFalse);
+      conversation.dispose();
+    });
+
+    test('calls onSend with correct message and history', () async {
+      ChatMessage? capturedMessage;
+      Iterable<ChatMessage>? capturedHistory;
+
+      final conversation = GenUiConversation(
+        controller: controller,
+        onSend: (message, history) async {
+          capturedMessage = message;
+          capturedHistory = history;
+        },
       );
+
+      // Send first message
+      final firstMessage = ChatMessage.user('First');
+      await conversation.sendRequest(firstMessage);
+
+      expect(capturedMessage, firstMessage);
+      expect(capturedHistory, isEmpty);
+      expect(conversation.conversation.value.last, firstMessage);
+
+      // Send second message
+      final secondMessage = ChatMessage.user('Second');
+      await conversation.sendRequest(secondMessage);
+
+      expect(capturedMessage, secondMessage);
+      expect(capturedHistory, isNotEmpty);
+      expect(capturedHistory!.last, firstMessage);
+      expect(conversation.conversation.value.length, 2);
+      expect(conversation.conversation.value.last, secondMessage);
+
+      conversation.dispose();
     });
   });
 }

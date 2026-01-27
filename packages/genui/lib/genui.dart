@@ -10,9 +10,7 @@
 library;
 
 export 'src/catalog/core_catalog.dart';
-export 'src/content_generator.dart';
 export 'src/core/a2ui_message_processor.dart';
-export 'src/core/content_generator_mixin.dart';
 export 'src/core/genui_surface.dart';
 export 'src/core/prompt_fragments.dart';
 export 'src/core/ui_tools.dart';
@@ -33,6 +31,7 @@ export 'src/model/gen_ui_events.dart';
 export 'src/model/standard_catalog_embed.dart';
 export 'src/model/tools.dart';
 export 'src/model/ui_models.dart';
+export 'src/primitives/cancellation.dart';
 export 'src/primitives/constants.dart';
 export 'src/primitives/logging.dart';
 export 'src/primitives/simple_items.dart';

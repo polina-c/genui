@@ -22,21 +22,19 @@ import 'gemini_schema_adapter.dart';
 /// This is used to allow for custom model creation, for example, for testing.
 typedef GenerativeModelFactory =
     GeminiGenerativeModelInterface Function({
-      required FirebaseAiContentGenerator configuration,
+      required FirebaseAiClient configuration,
       Content? systemInstruction,
       List<Tool>? tools,
       ToolConfig? toolConfig,
     });
 
-/// A [ContentGenerator] that uses the Firebase AI API to generate content.
+/// A client that uses the Firebase AI API to generate content.
 ///
 /// This generator utilizes a [GeminiGenerativeModelInterface] to interact with
 /// the Firebase AI API. The actual model instance is created by the
 /// [modelCreator] function, which defaults to [defaultGenerativeModelFactory].
-class FirebaseAiContentGenerator
-    with ContentGeneratorMixin
-    implements ContentGenerator {
-  /// Creates a [FirebaseAiContentGenerator] instance with specified
+class FirebaseAiClient {
+  /// Creates a [FirebaseAiClient] instance with specified
   /// configurations.
   ///
   /// The [catalog] is the registry of components that can be dynamically
@@ -52,7 +50,7 @@ class FirebaseAiContentGenerator
   /// [GeminiGenerativeModelInterface].
   ///
   /// [additionalTools] allows providing extra [AiTool]s to the model.
-  FirebaseAiContentGenerator({
+  FirebaseAiClient({
     required this.catalog,
     this.systemInstruction,
     this.outputToolName = 'provideFinalOutput',
@@ -81,7 +79,7 @@ class FirebaseAiContentGenerator
   /// [GeminiGenerativeModelInterface] used for AI interactions. It allows for
   /// customization of the model setup, such as using different HTTP clients, or
   /// for providing mock models during testing. The factory receives this
-  /// [FirebaseAiContentGenerator] instance as configuration.
+  /// [FirebaseAiClient] instance as configuration.
   ///
   /// Defaults to a wrapper for the regular [GenerativeModel] constructor,
   /// [defaultGenerativeModelFactory].
@@ -98,31 +96,40 @@ class FirebaseAiContentGenerator
 
   final _a2uiMessageController = StreamController<A2uiMessage>.broadcast();
   final _textResponseController = StreamController<String>.broadcast();
-  final _errorController = StreamController<ContentGeneratorError>.broadcast();
+  final _eventController = StreamController<GenUiEvent>.broadcast();
+  final _errorController = StreamController<Object>.broadcast();
   final _isProcessing = ValueNotifier<bool>(false);
 
-  @override
+  /// A stream of A2UI messages produced by the generator.
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
 
-  @override
+  /// A stream of text responses from the agent.
   Stream<String> get textResponseStream => _textResponseController.stream;
 
-  @override
-  Stream<ContentGeneratorError> get errorStream => _errorController.stream;
+  /// A stream of errors from the agent.
+  Stream<Object> get errorStream => _errorController.stream;
 
-  @override
+  /// A stream of events related to the generation process (tool calls, usage,
+  /// etc.).
+  Stream<GenUiEvent> get eventStream => _eventController.stream;
+
+  /// Whether the content generator is currently processing a request.
   ValueListenable<bool> get isProcessing => _isProcessing;
 
-  @override
   void dispose() {
-    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
+    _eventController.close();
     _errorController.close();
     _isProcessing.dispose();
   }
 
-  @override
+  void emitEvent(GenUiEvent event) {
+    if (!_eventController.isClosed) {
+      _eventController.add(event);
+    }
+  }
+
   /// Sends a request to the AI model.
   ///
   /// Note: [clientDataModel] is currently ignored by this implementation.
@@ -154,7 +161,7 @@ class FirebaseAiContentGenerator
       genUiLogger.info('Request cancelled');
     } catch (e, st) {
       genUiLogger.severe('Error generating content', e, st);
-      _errorController.add(ContentGeneratorError(e, st));
+      _errorController.add(e);
     } finally {
       _isProcessing.value = false;
     }
@@ -163,9 +170,9 @@ class FirebaseAiContentGenerator
   /// The default factory function for creating a [GenerativeModel].
   ///
   /// This function instantiates a standard [GenerativeModel] using the `model`
-  /// from the provided [FirebaseAiContentGenerator] `configuration`.
+  /// from the provided [FirebaseAiClient] `configuration`.
   static GeminiGenerativeModelInterface defaultGenerativeModelFactory({
-    required FirebaseAiContentGenerator configuration,
+    required FirebaseAiClient configuration,
     Content? systemInstruction,
     List<Tool>? tools,
     ToolConfig? toolConfig,
@@ -312,26 +319,30 @@ class FirebaseAiContentGenerator
       final Map<String, Object?> argsMap = call.args;
 
       // Intercept tool call
-      final ToolAction toolAction = await interceptToolCall(call.name, argsMap);
+      // final ToolAction toolAction = await interceptToolCall(
+      //   call.name,
+      //   argsMap,
+      // );
+      // Tool interception removed
 
-      if (toolAction is ToolActionCancel) {
-        genUiLogger.info('Tool call ${call.name} cancelled by interceptor.');
-        functionResponseParts.add(
-          FunctionResponse(call.name, {
-            'error': 'Tool call cancelled by client.',
-          }),
-        );
-        continue;
-      } else if (toolAction is ToolActionMock) {
-        genUiLogger.info(
-          'Tool call ${call.name} mocked by interceptor '
-          'with result: ${toolAction.result}',
-        );
-        functionResponseParts.add(
-          FunctionResponse(call.name, toolAction.result),
-        );
-        continue;
-      }
+      // if (toolAction is ToolActionCancel) {
+      //   genUiLogger.info('Tool call ${call.name} cancelled by interceptor.');
+      //   functionResponseParts.add(
+      //     FunctionResponse(call.name, {
+      //       'error': 'Tool call cancelled by client.',
+      //     }),
+      //   );
+      //   continue;
+      // } else if (toolAction is ToolActionMock) {
+      //   genUiLogger.info(
+      //     'Tool call ${call.name} mocked by interceptor '
+      //     'with result: ${toolAction.result}',
+      //   );
+      //   functionResponseParts.add(
+      //     FunctionResponse(call.name, toolAction.result),
+      //   );
+      //   continue;
+      // }
 
       if (isForcedToolCalling && call.name == outputToolName) {
         try {

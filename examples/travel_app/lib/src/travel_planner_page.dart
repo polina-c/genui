@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
 import 'package:genui_firebase_ai/genui_firebase_ai.dart';
@@ -16,6 +17,7 @@ import 'config/configuration.dart';
 // non-web version.
 import 'config/io_get_api_key.dart'
     if (dart.library.html) 'config/web_get_api_key.dart';
+import 'fake_ai_client.dart'; // For FakeAiClient check
 import 'tools/booking/booking_service.dart';
 import 'tools/booking/list_hotels_tool.dart';
 import 'widgets/conversation.dart';
@@ -27,7 +29,7 @@ Future<void> loadImagesJson() async {
 /// The main page for the travel planner application.
 ///
 /// This stateful widget manages the core user interface and application logic.
-/// It initializes the [A2uiMessageProcessor] and [ContentGenerator], maintains
+/// It initializes the [A2uiMessageProcessor] and [GenUiController], maintains
 /// the conversation history, and handles the interaction between the user, the
 /// AI, and the dynamically generated UI.
 ///
@@ -37,16 +39,17 @@ Future<void> loadImagesJson() async {
 class TravelPlannerPage extends StatefulWidget {
   /// Creates a new [TravelPlannerPage].
   ///
-  /// An optional [contentGenerator] can be provided, which is useful for
+  /// An optional [aiClient] can be provided, which is useful for
   /// testing or using a custom AI client implementation. If not provided, a
-  /// default [FirebaseAiContentGenerator] is created.
-  const TravelPlannerPage({this.contentGenerator, super.key});
+  /// default [FirebaseAiClient] is created.
+  const TravelPlannerPage({this.aiClient, super.key});
 
   /// The AI client to use for the application.
   ///
-  /// If null, a default instance of [FirebaseAiContentGenerator] will be
-  /// created within the page's state.
-  final ContentGenerator? contentGenerator;
+  /// If null, a default instance will be created based on [aiBackend].
+  /// This must be an instance of [GoogleGenerativeAiClient] or
+  /// [FirebaseAiClient].
+  final Object? aiClient;
 
   @override
   State<TravelPlannerPage> createState() => _TravelPlannerPageState();
@@ -55,7 +58,10 @@ class TravelPlannerPage extends StatefulWidget {
 class _TravelPlannerPageState extends State<TravelPlannerPage>
     with AutomaticKeepAliveClientMixin {
   late final GenUiConversation _uiConversation;
-  late final StreamSubscription<ChatMessage> _userMessageSubscription;
+  late final GenUiController _controller;
+  // We keep a reference to the client to dispose it if we created it.
+  Object? _client;
+  bool _didCreateClient = false;
 
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
@@ -63,41 +69,38 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
   @override
   void initState() {
     super.initState();
-    final a2uiMessageProcessor = A2uiMessageProcessor(
-      catalogs: [travelAppCatalog],
-    );
-    _userMessageSubscription = a2uiMessageProcessor.onSubmit.listen(
-      _handleUserMessageFromUi,
-    );
+    _controller = GenUiController(catalogs: [travelAppCatalog]);
 
     // Create the appropriate content generator based on configuration
-    final ContentGenerator contentGenerator =
-        widget.contentGenerator ??
-        switch (aiBackend) {
-          AiBackend.googleGenerativeAi => () {
-            return GoogleGenerativeAiContentGenerator(
-              catalog: travelAppCatalog,
-              systemInstruction: prompt,
-              additionalTools: [
-                ListHotelsTool(
-                  onListHotels: BookingService.instance.listHotels,
-                ),
-              ],
-              apiKey: getApiKey(),
-            );
-          }(),
-          AiBackend.firebase => FirebaseAiContentGenerator(
+    _client = widget.aiClient;
+    if (_client == null) {
+      _didCreateClient = true;
+      _client = switch (aiBackend) {
+        AiBackend.googleGenerativeAi => () {
+          return GoogleGenerativeAiClient(
             catalog: travelAppCatalog,
             systemInstruction: prompt,
             additionalTools: [
               ListHotelsTool(onListHotels: BookingService.instance.listHotels),
             ],
-          ),
-        };
+            apiKey: getApiKey(),
+          );
+        }(),
+        AiBackend.firebase => FirebaseAiClient(
+          catalog: travelAppCatalog,
+          systemInstruction: prompt,
+          additionalTools: [
+            ListHotelsTool(onListHotels: BookingService.instance.listHotels),
+          ],
+        ),
+      };
+    }
+
+    _wireClient(_client!, _controller);
 
     _uiConversation = GenUiConversation(
-      a2uiMessageProcessor: a2uiMessageProcessor,
-      contentGenerator: contentGenerator,
+      controller: _controller,
+      onSend: (message, history) => _sendRequest(_client!, message, history),
       onComponentsUpdated: (update) {
         _scrollToBottom();
       },
@@ -113,10 +116,50 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
     );
   }
 
+  void _wireClient(Object client, GenUiController controller) {
+    if (client is GoogleGenerativeAiClient) {
+      client.a2uiMessageStream.listen(controller.addMessage);
+      client.textResponseStream.listen(controller.addChunk);
+    } else if (client is FirebaseAiClient) {
+      client.a2uiMessageStream.listen(controller.addMessage);
+      client.textResponseStream.listen(controller.addChunk);
+    } else if (client is FakeAiClient) {
+      client.a2uiMessageStream.listen(controller.addMessage);
+      client.textResponseStream.listen(controller.addChunk);
+    } else {
+      throw UnimplementedError(
+        'Unsupported client type: ${client.runtimeType}',
+      );
+    }
+  }
+
+  Future<void> _sendRequest(
+    Object client,
+    ChatMessage message,
+    Iterable<ChatMessage> history,
+  ) {
+    if (client is GoogleGenerativeAiClient) {
+      return client.sendRequest(message, history: history);
+    } else if (client is FirebaseAiClient) {
+      return client.sendRequest(message, history: history);
+    } else if (client is FakeAiClient) {
+      return client.sendRequest(message, history: history);
+    }
+    throw UnimplementedError('Unsupported client type: ${client.runtimeType}');
+  }
+
+  ValueListenable<bool> get isProcessing => _uiConversation.isProcessing;
+
   @override
   void dispose() {
-    _userMessageSubscription.cancel();
     _uiConversation.dispose();
+    if (_didCreateClient) {
+      if (_client is GoogleGenerativeAiClient) {
+        (_client as GoogleGenerativeAiClient).dispose();
+      } else if (_client is FirebaseAiClient) {
+        (_client as FirebaseAiClient).dispose();
+      }
+    }
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -136,10 +179,6 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
 
   Future<void> _triggerInference(ChatMessage message) async {
     await _uiConversation.sendRequest(message);
-  }
-
-  void _handleUserMessageFromUi(ChatMessage message) {
-    _scrollToBottom();
   }
 
   void _sendPrompt(String text) {
@@ -164,7 +203,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
                   builder: (context, messages, child) {
                     return Conversation(
                       messages: messages,
-                      manager: _uiConversation.a2uiMessageProcessor,
+                      manager: _uiConversation.host,
                       scrollController: _scrollController,
                     );
                   },

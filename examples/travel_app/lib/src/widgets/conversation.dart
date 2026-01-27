@@ -24,7 +24,7 @@ class Conversation extends StatelessWidget {
   });
 
   final List<ChatMessage> messages;
-  final A2uiMessageProcessor manager;
+  final GenUiHost manager;
   final UserPromptBuilder? userPromptBuilder;
   final UserUiInteractionBuilder? userUiInteractionBuilder;
   final bool showInternalMessages;

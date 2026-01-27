@@ -21,15 +21,13 @@ import 'google_schema_adapter.dart';
 /// This is used to allow for custom service creation, for example, for testing.
 typedef GenerativeServiceFactory =
     GoogleGenerativeServiceInterface Function({
-      required GoogleGenerativeAiContentGenerator configuration,
+      required GoogleGenerativeAiClient configuration,
     });
 
-/// A [ContentGenerator] that uses the Google Cloud Generative Language API to
+/// A client that uses the Google Cloud Generative Language API to
 /// generate content.
-class GoogleGenerativeAiContentGenerator
-    with ContentGeneratorMixin
-    implements ContentGenerator {
-  /// Creates a [GoogleGenerativeAiContentGenerator] instance with specified
+class GoogleGenerativeAiClient {
+  /// Creates a [GoogleGenerativeAiClient] instance with specified
   /// configurations.
   ///
   /// The [catalog] is the registry of components that can be dynamically
@@ -49,7 +47,7 @@ class GoogleGenerativeAiContentGenerator
   /// [modelName] is the name of the model to use (e.g., 'models/gemini-pro').
   ///
   /// [apiKey] is the API key to use for authentication.
-  GoogleGenerativeAiContentGenerator({
+  GoogleGenerativeAiClient({
     required this.catalog,
     this.systemInstruction,
     this.outputToolName = 'provideFinalOutput',
@@ -79,7 +77,7 @@ class GoogleGenerativeAiContentGenerator
   /// This factory function is responsible for instantiating the
   /// [GoogleGenerativeServiceInterface] used for AI interactions. It allows for
   /// customization of the service setup, or for providing mock services during
-  /// testing. The factory receives this [GoogleGenerativeAiContentGenerator]
+  /// testing. The factory receives this [GoogleGenerativeAiClient]
   /// instance as configuration.
   ///
   /// Defaults to a wrapper for the regular [google_ai.GenerativeService]
@@ -99,35 +97,45 @@ class GoogleGenerativeAiContentGenerator
   int inputTokenUsage = 0;
 
   /// The total number of output tokens used by this client
+  /// The total number of output tokens used by this client
   int outputTokenUsage = 0;
 
   final _a2uiMessageController = StreamController<A2uiMessage>.broadcast();
   final _textResponseController = StreamController<String>.broadcast();
-  final _errorController = StreamController<ContentGeneratorError>.broadcast();
+  final _eventController = StreamController<GenUiEvent>.broadcast();
+  final _errorController = StreamController<Object>.broadcast();
   final _isProcessing = ValueNotifier<bool>(false);
 
-  @override
+  /// A stream of A2UI messages produced by the generator.
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
 
-  @override
+  /// A stream of text responses from the agent.
   Stream<String> get textResponseStream => _textResponseController.stream;
 
-  @override
-  Stream<ContentGeneratorError> get errorStream => _errorController.stream;
+  /// A stream of errors from the agent.
+  Stream<Object> get errorStream => _errorController.stream;
 
-  @override
+  /// A stream of events related to the generation process (tool calls, usage,
+  /// etc.).
+  Stream<GenUiEvent> get eventStream => _eventController.stream;
+
+  /// Whether the content generator is currently processing a request.
   ValueListenable<bool> get isProcessing => _isProcessing;
 
-  @override
   void dispose() {
-    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
+    _eventController.close();
     _errorController.close();
     _isProcessing.dispose();
   }
 
-  @override
+  void emitEvent(GenUiEvent event) {
+    if (!_eventController.isClosed) {
+      _eventController.add(event);
+    }
+  }
+
   /// Sends a request to the AI model.
   ///
   /// Note: [clientDataModel] is currently ignored by this implementation.
@@ -161,7 +169,7 @@ class GoogleGenerativeAiContentGenerator
       genUiLogger.info('Request cancelled');
     } catch (e, st) {
       genUiLogger.severe('Error generating content', e, st);
-      _errorController.add(ContentGeneratorError(e, st));
+      _errorController.add(e);
     } finally {
       _isProcessing.value = false;
     }
@@ -170,10 +178,10 @@ class GoogleGenerativeAiContentGenerator
   /// The default factory function for creating a [google_ai.GenerativeService].
   ///
   /// This function instantiates a standard [google_ai.GenerativeService] using
-  /// the `apiKey` from the provided [GoogleGenerativeAiContentGenerator]
+  /// the `apiKey` from the provided [GoogleGenerativeAiClient]
   /// `configuration`.
   static GoogleGenerativeServiceInterface defaultGenerativeServiceFactory({
-    required GoogleGenerativeAiContentGenerator configuration,
+    required GoogleGenerativeAiClient configuration,
   }) {
     return GoogleGenerativeServiceWrapper(
       google_ai.GenerativeService.fromApiKey(configuration.apiKey),
@@ -304,8 +312,13 @@ class GoogleGenerativeAiContentGenerator
       final argsMap = call.args?.toJson() as Map<String, Object?>? ?? {};
 
       // Intercept tool call
-      final toolAction = await interceptToolCall(call.name, argsMap);
+      // final toolAction = await interceptToolCall(call.name, argsMap);
+      // Tool interception removed with ContentGeneratorMixin for now,
+      // or needs reimplementation
+      // default proceed:
+      // if (toolAction is ToolActionCancel) ...
 
+      /*
       if (toolAction is ToolActionCancel) {
         genUiLogger.info('Tool call ${call.name} cancelled by interceptor.');
         // Return an error/cancellation message to the model so it knows what happened.
@@ -342,6 +355,7 @@ class GoogleGenerativeAiContentGenerator
         );
         continue;
       }
+      */
 
       // ToolActionProceed falls through here
 
@@ -512,7 +526,7 @@ With functions:
           );
         } catch (e, st) {
           genUiLogger.severe('Error from service.generateContent', e, st);
-          _errorController.add(ContentGeneratorError(e, st));
+          _errorController.add(e);
           rethrow;
         }
         final elapsed = DateTime.now().difference(inferenceStartTime);

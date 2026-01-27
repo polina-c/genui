@@ -13,7 +13,7 @@ import 'package:genui/genui.dart';
 import 'dartantic_content_converter.dart';
 import 'dartantic_schema_adapter.dart';
 
-/// A [ContentGenerator] that uses Dartantic AI to generate content.
+/// A client that uses Dartantic AI to generate content.
 ///
 /// This generator utilizes a [dartantic.Provider] to interact with various
 /// AI providers (OpenAI, Anthropic, Google, Mistral, Cohere, Ollama) through
@@ -26,10 +26,8 @@ import 'dartantic_schema_adapter.dart';
 /// This implementation is **stateless** - it does not maintain internal
 /// conversation history. Instead, it uses the history provided by
 /// [GenUiConversation] via the [sendRequest] method's `history` parameter.
-class DartanticContentGenerator
-    with ContentGeneratorMixin
-    implements ContentGenerator {
-  /// Creates a [DartanticContentGenerator] instance.
+class DartanticClient {
+  /// Creates a [DartanticClient] instance.
   ///
   /// - [provider]: The dartantic AI provider to use (e.g., `Providers.google`,
   ///   `Providers.openai`, `Providers.anthropic`).
@@ -38,7 +36,7 @@ class DartanticContentGenerator
   /// - [modelName]: The name of the model to use (specific to the provider).
   /// - [additionalTools]: Additional GenUI [AiTool] instances to make
   ///   available.
-  DartanticContentGenerator({
+  DartanticClient({
     required dartantic.Provider provider,
     required this.catalog,
     this.systemInstruction,
@@ -90,34 +88,43 @@ ${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
 
   final _a2uiMessageController = StreamController<A2uiMessage>.broadcast();
   final _textResponseController = StreamController<String>.broadcast();
-  final _errorController = StreamController<ContentGeneratorError>.broadcast();
+  final _eventController = StreamController<GenUiEvent>.broadcast();
+  final _errorController = StreamController<Object>.broadcast();
   final _isProcessing = ValueNotifier<bool>(false);
   late final String _extraInstructions;
 
-  @override
+  /// A stream of A2UI messages produced by the generator.
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
 
-  @override
+  /// A stream of text responses from the agent.
   Stream<String> get textResponseStream => _textResponseController.stream;
 
-  @override
-  Stream<ContentGeneratorError> get errorStream => _errorController.stream;
+  /// A stream of errors from the agent.
+  Stream<Object> get errorStream => _errorController.stream;
 
-  @override
+  /// A stream of events related to the generation process (tool calls, usage,
+  /// etc.).
+  Stream<GenUiEvent> get eventStream => _eventController.stream;
+
+  /// Whether the content generator is currently processing a request.
   ValueListenable<bool> get isProcessing => _isProcessing;
 
-  @override
   void dispose() {
-    disposeMixin();
     _a2uiMessageController.close();
     _textResponseController.close();
+    _eventController.close();
     _errorController.close();
     _isProcessing.dispose();
   }
 
+  void emitEvent(GenUiEvent event) {
+    if (!_eventController.isClosed) {
+      _eventController.add(event);
+    }
+  }
+
   CancellationSignal? _currentCancellationSignal;
 
-  @override
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,
@@ -192,7 +199,7 @@ ${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
       genUiLogger.info('Request cancelled');
     } catch (e, st) {
       genUiLogger.severe('Error generating content', e, st);
-      _errorController.add(ContentGeneratorError(e, st));
+      _errorController.add(e);
     } finally {
       _currentCancellationSignal = null;
       _isProcessing.value = false;
@@ -212,20 +219,21 @@ ${A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ')}
             }
 
             // Intercept tool call
-            final toolAction = await interceptToolCall(aiTool.name, args);
+            // final toolAction = await interceptToolCall(aiTool.name, args);
+            // Tool interception removed
 
-            if (toolAction is ToolActionCancel) {
-              genUiLogger.info(
-                'Tool call ${aiTool.name} cancelled by interceptor.',
-              );
-              return {'error': 'Tool call cancelled by client.'};
-            } else if (toolAction is ToolActionMock) {
-              genUiLogger.info(
-                'Tool call ${aiTool.name} mocked by interceptor '
-                'with result: ${toolAction.result}',
-              );
-              return toolAction.result as Map<String, dynamic>;
-            }
+            // if (toolAction is ToolActionCancel) {
+            //   genUiLogger.info(
+            //     'Tool call ${aiTool.name} cancelled by interceptor.',
+            //   );
+            //   return {'error': 'Tool call cancelled by client.'};
+            // } else if (toolAction is ToolActionMock) {
+            //   genUiLogger.info(
+            //     'Tool call ${aiTool.name} mocked by interceptor '
+            //     'with result: ${toolAction.result}',
+            //   );
+            //   return toolAction.result as Map<String, dynamic>;
+            // }
 
             genUiLogger.fine('Invoking tool: ${aiTool.name} with args: $args');
 

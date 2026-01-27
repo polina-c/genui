@@ -8,7 +8,7 @@ import 'package:genui/genui.dart' as genui;
 import 'package:genui_dartantic/genui_dartantic.dart';
 
 void main() {
-  group('DartanticContentGenerator', () {
+  group('DartanticClient', () {
     // Use the ollama provider for testing - it doesn't require API keys
     // Note: These tests only verify object construction, not actual AI calls
     late dartantic.OllamaProvider testProvider;
@@ -18,21 +18,21 @@ void main() {
     });
 
     group('construction', () {
-      test('creates generator with required parameters', () {
-        final generator = DartanticContentGenerator(
+      test('creates client with required parameters', () {
+        final client = DartanticClient(
           provider: testProvider,
           catalog: const genui.Catalog({}),
         );
 
-        expect(generator, isNotNull);
-        expect(generator.catalog, isNotNull);
-        expect(generator.isProcessing.value, isFalse);
+        expect(client, isNotNull);
+        expect(client.catalog, isNotNull);
+        expect(client.isProcessing.value, isFalse);
 
-        generator.dispose();
+        client.dispose();
       });
 
-      test('creates generator with all optional parameters', () {
-        final generator = DartanticContentGenerator(
+      test('creates client with all optional parameters', () {
+        final client = DartanticClient(
           provider: testProvider,
           catalog: const genui.Catalog({}),
           systemInstruction: 'You are a helpful assistant.',
@@ -45,61 +45,58 @@ void main() {
           ],
         );
 
-        expect(generator, isNotNull);
-        expect(generator.systemInstruction, 'You are a helpful assistant.');
+        expect(client, isNotNull);
+        expect(client.systemInstruction, 'You are a helpful assistant.');
 
-        generator.dispose();
+        client.dispose();
       });
     });
 
     group('streams', () {
       test('provides a2uiMessageStream', () {
-        final generator = DartanticContentGenerator(
+        final client = DartanticClient(
           provider: testProvider,
           catalog: const genui.Catalog({}),
         );
 
-        expect(generator.a2uiMessageStream, isA<Stream<genui.A2uiMessage>>());
+        expect(client.a2uiMessageStream, isA<Stream<genui.A2uiMessage>>());
 
-        generator.dispose();
+        client.dispose();
       });
 
       test('provides textResponseStream', () {
-        final generator = DartanticContentGenerator(
+        final client = DartanticClient(
           provider: testProvider,
           catalog: const genui.Catalog({}),
         );
 
-        expect(generator.textResponseStream, isA<Stream<String>>());
+        expect(client.textResponseStream, isA<Stream<String>>());
 
-        generator.dispose();
+        client.dispose();
       });
 
       test('provides errorStream', () {
-        final generator = DartanticContentGenerator(
+        final client = DartanticClient(
           provider: testProvider,
           catalog: const genui.Catalog({}),
         );
 
-        expect(
-          generator.errorStream,
-          isA<Stream<genui.ContentGeneratorError>>(),
-        );
+        expect(client.errorStream, isA<Stream<Object>>());
 
-        generator.dispose();
+        client.dispose();
       });
     });
 
     group('isProcessing', () {
       test('initially false', () {
-        final generator = DartanticContentGenerator(
+        final client = DartanticClient(
           provider: testProvider,
           catalog: const genui.Catalog({}),
         );
 
-        expect(generator.isProcessing.value, isFalse);
+        expect(client.isProcessing.value, isFalse);
 
-        generator.dispose();
+        client.dispose();
       });
     });
   });

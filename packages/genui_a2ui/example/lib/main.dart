@@ -41,10 +41,8 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
-  final A2uiMessageProcessor _a2uiMessageProcessor = A2uiMessageProcessor(
-    catalogs: [CoreCatalogItems.asCatalog()],
-  );
-  late final A2uiContentGenerator _contentGenerator;
+  late final GenUiController _controller;
+  late final A2uiAgentConnector _connector;
   late final GenUiConversation _genUiConversation;
   final List<String> _surfaceIds = ['default'];
   int _currentSurfaceIndex = 0;
@@ -53,23 +51,27 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _contentGenerator = A2uiContentGenerator(
+    _connector = A2uiAgentConnector(
       // Replace this with the address of the A2A server (one that supports the
       // A2UI extension) that you wish to connect to.
-      serverUrl: Uri.parse('http://localhost:10002'),
+      url: Uri.parse('http://localhost:10002'),
     );
+    _controller = GenUiController(catalogs: [CoreCatalogItems.asCatalog()]);
+    _connector.stream.listen(_controller.addMessage);
+    _connector.textStream.listen(_controller.addChunk);
+
     _genUiConversation = GenUiConversation(
-      contentGenerator: _contentGenerator,
-      a2uiMessageProcessor: _a2uiMessageProcessor,
+      controller: _controller,
+      onSend: (message, history) => _connector.connectAndSend(message),
     );
     // Initialize with existing surfaces
     _surfaceIds.addAll(
-      _a2uiMessageProcessor.surfaces.keys.where(
+      _controller.processor.surfaces.keys.where(
         (id) => !_surfaceIds.contains(id),
       ),
     );
 
-    _surfaceSubscription = _a2uiMessageProcessor.surfaceUpdates.listen((
+    _surfaceSubscription = _controller.processor.surfaceUpdates.listen((
       update,
     ) {
       if (update is SurfaceAdded) {
@@ -114,8 +116,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.dispose();
     _genUiConversation.dispose();
     _surfaceSubscription?.cancel();
-    _a2uiMessageProcessor.dispose();
-    _contentGenerator.dispose();
+    _controller.dispose();
+    _connector.dispose();
     super.dispose();
   }
 
@@ -203,7 +205,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: SingleChildScrollView(
               child: GenUiSurface(
                 key: ValueKey(currentSurfaceId),
-                host: _a2uiMessageProcessor,
+                host: _controller.processor,
                 surfaceId: currentSurfaceId,
               ),
             ),
