@@ -176,6 +176,7 @@ GenUiSurface(
 
 - `host`: The `GenUiHost` to watch.
 - `layoutBuilder`: Custom layout for the list of surfaces.
+- `surfaceBuilder`: Custom builder for individual surfaces (e.g. to wrap them).
 
 #### `lib/src/facade/gen_ui_conversation.dart`
 
@@ -193,7 +194,9 @@ final conversation = GenUiConversation(
 **`GenUiConversation`**
 
 - `ValueListenable<List<ChatMessage>> get conversation`: The reactive list of chat messages.
+- `ValueListenable<bool> get isProcessing`: Whether the conversation is currently waiting for a response.
 - `Future<void> sendRequest(ChatMessage message)`: Sends a message to the LLM.
+- **Callbacks:** `onSurfaceAdded`, `onComponentsUpdated`, `onSurfaceDeleted`, `onTextResponse`, `onError`.
 
 ### Data Models & Protocol
 
@@ -288,6 +291,8 @@ These classes handle the definition and building of UI components.
 
 - `Schema get definition`: Generates the full JSON schema for the catalog (for the LLM).
 - `Widget buildWidget(...)`: Builds a widget from the catalog given context.
+- `Catalog copyWith(List<CatalogItem> newItems)`: Returns a new catalog with items added/replaced.
+- `Catalog copyWithout(Iterable<CatalogItem> itemNames)`: Returns a new catalog with items removed.
 
 #### `lib/src/model/catalog_item.dart`
 
@@ -333,6 +338,7 @@ final processor = A2uiMessageProcessor(
 
 - `void register(String name, ClientFunction function)`: Add a custom function.
 - `Object? invoke(String name, List<Object?> args)`: Call a function.
+- `void registerStandardFunctions()`: Registers the default set of functions (e.g. `required`, `regex`, `length`).
 
 ### Utilities & Helpers
 
@@ -352,6 +358,7 @@ final processor = A2uiMessageProcessor(
 
 - `Object? parse(String input)`: Parses a string with potential expressions.
 - `bool evaluateLogic(JsonMap expression)`: Evaluates a logic object (and/or/not).
+- `Object? evaluateFunctionCall(JsonMap callDefinition)`: Evaluates a function call map.
 
 #### `lib/src/utils/json_block_parser.dart`
 
@@ -361,6 +368,7 @@ final processor = A2uiMessageProcessor(
 
 - `static Object? parseFirstJsonBlock(String text)`
 - `static List<Object> parseJsonBlocks(String text)`
+- `static String stripJsonBlock(String text)`
 
 #### `lib/src/core/widget_utilities.dart`
 
