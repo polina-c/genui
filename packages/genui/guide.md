@@ -26,40 +26,60 @@ classDiagram
         +Stream~GenUiUpdate~ surfaceUpdates
         +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
         +Iterable~Catalog~ catalogs
+        +Map~String, DataModel~ dataModels
         +DataModel dataModelForSurface(String surfaceId)
         +void handleUiEvent(UiEvent event)
     }
 
     class A2uiMessageProcessor {
         +void handleMessage(A2uiMessage message)
+        +Stream~GenUiUpdate~ surfaceUpdates
         +Stream~ChatMessage~ onSubmit
+        +Map~String, DataModel~ dataModels
+        +DataModel dataModelForSurface(String surfaceId)
+        +Map~String, Object?~ getClientDataModel()
+        +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
+        +void dispose()
     }
 
     class GenUiController {
         +void addChunk(String text)
+        +void addMessage(A2uiMessage message)
         +Stream~String~ textStream
         +Stream~GenUiState~ stateStream
+        +Stream~ChatMessage~ onClientEvent
+        +void dispose()
     }
 
     class GenUiSurface {
+        +GenUiHost host
         +String surfaceId
+        +WidgetBuilder? defaultBuilder
     }
 
     class Catalog {
-        +String catalogId
+        +String? catalogId
         +Iterable~CatalogItem~ items
+        +Schema definition
         +Widget buildWidget(CatalogItemContext context)
+        +Catalog copyWith(List~CatalogItem~ newItems)
+        +Catalog copyWithout(Iterable~CatalogItem~ itemNames)
     }
 
     class CatalogItem {
         +String name
         +Schema dataSchema
         +CatalogWidgetBuilder widgetBuilder
+        +List~ExampleBuilderCallback~ exampleData
     }
 
     class DataModel {
-        +void update(DataPath path, Object? contents)
+        +void update(DataPath? path, Object? contents)
         +ValueNotifier subscribe(DataPath path)
+        +ValueNotifier subscribeToValue(DataPath path)
+        +T? getValue(DataPath path)
+        +void bindExternalState(DataPath path, ValueListenable source)
+        +void dispose()
     }
 
     GenUiHost <|.. A2uiMessageProcessor
@@ -130,12 +150,15 @@ processor.handleMessage(
 
 **`A2uiMessageProcessor`**
 
-- `void handleMessage(A2uiMessage message)`: Processes an incoming `A2uiMessage` (create, update, delete surface).
-- `Stream<GenUiUpdate> get surfaceUpdates`: Stream of events when surfaces change.
-- `Stream<ChatMessage> get onSubmit`: Stream of user interactions (form submissions).
 - `DataModel dataModelForSurface(String surfaceId)`: Access the data model for a specific surface.
+- `Map<String, DataModel> get dataModels`: Map of all active data models.
 - `Map<String, Object?> getClientDataModel()`: Returns a snapshot of the current data for all attached surfaces.
+- `Stream<ChatMessage> get onSubmit`: Stream of user interactions (form submissions).
+- `Stream<GenUiUpdate> get surfaceUpdates`: Stream of events when surfaces change.
+- `ValueNotifier<UiDefinition?> getSurfaceNotifier(String surfaceId)`: Get the notifier for a surface's UI definition.
 - `void dispose()`: Cleans up surface notifiers and streams.
+- `void handleMessage(A2uiMessage message)`: Processes an incoming `A2uiMessage` (create, update, delete surface).
+- `void handleUiEvent(UiEvent event)`: Handle a UI event from a surface.
 
 **`GenUiHost` (Interface)**
 
@@ -144,7 +167,13 @@ processor.handleMessage(
   - Use `GenUiController` for streaming text (LLMs).
   - Use `A2uiMessageProcessor` for structured data (Tools, Databases).
   - Implement your own for custom backends.
-- **API:** Provides access to `surfaceUpdates`, `getSurfaceNotifier`, `catalogs`, `dataModels`, and `dataModelForSurface`.
+- **API:**
+- `DataModel dataModelForSurface(String surfaceId)`: Access the data model for a specific surface.
+- `Iterable<Catalog> get catalogs`: The catalogs available to this host.
+- `Map<String, DataModel> get dataModels`: Map of all active data models.
+- `Stream<GenUiUpdate> get surfaceUpdates`: Stream of events when surfaces change.
+- `ValueNotifier<UiDefinition?> getSurfaceNotifier(String surfaceId)`: Get the notifier for a surface's UI definition.
+- `void handleUiEvent(UiEvent event)`: Handle a UI event from a surface.
 
 **`GenUiUpdate` (Sealed Class)**
 
@@ -210,11 +239,15 @@ These classes define the data structures and protocol used by GenUI.
 
 - `void update(DataPath? path, Object? contents)`: Updates data.
 - `ValueNotifier<T?> subscribe<T>(DataPath path)`: Subscribe to changes.
+- `ValueNotifier<T?> subscribeToValue<T>(DataPath path)`: Subscribe to changes at a specific path only.
 - `T? getValue<T>(DataPath path)`: Retrieve a static value without subscribing.
 - `void bindExternalState<T>({required DataPath path, required ValueListenable<T> source, bool twoWay})`: Bind an external `ValueNotifier` to the data model.
-  **`DataPath`**
+- `void dispose()`: Disposes resources.
+
+**`DataPath`**
 - Parses and represents paths like `/user/name` or relative paths.
-  **`DataContext`**
+
+**`DataContext`**
 - A view of the `DataModel` scoped to a specific path (used by widgets).
 
 #### `lib/src/model/ui_models.dart`
@@ -223,9 +256,13 @@ These classes define the data structures and protocol used by GenUI.
 **`UiDefinition`**
 
 - Represents the state of a surface: `catalogId`, `components` map, `theme`.
-  **`UiEvent` & `UserActionEvent`**
+
+**`UiEvent` & `UserActionEvent`**
+
 - Represents events triggered by the user (e.g. button click).
-  **`Component`**
+
+**`Component`**
+
 - Data class for a single widget instance (type, id, properties).
 
 #### `lib/src/model/a2ui_message.dart`
@@ -338,7 +375,7 @@ final processor = A2uiMessageProcessor(
 
 - `void register(String name, ClientFunction function)`: Add a custom function.
 - `Object? invoke(String name, List<Object?> args)`: Call a function.
-- `void registerStandardFunctions()`: Registers the default set of functions (e.g. `required`, `regex`, `length`).
+- `void registerStandardFunctions()`: Registers the default set of functions (e.g. `required`, `regex`, `length`, etc.).
 
 ### Utilities & Helpers
 
