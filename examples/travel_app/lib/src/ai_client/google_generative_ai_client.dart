@@ -15,6 +15,7 @@ import 'package:json_schema_builder/json_schema_builder.dart' as dsb;
 import 'google_content_converter.dart';
 import 'google_generative_service_interface.dart';
 import 'google_schema_adapter.dart';
+import 'tools.dart';
 
 /// A factory for creating a [GoogleGenerativeServiceInterface].
 ///

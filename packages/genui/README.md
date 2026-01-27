@@ -383,14 +383,7 @@ _controller = GenUiController(
 
 #### Update the system instruction to use the new widget
 
-In order to make sure the agent knows to use your new widget, use the system
-instruction to explicitly tell it how and when to do so. Provide the name from
-the CatalogItem when you do.
-
-```dart
-   tools: _controller.processor.getTools(),
-);
-```
+In order to make sure the agent knows to use your new widget, usage of the prompt engineering techniques is required (e.g. one-shot or few-shot prompting) to explicitly tell it how and when to do so. Provide the name from the CatalogItem when you do.
 
 ### Data Model and Data Binding
 
@@ -443,13 +436,6 @@ Check out the [examples](../../examples) included in this repo! The
 If something is unclear or missing, please
 [create an issue](https://github.com/flutter/genui/issues/new/choose).
 
-### System instructions
-
-The `genui` package gives the LLM a set of tools it can use to generate
-UI. To get the LLM to use these tools, the `systemInstruction` provided to
-the LLM must explicitly tell it to do so. This is why the previous example
-includes a system instruction for the agent with the line "Every time I give
-you a word, you should generate UI that displays one new riddle...".
 
 ### Troubleshooting / FAQ
 

@@ -5,6 +5,8 @@
 import 'package:genui/genui.dart';
 import 'package:json_schema_builder/json_schema_builder.dart';
 
+import '../../ai_client/tools.dart';
+
 import 'model.dart';
 
 /// An [AiTool] for listing hotels.

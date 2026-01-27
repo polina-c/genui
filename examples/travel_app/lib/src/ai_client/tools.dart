@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:genui/genui.dart' show JsonMap;
 import 'package:json_schema_builder/json_schema_builder.dart';
-
-import '../primitives/simple_items.dart';
 
 /// Abstract base class for defining tools that an AI agent can invoke.
 ///
