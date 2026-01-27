@@ -4,14 +4,11 @@
 
 // Be sure to uncomment these Firebase initialization code and these imports
 // if using Firebase AI.
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
 import 'package:logging/logging.dart';
 
 import 'src/catalog.dart';
-import 'src/config/configuration.dart';
 import 'src/travel_planner_page.dart';
 
 // If you want to convert to using Firebase AI, run:
@@ -27,19 +24,6 @@ import 'src/travel_planner_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Only initialize Firebase if we are using the Firebase backend.
-  if (aiBackend == AiBackend.firebase) {
-    await Firebase.initializeApp(
-      // UNCOMMENT_FOR_FIREBASE (See top of file for details)
-      // options: DefaultFirebaseOptions.currentPlatform,
-    );
-    await FirebaseAppCheck.instance.activate(
-      providerApple: const AppleDebugProvider(),
-      providerAndroid: const AndroidDebugProvider(),
-      providerWeb: ReCaptchaV3Provider('debug'),
-    );
-  }
 
   await loadImagesJson();
   configureGenUiLogging(level: Level.ALL);

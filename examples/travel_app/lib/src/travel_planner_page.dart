@@ -7,12 +7,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
-import 'package:genui_firebase_ai/genui_firebase_ai.dart';
-import 'package:genui_google_generative_ai/genui_google_generative_ai.dart';
 
+import 'ai_client/google_generative_ai_client.dart';
 import 'asset_images.dart';
 import 'catalog.dart';
-import 'config/configuration.dart';
 // Conditionally import non-web version so we can read from shell env vars in
 // non-web version.
 import 'config/io_get_api_key.dart'
@@ -41,14 +39,13 @@ class TravelPlannerPage extends StatefulWidget {
   ///
   /// An optional [aiClient] can be provided, which is useful for
   /// testing or using a custom AI client implementation. If not provided, a
-  /// default [FirebaseAiClient] is created.
+  /// default [GoogleGenerativeAiClient] is created.
   const TravelPlannerPage({this.aiClient, super.key});
 
   /// The AI client to use for the application.
   ///
-  /// If null, a default instance will be created based on [aiBackend].
-  /// This must be an instance of [GoogleGenerativeAiClient] or
-  /// [FirebaseAiClient].
+  /// If null, a default instance will be created.
+  /// This must be an instance of [GoogleGenerativeAiClient].
   final Object? aiClient;
 
   @override
@@ -75,25 +72,14 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
     _client = widget.aiClient;
     if (_client == null) {
       _didCreateClient = true;
-      _client = switch (aiBackend) {
-        AiBackend.googleGenerativeAi => () {
-          return GoogleGenerativeAiClient(
-            catalog: travelAppCatalog,
-            systemInstruction: prompt,
-            additionalTools: [
-              ListHotelsTool(onListHotels: BookingService.instance.listHotels),
-            ],
-            apiKey: getApiKey(),
-          );
-        }(),
-        AiBackend.firebase => FirebaseAiClient(
-          catalog: travelAppCatalog,
-          systemInstruction: prompt,
-          additionalTools: [
-            ListHotelsTool(onListHotels: BookingService.instance.listHotels),
-          ],
-        ),
-      };
+      _client = GoogleGenerativeAiClient(
+        catalog: travelAppCatalog,
+        systemInstruction: prompt,
+        additionalTools: [
+          ListHotelsTool(onListHotels: BookingService.instance.listHotels),
+        ],
+        apiKey: getApiKey(),
+      );
     }
 
     _wireClient(_client!, _controller);
@@ -120,9 +106,6 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
     if (client is GoogleGenerativeAiClient) {
       client.a2uiMessageStream.listen(controller.addMessage);
       client.textResponseStream.listen(controller.addChunk);
-    } else if (client is FirebaseAiClient) {
-      client.a2uiMessageStream.listen(controller.addMessage);
-      client.textResponseStream.listen(controller.addChunk);
     } else if (client is FakeAiClient) {
       client.a2uiMessageStream.listen(controller.addMessage);
       client.textResponseStream.listen(controller.addChunk);
@@ -140,8 +123,6 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
   ) {
     if (client is GoogleGenerativeAiClient) {
       return client.sendRequest(message, history: history);
-    } else if (client is FirebaseAiClient) {
-      return client.sendRequest(message, history: history);
     } else if (client is FakeAiClient) {
       return client.sendRequest(message, history: history);
     }
@@ -156,8 +137,6 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
     if (_didCreateClient) {
       if (_client is GoogleGenerativeAiClient) {
         (_client as GoogleGenerativeAiClient).dispose();
-      } else if (_client is FirebaseAiClient) {
-        (_client as FirebaseAiClient).dispose();
       }
     }
     _textController.dispose();
