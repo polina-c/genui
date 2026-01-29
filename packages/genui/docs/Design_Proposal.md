@@ -237,7 +237,45 @@ graph TD
     MessageProcessor -- "emits client event" --> GenUiController;
     GenUiController -- "forwards event" --> GenUiConversation;
     GenUiConversation -- "loops back" --> ExternalLLM;
+
+## Surface Lifecycle & Cleanup
+
+When multiple surfaces are generated in a conversation, `A2uiMessageProcessor` manages them according to a `SurfaceCleanupPolicy`. The default is `manual` (keep all surfaces until explicitly deleted), but `keepLatest` is common for chat interfaces where only the newest UI matters.
+
+### Example: `keepLatest` Policy
+
+```mermaid
+sequenceDiagram
+    participant LLM as External LLM
+    participant Controller as GenUiController
+    participant Processor as A2uiMessageProcessor
+    participant UI as GenUiSurface (Manager)
+
+    Note over Processor: Policy: keepLatest
+
+    LLM->>Controller: "createSurface(id: 'A')"
+    Controller->>Processor: CreateSurface('A')
+    Processor->>UI: SurfaceAdded('A')
+    UI->>UI: Render Surface A
+
+    LLM->>Controller: "updateComponents(id: 'A', ...)"
+    Controller->>Processor: UpdateComponents('A')
+    Processor->>UI: ComponentsUpdated('A')
+    UI->>UI: Update Surface A
+
+    LLM->>Controller: "createSurface(id: 'B')"
+    Controller->>Processor: CreateSurface('B')
+
+    rect rgb(255, 240, 240)
+        Note right of Processor: Policy Enforcement
+        Processor->>UI: SurfaceRemoved('A')
+        UI->>UI: Dispose Surface A
+    end
+
+    Processor->>UI: SurfaceAdded('B')
+    UI->>UI: Render Surface B
 ```
+
 
 ## Detailed API Reference
 
