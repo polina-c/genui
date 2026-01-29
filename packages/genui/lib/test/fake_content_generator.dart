@@ -9,10 +9,17 @@ import 'package:flutter/foundation.dart';
 import '../genui.dart';
 
 /// A fake [ContentGenerator] for use in tests.
-/// A fake [ContentGenerator] for use in tests.
+///
+/// This implementation allows tests to control AI responses by:
+/// - Tracking calls to [sendRequest] via [sendRequestCallCount]
+/// - Capturing the last message and history via [lastMessage] and [lastHistory]
+/// - Emitting fake A2UI messages via [addA2uiMessage]
+/// - Emitting fake text responses via [addTextResponse]
+/// - Pausing execution via [sendRequestCompleter]
 class FakeContentGenerator
     with ContentGeneratorMixin
     implements ContentGenerator {
+  /// Creates a new [FakeContentGenerator] instance.
   FakeContentGenerator();
 
   final _a2uiMessageController = StreamController<A2uiMessage>.broadcast();
