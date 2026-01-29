@@ -9,7 +9,7 @@ import 'catalog.dart';
 
 /// Provides a set of pre-defined, reusable schema objects for common
 /// A2UI patterns, simplifying the creation of CatalogItem definitions.
-class A2uiSchemas {
+abstract final class A2uiSchemas {
   /// Defines the usage of the function registry.
   static Schema clientFunctions() {
     return S.list(
