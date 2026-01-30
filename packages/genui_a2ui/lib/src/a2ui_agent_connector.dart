@@ -268,15 +268,19 @@ class A2uiAgentConnector {
     }
 
     final Map<String, Object?> clientEvent = {
-      'actionName': event['action'],
-      'sourceComponentId': event['sourceComponentId'],
-      'timestamp': DateTime.now().toIso8601String(),
-      'resolvedContext': event['context'],
+      'version': 'v0.9',
+      'action': {
+        'name': event['action'],
+        'sourceComponentId': event['sourceComponentId'],
+        'timestamp': DateTime.now().toIso8601String(),
+        'context': event['context'],
+        if (event.containsKey('surfaceId')) 'surfaceId': event['surfaceId'],
+      },
     };
 
     _log.finest('Sending client event: $clientEvent');
 
-    final dataPart = Part.data(data: {'a2uiEvent': clientEvent});
+    final dataPart = Part.data(data: clientEvent);
     final message = Message(
       role: Role.user,
       parts: [dataPart],

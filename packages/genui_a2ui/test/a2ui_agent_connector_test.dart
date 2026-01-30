@@ -64,7 +64,9 @@ void main() {
       final a2a.Message sentMessage = fakeClient.lastMessageStreamParams!;
       expect(sentMessage.metadata, isNotNull);
       expect(sentMessage.metadata!['a2uiClientCapabilities'], {
-        'supportedCatalogIds': ['cat1', 'cat2'],
+        'v0.9': {
+          'supportedCatalogIds': ['cat1', 'cat2'],
+        },
       });
     });
 
@@ -170,10 +172,12 @@ void main() {
       expect(sentMessage.referenceTaskIds, ['task1']);
       expect(sentMessage.contextId, 'context1');
       final dataPart = sentMessage.parts.first as a2a.DataPart;
-      final a2uiEvent = dataPart.data['a2uiEvent'] as Map<String, Object?>;
-      expect(a2uiEvent['actionName'], 'testAction');
-      expect(a2uiEvent['sourceComponentId'], 'c1');
-      expect(a2uiEvent['resolvedContext'], {'key': 'value'});
+      final Map<String, Object?> eventData = dataPart.data;
+      expect(eventData['version'], 'v0.9');
+      final action = eventData['action'] as Map<String, Object?>;
+      expect(action['name'], 'testAction');
+      expect(action['sourceComponentId'], 'c1');
+      expect(action['context'], {'key': 'value'});
     });
 
     test('sendEvent does nothing if taskId is null', () async {

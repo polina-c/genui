@@ -74,6 +74,26 @@ void main() {
       expect(delete.surfaceId, 's1');
     });
 
+    test('CreateSurface.toJson includes version', () {
+      const message = CreateSurface(surfaceId: 's1', catalogId: 'c1');
+      expect(message.toJson(), containsPair('version', 'v0.9'));
+    });
+
+    test('UpdateComponents.toJson includes version', () {
+      const message = UpdateComponents(surfaceId: 's1', components: []);
+      expect(message.toJson(), containsPair('version', 'v0.9'));
+    });
+
+    test('UpdateDataModel.toJson includes version', () {
+      const message = UpdateDataModel(surfaceId: 's1');
+      expect(message.toJson(), containsPair('version', 'v0.9'));
+    });
+
+    test('DeleteSurface.toJson includes version', () {
+      const message = DeleteSurface(surfaceId: 's1');
+      expect(message.toJson(), containsPair('version', 'v0.9'));
+    });
+
     test('fromJson throws on unknown message type', () {
       final json = <String, Object>{'unknown': {}};
       expect(
