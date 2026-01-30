@@ -684,8 +684,6 @@ With functions:
   }
 }
 
-
-
 String _responseToString(google_ai.GenerateContentResponse response) {
   final buffer = StringBuffer();
   buffer.writeln('GenerateContentResponse(');
