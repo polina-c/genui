@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genui/src/core/functions.dart';
+import 'package:genui/src/functions/functions.dart';
 import 'package:genui/src/model/data_model.dart';
 
 void main() {

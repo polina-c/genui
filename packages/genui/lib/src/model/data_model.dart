@@ -7,8 +7,8 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
-import '../core/expression_parser.dart';
-import '../core/functions.dart';
+import '../functions/expression_parser.dart';
+import '../functions/functions.dart';
 import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
 
