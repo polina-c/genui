@@ -83,6 +83,7 @@ void main() {
               parts: [
                 a2a.Part.data(
                   data: {
+                    'version': 'v0.9',
                     'updateComponents': {
                       'surfaceId': 's1',
                       'components': [

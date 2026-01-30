@@ -207,8 +207,9 @@ class A2uiMessageProcessor implements GenUiHost {
       _handleMessageInternal(message);
     } on GenUiValidationException catch (e) {
       genUiLogger.warning('Validation failed for surface ${e.surfaceId}: $e');
-      final Map<String, Map<String, String>> errorMsg = {
+      final Map<String, Map<String, Object>> errorMsg = {
         'error': {
+          'version': 'v0.9',
           'code': 'VALIDATION_FAILED',
           'surfaceId': e.surfaceId,
           'path': e.path,
@@ -407,6 +408,6 @@ class A2uiMessageProcessor implements GenUiHost {
         result[surfaceId] = _dataModels[surfaceId]!.data;
       }
     }
-    return {'surfaces': result};
+    return {'version': 'v0.9', 'surfaces': result};
   }
 }

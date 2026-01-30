@@ -9,7 +9,8 @@ import 'package:genui/src/primitives/simple_items.dart';
 void main() {
   group('A2uiMessage', () {
     test('CreateSurface.fromJson parses correctly', () {
-      final Map<String, Map<String, Object>> json = {
+      final Map<String, Object> json = {
+        'version': 'v0.9',
         'createSurface': {
           surfaceIdKey: 's1',
           'catalogId': 'catalog1',
@@ -28,7 +29,8 @@ void main() {
     });
 
     test('UpdateComponents.fromJson parses correctly', () {
-      final Map<String, Map<String, Object>> json = {
+      final Map<String, Object> json = {
+        'version': 'v0.9',
         'updateComponents': {
           surfaceIdKey: 's1',
           'components': [
@@ -47,7 +49,8 @@ void main() {
     });
 
     test('UpdateDataModel.fromJson parses correctly', () {
-      final Map<String, Map<String, String>> json = {
+      final Map<String, Object> json = {
+        'version': 'v0.9',
         'updateDataModel': {
           surfaceIdKey: 's1',
           'path': '/user/name',
@@ -64,7 +67,8 @@ void main() {
     });
 
     test('DeleteSurface.fromJson parses correctly', () {
-      final Map<String, Map<String, String>> json = {
+      final Map<String, Object> json = {
+        'version': 'v0.9',
         'deleteSurface': {surfaceIdKey: 's1'},
       };
 
@@ -95,7 +99,7 @@ void main() {
     });
 
     test('fromJson throws on unknown message type', () {
-      final json = <String, Object>{'unknown': {}};
+      final json = <String, Object>{'version': 'v0.9', 'unknown': {}};
       expect(
         () => A2uiMessage.fromJson(json),
         throwsA(
@@ -103,6 +107,22 @@ void main() {
             (e) => e.message,
             'message',
             contains('Unknown A2UI message type'),
+          ),
+        ),
+      );
+    });
+
+    test('fromJson throws on missing or invalid version', () {
+      final json = <String, Object>{
+        'createSurface': {surfaceIdKey: 's1', 'catalogId': 'c1'},
+      };
+      expect(
+        () => A2uiMessage.fromJson(json),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'message',
+            contains('A2UI message must have version "v0.9"'),
           ),
         ),
       );
