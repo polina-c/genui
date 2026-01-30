@@ -12,6 +12,7 @@ import 'package:google_cloud_ai_generativelanguage_v1beta/generativelanguage.dar
 import 'package:google_cloud_protobuf/protobuf.dart' as protobuf;
 import 'package:json_schema_builder/json_schema_builder.dart' as dsb;
 
+import 'ai_client.dart';
 import 'google_content_converter.dart';
 import 'google_generative_service_interface.dart';
 import 'google_schema_adapter.dart';
@@ -27,7 +28,7 @@ typedef GenerativeServiceFactory =
 
 /// A client that uses the Google Cloud Generative Language API to
 /// generate content.
-class GoogleGenerativeAiClient {
+class GoogleGenerativeAiClient implements AiClient {
   /// Creates a [GoogleGenerativeAiClient] instance with specified
   /// configurations.
   ///
@@ -108,9 +109,11 @@ class GoogleGenerativeAiClient {
   final _isProcessing = ValueNotifier<bool>(false);
 
   /// A stream of A2UI messages produced by the generator.
+  @override
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
 
   /// A stream of text responses from the agent.
+  @override
   Stream<String> get textResponseStream => _textResponseController.stream;
 
   /// A stream of errors from the agent.
@@ -123,6 +126,7 @@ class GoogleGenerativeAiClient {
   /// Whether the content generator is currently processing a request.
   ValueListenable<bool> get isProcessing => _isProcessing;
 
+  @override
   void dispose() {
     _a2uiMessageController.close();
     _textResponseController.close();
@@ -140,6 +144,7 @@ class GoogleGenerativeAiClient {
   /// Sends a request to the AI model.
   ///
   /// Note: [clientDataModel] is currently ignored by this implementation.
+  @override
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,
@@ -601,12 +606,10 @@ With functions:
             content.add(candidate.content!);
           }
 
-          // Parse JSON from text Note: JsonBlockParser is internal to genui, so
-          // we use a simplified regex approach here or public API if available.
-          // Since we copied this code, we might need to copy JsonBlockParser or
-          // rewrite this. Re-implementing simplified JSON block extraction for
-          // this example to avoid deep dependency on internal package utils.
-          final List<dynamic> jsonBlocks = _parseJsonBlocks(text);
+          // Parse JSON from text.
+          final List<dynamic> jsonBlocks = JsonBlockParser.parseJsonBlocks(
+            text,
+          );
           for (final jsonBlock in jsonBlocks) {
             try {
               if (jsonBlock is Map<String, dynamic>) {
@@ -625,7 +628,7 @@ With functions:
 
           if (jsonBlocks.isNotEmpty) {
             // remove the JSON from the text response
-            text = _stripJsonBlock(text);
+            text = JsonBlockParser.stripJsonBlock(text);
           }
 
           genUiLogger.fine('Returning text response: "$text"');
@@ -681,26 +684,7 @@ With functions:
   }
 }
 
-List<dynamic> _parseJsonBlocks(String text) {
-  final jsonBlocks = <dynamic>[];
-  final regex = RegExp(r'```json\s*(\{.*?\})\s*```', dotAll: true);
-  final Iterable<RegExpMatch> matches = regex.allMatches(text);
-  for (final match in matches) {
-    try {
-      jsonBlocks.add(jsonDecode(match.group(1)!));
-    } catch (e) {
-      // Ignore invalid JSON
-    }
-  }
-  return jsonBlocks;
-}
 
-String _stripJsonBlock(String text) {
-  return text.replaceAll(
-    RegExp(r'```json\s*(\{.*?\})\s*```', dotAll: true),
-    '',
-  );
-}
 
 String _responseToString(google_ai.GenerateContentResponse response) {
   final buffer = StringBuffer();

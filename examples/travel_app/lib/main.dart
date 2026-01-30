@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
 import 'package:logging/logging.dart';
 
+import 'src/ai_client/ai_client.dart';
 import 'src/catalog.dart';
 import 'src/travel_planner_page.dart';
 
@@ -45,7 +46,7 @@ class TravelApp extends StatelessWidget {
   /// client, which is useful for testing with a mock implementation.
   const TravelApp({this.aiClient, super.key});
 
-  final Object? aiClient;
+  final AiClient? aiClient;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +68,7 @@ class _TravelAppBody extends StatelessWidget {
   ///
   /// If null, a default client will be created by the
   /// [TravelPlannerPage].
-  final Object? aiClient;
+  final AiClient? aiClient;
 
   @override
   Widget build(BuildContext context) {

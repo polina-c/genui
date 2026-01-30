@@ -141,9 +141,6 @@ ${GenUiPromptFragments.basicChat}''';
         }
       }
 
-      // Wait a bit to ensure the textStream processes the chunk
-      await Future<void>.delayed(Duration.zero);
-
       await subscription.cancel();
 
       _chatHistory.add(dartantic.ChatMessage.model(fullResponseText));

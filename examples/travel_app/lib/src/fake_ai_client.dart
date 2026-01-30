@@ -6,21 +6,26 @@ import 'dart:async';
 
 import 'package:genui/genui.dart';
 
-class FakeAiClient {
+import 'ai_client/ai_client.dart';
+
+class FakeAiClient implements AiClient {
   final _a2uiMessageController = StreamController<A2uiMessage>.broadcast();
   final _textResponseController = StreamController<String>.broadcast();
   final _errorController = StreamController<Object>.broadcast();
 
+  @override
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
+  @override
   Stream<String> get textResponseStream => _textResponseController.stream;
   Stream<Object> get errorStream => _errorController.stream;
 
   int sendRequestCallCount = 0;
   Completer<void>? sendRequestCompleter;
 
+  @override
   Future<void> sendRequest(
     ChatMessage message, {
-    Iterable<ChatMessage> history = const [],
+    Iterable<ChatMessage>? history,
   }) async {
     sendRequestCallCount++;
     if (sendRequestCompleter != null) {
@@ -40,6 +45,7 @@ class FakeAiClient {
     _errorController.add(error);
   }
 
+  @override
   void dispose() {
     _a2uiMessageController.close();
     _textResponseController.close();

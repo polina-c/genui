@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
 
+import 'ai_client/ai_client.dart';
 import 'ai_client/google_generative_ai_client.dart';
 import 'asset_images.dart';
 import 'catalog.dart';
@@ -15,7 +16,6 @@ import 'catalog.dart';
 // non-web version.
 import 'config/io_get_api_key.dart'
     if (dart.library.html) 'config/web_get_api_key.dart';
-import 'fake_ai_client.dart'; // For FakeAiClient check
 import 'tools/booking/booking_service.dart';
 import 'tools/booking/list_hotels_tool.dart';
 import 'widgets/conversation.dart';
@@ -45,8 +45,8 @@ class TravelPlannerPage extends StatefulWidget {
   /// The AI client to use for the application.
   ///
   /// If null, a default instance will be created.
-  /// This must be an instance of [GoogleGenerativeAiClient].
-  final Object? aiClient;
+  /// This must be an instance of [AiClient].
+  final AiClient? aiClient;
 
   @override
   State<TravelPlannerPage> createState() => _TravelPlannerPageState();
@@ -57,7 +57,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
   late final GenUiConversation _uiConversation;
   late final GenUiController _controller;
   // We keep a reference to the client to dispose it if we created it.
-  Object? _client;
+  AiClient? _client;
   bool _didCreateClient = false;
 
   final _textController = TextEditingController();
@@ -102,31 +102,17 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
     );
   }
 
-  void _wireClient(Object client, GenUiController controller) {
-    if (client is GoogleGenerativeAiClient) {
-      client.a2uiMessageStream.listen(controller.addMessage);
-      client.textResponseStream.listen(controller.addChunk);
-    } else if (client is FakeAiClient) {
-      client.a2uiMessageStream.listen(controller.addMessage);
-      client.textResponseStream.listen(controller.addChunk);
-    } else {
-      throw UnimplementedError(
-        'Unsupported client type: ${client.runtimeType}',
-      );
-    }
+  void _wireClient(AiClient client, GenUiController controller) {
+    client.a2uiMessageStream.listen(controller.addMessage);
+    client.textResponseStream.listen(controller.addChunk);
   }
 
   Future<void> _sendRequest(
-    Object client,
+    AiClient client,
     ChatMessage message,
     Iterable<ChatMessage> history,
   ) {
-    if (client is GoogleGenerativeAiClient) {
-      return client.sendRequest(message, history: history);
-    } else if (client is FakeAiClient) {
-      return client.sendRequest(message, history: history);
-    }
-    throw UnimplementedError('Unsupported client type: ${client.runtimeType}');
+    return client.sendRequest(message, history: history);
   }
 
   ValueListenable<bool> get isProcessing => _uiConversation.isProcessing;
@@ -135,9 +121,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
   void dispose() {
     _uiConversation.dispose();
     if (_didCreateClient) {
-      if (_client is GoogleGenerativeAiClient) {
-        (_client as GoogleGenerativeAiClient).dispose();
-      }
+      _client?.dispose();
     }
     _textController.dispose();
     _scrollController.dispose();
