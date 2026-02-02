@@ -31,7 +31,7 @@ void main() {
     test('addChunk with message updates state', () async {
       // Using JSON block
       final json = '''```json
-{"createSurface": {"surfaceId": "test_chunk", "catalogId": "test-cat"}}
+{"version": "v0.9", "createSurface": {"surfaceId": "test_chunk", "catalogId": "test-cat"}}
 ```''';
 
       final Future<dynamic> stateFuture = expectLater(

@@ -46,7 +46,8 @@ void main() {
       controller.add('Here is a message:\n');
       controller.add('```json\n');
       controller.add(
-        '{"createSurface": {"surfaceId": "foo", "catalogId": "cat"}}\n',
+        '{"version": "v0.9", "createSurface": {"surfaceId": "foo", '
+        '"catalogId": "cat"}}\n',
       );
       controller.add('```\n');
       controller.add('End of message.');
@@ -87,7 +88,7 @@ void main() {
       final StreamQueue<GenUiEvent> queue = StreamQueue(stream);
 
       controller.add('Start ');
-      controller.add('{ "deleteSurface": ');
+      controller.add('{ "version": "v0.9", "deleteSurface": ');
       controller.add('{ "surfaceId": '); // Needs nesting for wrapper
       controller.add('"bar" } }');
       controller.add(' End');
