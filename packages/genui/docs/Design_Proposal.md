@@ -783,3 +783,35 @@ These are the standard widgets available in the `CoreCatalog`:
 ##### `buildWeightedChild`
 
 - Helper to wrap a child in `Flexible` if the component definition has a 'weight' property.
+
+## Testing & Validation Strategy
+
+The decoupled architecture requires a robust testing strategy that validates each layer independently and the system as a whole. This is split into **Unit Tests** for the Dart code and **LLM Evals** to verify that models can correctly "speak" the A2UI protocol.
+
+### 1. Dart Unit Tests
+
+We will maintain comprehensive unit test coverage for the framework components, adding new tests as we add new features and fix issues. PRs are required to add new tests and fix existing tests when code changes are made.
+
+### 2. LLM Evals & Validation
+
+Since the "backend" is now any LLM, we must ensure that models can reliably generate valid A2UI commands. We will use a dedicated **Evaluation Framework**, which will be detailed in a separate document.
+
+#### Evaluation Goal
+
+Measure the "A2UI Compliance Rate" of different models when given standard prompts, and track the results over time, ensuring that the framework produces valid A2UI commands at least 95% of the time on three foundation models (Gemini, ChatGPT, Claude).
+
+#### Evaluation Methodology
+1.  **Dataset:** A collection of `(Prompt, Expected UI Structure)` pairs.
+    *   *Example:* "Create a login form" -> Expect `CreateSurface` with `TextField(username)`, `TextField(password)`, `Button(Login)`.
+2.  **Execution:**
+    *   Send prompt + standard system instructions (from `GenUiPromptFragments`) using the `GenUiController` logic.
+    *   Capture the output stream.
+3.  **Validation Metrics:**
+    *   **Syntax Validity:** Is the output valid JSON?
+    *   **Protocol Compliance:** Does it adhere to the A2UI schema (correct message types, `version: "v0.9"`)?
+    *   **Logic Correctness:** Does the generated UI match the intent? (e.g., does the login form actually have a password field?)
+    *   **Round-Trip Validity:** Can the generated output be successfully parsed by `A2uiMessage.fromJson` without throwing?
+
+#### CI Integration
+*   Run a lightweight subset of evals (using a fast model) on PRs to catch regressions in the system prompts or schema definitions.
+*   Run a full evaluation suite nightly to track model performance over time.
