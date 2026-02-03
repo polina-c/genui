@@ -54,6 +54,7 @@ class TravelPlannerPage extends StatefulWidget {
 
 class _TravelPlannerPageState extends State<TravelPlannerPage>
     with AutomaticKeepAliveClientMixin {
+  late final A2uiMessageProcessor _processor;
   late final GenUiConversation _uiConversation;
   late final GenUiController _controller;
   // We keep a reference to the client to dispose it if we created it.
@@ -66,7 +67,8 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
   @override
   void initState() {
     super.initState();
-    _controller = GenUiController(catalogs: [travelAppCatalog]);
+    _controller = GenUiController();
+    _processor = A2uiMessageProcessor(catalogs: [travelAppCatalog]);
 
     // Create the appropriate content generator based on configuration
     _client = widget.aiClient;
@@ -86,6 +88,8 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
 
     _uiConversation = GenUiConversation(
       controller: _controller,
+      messageSink: _processor,
+      context: _processor,
       onSend: (message, history) => _sendRequest(_client!, message, history),
       onComponentsUpdated: (update) {
         _scrollToBottom();
@@ -119,6 +123,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
 
   @override
   void dispose() {
+    _processor.dispose();
     _uiConversation.dispose();
     if (_didCreateClient) {
       _client?.dispose();

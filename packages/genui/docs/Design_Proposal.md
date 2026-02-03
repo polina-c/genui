@@ -40,130 +40,153 @@ The package is designed with a layered architecture, separating concerns to crea
 
 ```mermaid
 graph TD
-    subgraph "Developer's Application"
-        AppLogic["App Logic"]
-        UIWidgets["UI Widgets<br>(e.g., GenUiSurface)"]
-        ExternalLLM["External LLM Client"]
-    end
-
     subgraph "genui Package"
         GenUiConversation["GenUiConversation (Facade)"]
-        GenUiController["GenUiController"]
+        GenUiController["GenUiController (Parser)"]
         Transformer["A2uiParserTransformer"]
         A2uiMessageProcessor["A2uiMessageProcessor"]
         Catalog["Widget Catalog"]
         DataModel["DataModel"]
+        GenUiSurface["GenUiSurface (Widget)"]
     end
 
-    AppLogic -- "Initializes" --> GenUiConversation
-    GenUiConversation -- "Wraps" --> GenUiController
-    GenUiController -- "Owns" --> A2uiMessageProcessor
-    GenUiController -- "Uses" --> Transformer
 
-    A2uiMessageProcessor -- "Owns" --> DataModel
+    AppLogic -- "Initializes" --> GenUiConversation
+    GenUiConversation -- "Manages" --> GenUiController
+    GenUiConversation -- "Manages" --> A2uiMessageProcessor
 
     AppLogic -- "Sends User Input" --> GenUiConversation
     GenUiConversation -- "Calls callback" --> ExternalLLM
     ExternalLLM -- "Returns chunks" --> GenUiController
     GenUiController -- "Pipes to" --> Transformer
-    Transformer -- "Parses into events" --> A2uiMessageProcessor
+    Transformer -- "Parses into<br>messages" --> GenUiController
+    GenUiController -- "Stream<A2uiMessage>" --> GenUiConversation
+    GenUiConversation -- "Dispatches to" --> A2uiMessageProcessor
 
-    A2uiMessageProcessor -- "Notifies of updates" --> UIWidgets
-    UIWidgets -- "Builds widgets using" --> Catalog
-    UIWidgets -- "Reads/writes state via" --> DataModel
-    UIWidgets -- "Sends UI events to" --> A2uiMessageProcessor
+    A2uiMessageProcessor -- "Owns" --> DataModel
+    A2uiMessageProcessor -- "Notifies of updates" --> GenUiConversation
+    A2uiMessageProcessor -- "Notifies of updates" --> GenUiSurface
 
-    A2uiMessageProcessor -- "Client events" --> GenUiController
-    GenUiController -- "Forwards events" --> GenUiConversation
-    GenUiConversation -- "Loops back" --> ExternalLLM
+    UserUI -- "Instantiates" --> GenUiSurface
+    GenUiSurface -- "Builds widgets using" --> Catalog
+    GenUiSurface -- "Reads/writes state via" --> DataModel
+    GenUiSurface -- "Sends UI events" --> A2uiMessageProcessor
+
+    A2uiMessageProcessor -- "Client events (onSubmit)" --> GenUiConversation
+    GenUiConversation -- "Loops back (onSend)" --> ExternalLLM
 ```
 
 ## Class Diagram
 
 ```mermaid
 classDiagram
-    class GenUiHost {
-        <<interface>>
-        +Stream~GenUiUpdate~ surfaceUpdates
-        +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
-        +Iterable~Catalog~ catalogs
-        +Map~String, DataModel~ dataModels
-        +DataModel dataModelForSurface(String surfaceId)
-        +void handleUiEvent(UiEvent event)
+    namespace Facade {
+        class GenUiConversation {
+            +GenUiController controller
+            +GenUiContext host
+            +ValueListenable~List~ChatMessage~~ conversation
+            +ValueListenable~bool~ isProcessing
+            +Future~void~ sendRequest(ChatMessage message)
+            +void dispose()
+        }
     }
 
-    class A2uiMessageProcessor {
-        +void handleMessage(A2uiMessage message)
-        +Stream~GenUiUpdate~ surfaceUpdates
-        +Stream~ChatMessage~ onSubmit
-        +Map~String, DataModel~ dataModels
-        +DataModel dataModelForSurface(String surfaceId)
-        +Map~String, Object?~ getClientDataModel()
-        +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
-        +void dispose()
+    namespace Transport {
+        class GenUiController {
+            +void addChunk(String text)
+            +void addMessage(A2uiMessage message)
+            +Stream~String~ textStream
+            +Stream~A2uiMessage~ messageStream
+            +void dispose()
+        }
     }
 
-    class GenUiController {
-        +void addChunk(String text)
-        +void addMessage(A2uiMessage message)
-        +Stream~String~ textStream
-        +Stream~GenUiState~ stateStream
-        +Stream~ChatMessage~ onClientEvent
-        +void dispose()
+    namespace Core {
+        class GenUiContext {
+            <<interface>>
+            +Stream~GenUiUpdate~ surfaceUpdates
+            +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
+            +Iterable~Catalog~ catalogs
+            +Map~String, DataModel~ dataModels
+            +DataModel dataModelForSurface(String surfaceId)
+            +void handleUiEvent(UiEvent event)
+        }
+
+        class A2uiMessageSink {
+            <<interface>>
+            +void handleMessage(A2uiMessage message)
+        }
+
+        class A2uiMessageProcessor {
+            +void handleMessage(A2uiMessage message)
+            +Stream~GenUiUpdate~ surfaceUpdates
+            +Stream~ChatMessage~ onSubmit
+            +Map~String, DataModel~ dataModels
+            +DataModel dataModelForSurface(String surfaceId)
+            +Map~String, Object?~ getClientDataModel()
+            +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
+            +void dispose()
+        }
     }
 
-    class GenUiSurface {
-        +GenUiHost host
-        +String surfaceId
-        +WidgetBuilder? defaultBuilder
+    namespace UI {
+        class GenUiSurface {
+            +GenUiContext genUiContext
+            +String surfaceId
+            +WidgetBuilder? defaultBuilder
+        }
     }
 
-    class Catalog {
-        +String? catalogId
-        +Iterable~CatalogItem~ items
-        +Schema definition
-        +Widget buildWidget(CatalogItemContext context)
-        +Catalog copyWith(List~CatalogItem~ newItems)
-        +Catalog copyWithout(Iterable~CatalogItem~ itemNames)
+    namespace Model {
+        class Catalog {
+            +String? catalogId
+            +Iterable~CatalogItem~ items
+            +Schema definition
+            +Widget buildWidget(CatalogItemContext context)
+            +Catalog copyWith(List~CatalogItem~ newItems)
+            +Catalog copyWithout(Iterable~CatalogItem~ itemNames)
+        }
+
+        class CatalogItem {
+            +String name
+            +Schema dataSchema
+            +CatalogWidgetBuilder widgetBuilder
+            +List~ExampleBuilderCallback~ exampleData
+        }
+
+        class DataModel {
+            +void update(DataPath? path, Object? contents)
+            +ValueNotifier subscribe(DataPath path)
+            +ValueNotifier subscribeToValue(DataPath path)
+            +T? getValue(DataPath path)
+            +void bindExternalState(DataPath path, ValueListenable source)
+            +void dispose()
+        }
     }
 
-    class CatalogItem {
-        +String name
-        +Schema dataSchema
-        +CatalogWidgetBuilder widgetBuilder
-        +List~ExampleBuilderCallback~ exampleData
-    }
-
-    class DataModel {
-        +void update(DataPath? path, Object? contents)
-        +ValueNotifier subscribe(DataPath path)
-        +ValueNotifier subscribeToValue(DataPath path)
-        +T? getValue(DataPath path)
-        +void bindExternalState(DataPath path, ValueListenable source)
-        +void dispose()
-    }
-
-    GenUiHost <|.. A2uiMessageProcessor
-    GenUiHost <|.. GenUiController
-    GenUiController --> A2uiMessageProcessor : wraps
-    GenUiSurface --> GenUiHost : uses
-    A2uiMessageProcessor --> Catalog : uses
+    GenUiContext <|.. A2uiMessageProcessor
+    A2uiMessageSink <|.. A2uiMessageProcessor
+    GenUiSurface --> GenUiContext : uses
     Catalog --> CatalogItem : contains
-    GenUiHost --> DataModel : manages
+    GenUiContext --> DataModel : manages
+    GenUiConversation --> GenUiController : uses
+    GenUiConversation --> GenUiContext : uses
+    GenUiConversation --> A2uiMessageSink : converts messages to
+    A2uiMessageProcessor --> Catalog : uses
 ```
 
 ### 1. Transport Layer (`lib/src/transport/`)
 
 This layer handles the pipeline from raw text input (from an LLM) to parsed UI events.
 
-- **`GenUiController`**: The primary controller that manages the input stream (`addChunk`), the parsing pipeline, and the `A2uiMessageProcessor`. It provides a clean API for the application to feed data into the framework and listen for UI updates.
+- **`GenUiController`**: A lightweight controller that manages the input stream (`addChunk`) and the parsing pipeline. It parses raw text into a stream of `A2uiMessage`s, which are then consumed by the `GenUiConversation` (or other listener). It does *not* manage the UI state itself.
 - **`A2uiParserTransformer`**: A robust stream transformer that parses mixed streams of text and A2UI JSON messages. It handles buffering, validation, and conversion of raw strings into structured `GenUiEvent`s.
 
 ### 2. UI State Management Layer (`lib/src/core/`)
 
 This is the central nervous system of the package, orchestrating the state of all generated UI surfaces.
 
-- **`A2uiMessageProcessor`**: The core state manager for the dynamic UI. It maintains a map of all active UI "surfaces", where each surface is represented by a `UiDefinition`. It takes a `GenUiConfiguration` object that can restrict AI actions (e.g., only allow creating surfaces, not updating or deleting them). The AI interacts with the manager by sending structured A2UI messages (parsed from the text stream), which the processor handles via `handleMessage()`. It exposes a stream of `GenUiUpdate` events (`SurfaceAdded`, `ComponentsUpdated`, `SurfaceRemoved`) so that the application can react to changes. It also owns the `DataModel` to manage the state of individual widgets (e.g., text field content) and acts as the `GenUiHost` for the `GenUiSurface` widget.
+- **`A2uiMessageProcessor`**: The core state manager for the dynamic UI. It maintains a map of all active UI "surfaces", where each surface is represented by a `UiDefinition`. It takes a `GenUiConfiguration` object that can restrict AI actions (e.g., only allow creating surfaces, not updating or deleting them). The AI interacts with the manager by sending structured A2UI messages (parsed from the text stream), which the processor handles via `handleMessage()`. It exposes a stream of `GenUiUpdate` events (`SurfaceAdded`, `ComponentsUpdated`, `SurfaceRemoved`) so that the application can react to changes. It also owns the `DataModel` to manage the state of individual widgets (e.g., text field content) and acts as the `GenUiContext` for the `GenUiSurface` widget.
 
 ### 3. UI Model Layer (`lib/src/model/`)
 
@@ -190,8 +213,8 @@ This layer provides a set of core, general-purpose UI widgets that can be used o
 
 This layer provides high-level widgets and controllers for easily building a generative UI application.
 
-- **`GenUiConversation`**: The primary entry point for the package. This facade class encapsulates the `GenUiController` and manages the conversation loop. It abstracts away the complexity of piping events back to the `onSend` callback.
-- **`GenUiSurface`**: The Flutter widget responsible for recursively building a UI tree from a `UiDefinition`. It listens for updates from a `GenUiHost` (implemented by `GenUiController` or `A2uiMessageProcessor`) for a specific `surfaceId` and rebuilds itself when the definition changes.
+- **`GenUiConversation`**: The primary entry point for the package. This facade class encapsulates the `GenUiController` and `A2uiMessageProcessor`, managing the conversation loop. It abstracts away the complexity of piping events back to the `onSend` callback.
+- **`GenUiSurface`**: The Flutter widget responsible for recursively building a UI tree from a `UiDefinition`. It listens for updates from a `GenUiContext` (implemented by `A2uiMessageProcessor`) for a specific `surfaceId` and rebuilds itself when the definition changes.
 
 ### 6. Primitives Layer (`lib/src/primitives/`)
 
@@ -234,9 +257,9 @@ graph TD
     MessageProcessor -- "updates state" --> GenUiSurface;
     GenUiSurface -- "renders UI" --> UserInteraction;
     UserInteraction -- "creates event" --> MessageProcessor;
-    MessageProcessor -- "emits client event" --> GenUiController;
-    GenUiController -- "forwards event" --> GenUiConversation;
+    MessageProcessor -- "emits client event" --> GenUiConversation;
     GenUiConversation -- "loops back" --> ExternalLLM;
+```
 
 ## Surface Lifecycle & Cleanup
 
@@ -358,11 +381,10 @@ processor.handleMessage(
 - `void handleMessage(A2uiMessage message)`: Processes an incoming `A2uiMessage` (create, update, delete surface).
 - `void handleUiEvent(UiEvent event)`: Handle a UI event from a surface.
 
-##### `GenUiHost` (Interface)
+##### `GenUiContext` (Interface)
 
 - **The Contract:** Defines how `GenUiSurface` interacts with the backend logic, decoupling UI rendering from message processing.
 - **Flexibility:** Allows `GenUiSurface` to work with *any* backend implementation:
-  - Use `GenUiController` for streaming text (LLMs).
   - Use `A2uiMessageProcessor` for structured data (Tools, Databases).
   - Implement your own for custom backends.
 - **API:**

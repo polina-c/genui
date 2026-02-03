@@ -58,11 +58,13 @@ sealed class A2uiMessage {
               'Describes a JSON payload for an A2UI (Agent to UI) message. '
               'A message MUST contain exactly ONE of the action properties.',
           properties: {
+            'version': S.string(constValue: 'v0.9'),
             'createSurface': A2uiSchemas.createSurfaceSchema(),
             'updateComponents': A2uiSchemas.updateComponentsSchema(catalog),
             'updateDataModel': A2uiSchemas.updateDataModelSchema(),
             'deleteSurface': A2uiSchemas.deleteSurfaceSchema(),
           },
+          required: ['version'],
         ),
       ],
       anyOf: [

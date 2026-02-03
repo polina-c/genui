@@ -21,7 +21,7 @@ The `genui` package is the core Flutter client library for the [A2UI (Agent to U
 
 ```mermaid
 classDiagram
-    class GenUiHost {
+    class GenUiContext {
         <<interface>>
         +Stream~GenUiUpdate~ surfaceUpdates
         +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
@@ -29,6 +29,11 @@ classDiagram
         +Map~String, DataModel~ dataModels
         +DataModel dataModelForSurface(String surfaceId)
         +void handleUiEvent(UiEvent event)
+    }
+
+    class A2uiMessageSink {
+        <<interface>>
+        +void handleMessage(A2uiMessage message)
     }
 
     class A2uiMessageProcessor {
@@ -46,13 +51,12 @@ classDiagram
         +void addChunk(String text)
         +void addMessage(A2uiMessage message)
         +Stream~String~ textStream
-        +Stream~GenUiState~ stateStream
-        +Stream~ChatMessage~ onClientEvent
+        +Stream~A2uiMessage~ messageStream
         +void dispose()
     }
 
     class GenUiSurface {
-        +GenUiHost host
+        +GenUiContext genUiContext
         +String surfaceId
         +WidgetBuilder? defaultBuilder
     }
@@ -82,13 +86,12 @@ classDiagram
         +void dispose()
     }
 
-    GenUiHost <|.. A2uiMessageProcessor
-    GenUiHost <|.. GenUiController
-    GenUiController --> A2uiMessageProcessor : wraps
-    GenUiSurface --> GenUiHost : uses
+    GenUiContext <|.. A2uiMessageProcessor
+    A2uiMessageSink <|.. A2uiMessageProcessor
+    GenUiSurface --> GenUiContext : uses
     A2uiMessageProcessor --> Catalog : uses
     Catalog --> CatalogItem : contains
-    GenUiHost --> DataModel : manages
+    GenUiContext --> DataModel : manages
 ```
 
 ## Detailed API Reference
@@ -124,10 +127,8 @@ llmStream.listen((chunk) => controller.addChunk(chunk));
 - `void addChunk(String text)`: Feed text from LLM.
 - `void addMessage(A2uiMessage message)`: Feed a raw A2UI message directly (e.g. from tool output).
 - `Stream<String> textStream`: Stream of text content (markdown) with UI JSON blocks stripped out.
-- `Stream<GenUiState> stateStream`: Stream of UI updates (e.g. `SurfaceAdded`, `ComponentsUpdated`).
-- `Stream<ChatMessage> onClientEvent`: Stream of user actions to send to LLM.
+- `Stream<A2uiMessage> messageStream`: Stream of parsed A2UI messages.
 - `void dispose()`: Closes streams and cleans up resources.
-- **Implements `GenUiHost`**: Can be passed directly to `GenUiSurface`.
 
 #### `lib/src/core/a2ui_message_processor.dart`
 
@@ -160,11 +161,10 @@ processor.handleMessage(
 - `void handleMessage(A2uiMessage message)`: Processes an incoming `A2uiMessage` (create, update, delete surface).
 - `void handleUiEvent(UiEvent event)`: Handle a UI event from a surface.
 
-**`GenUiHost` (Interface)**
+**`GenUiContext` (Interface)**
 
 - **The Contract:** Defines how `GenUiSurface` interacts with the backend logic, decoupling UI rendering from message processing.
-- **Flexibility:** Allows `GenUiSurface` to work with _any_ backend implementation:
-  - Use `GenUiController` for streaming text (LLMs).
+- **Flexibility:** Allows `GenUiSurface` to work with *any* backend implementation:
   - Use `A2uiMessageProcessor` for structured data (Tools, Databases).
   - Implement your own for custom backends.
 - **API:**
@@ -187,14 +187,14 @@ processor.handleMessage(
 
 ```dart
 GenUiSurface(
-  host: myGenUiController,
+  genUiContext: myContext,
   surfaceId: 'main-surface',
 )
 ```
 
 **`GenUiSurface` (StatefulWidget)**
 
-- Constructor: `GenUiSurface({required GenUiHost host, required String surfaceId, WidgetBuilder? defaultBuilder})`
+- Constructor: `GenUiSurface({required GenUiContext genUiContext, required String surfaceId, WidgetBuilder? defaultBuilder})`
 - The `defaultBuilder` renders a placeholder while the surface definition is empty or loading.
 
 #### `lib/src/widgets/gen_ui_surface_manager.dart`
@@ -203,7 +203,7 @@ GenUiSurface(
 **Use Case:** Automatically displaying all active surfaces (e.g. if the LLM creates multiple).
 **`GenUiSurfaceManager`**
 
-- `host`: The `GenUiHost` to watch.
+- `host`: The `GenUiContext` to watch.
 - `layoutBuilder`: Custom layout for the list of surfaces.
 - `surfaceBuilder`: Custom builder for individual surfaces (e.g. to wrap them).
 

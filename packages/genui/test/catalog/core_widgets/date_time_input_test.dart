@@ -9,7 +9,7 @@ import 'package:genui/genui.dart';
 void main() {
   testWidgets('renders and handles explicit updates', (tester) async {
     final robot = DateTimeInputRobot(tester);
-    final (GenUiHost manager, String surfaceId) = setup('datetime', {
+    final (GenUiContext manager, String surfaceId) = setup('datetime', {
       'value': {'path': '/myDateTime'},
       'enableTime': false,
     });
@@ -28,7 +28,7 @@ void main() {
   ) async {
     final robot = DateTimeInputRobot(tester);
 
-    var (GenUiHost manager, String surfaceId) = setup('datetime_default', {
+    var (GenUiContext manager, String surfaceId) = setup('datetime_default', {
       'value': {'path': '/myDateTimeDefault'},
     });
     await robot.pumpSurface(manager, surfaceId);
@@ -52,7 +52,7 @@ void main() {
   group('combined mode', () {
     testWidgets('aborts update when time picker is cancelled', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('combined_mode', {
+      final (GenUiContext manager, String surfaceId) = setup('combined_mode', {
         'value': {'path': '/myDateTime'},
       });
 
@@ -78,7 +78,7 @@ void main() {
   group('time only mode', () {
     testWidgets('aborts when time picker is cancelled', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('time_only_mode', {
+      final (GenUiContext manager, String surfaceId) = setup('time_only_mode', {
         'value': {'path': '/myTime'},
         'enableDate': false,
       });
@@ -97,10 +97,13 @@ void main() {
 
     testWidgets('parses initial value correctly', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('time_only_parsing', {
-        'value': {'path': '/myTimeProp'},
-        'enableDate': false,
-      });
+      final (GenUiContext manager, String surfaceId) = setup(
+        'time_only_parsing',
+        {
+          'value': {'path': '/myTimeProp'},
+          'enableDate': false,
+        },
+      );
 
       manager
           .dataModelForSurface(surfaceId)
@@ -120,7 +123,7 @@ void main() {
     testWidgets('updates immediately with date-only string after '
         'date selection', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('date_only_mode', {
+      final (GenUiContext manager, String surfaceId) = setup('date_only_mode', {
         'value': {'path': '/myDate'},
         'enableTime': false,
       });
@@ -149,7 +152,7 @@ void main() {
   group('date range configuration', () {
     testWidgets('respects custom firstDate and lastDate', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('custom_range', {
+      final (GenUiContext manager, String surfaceId) = setup('custom_range', {
         'value': {'path': '/myDate'},
         'firstDate': '2020-01-01',
         'lastDate': '2030-12-31',
@@ -170,7 +173,7 @@ void main() {
 
     testWidgets('defaults to -9999 to 9999 when not specified', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('default_range', {
+      final (GenUiContext manager, String surfaceId) = setup('default_range', {
         'value': {'path': '/myDate'},
       });
 
@@ -190,18 +193,21 @@ void main() {
   group('validation', () {
     testWidgets('shows error when check fails', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (GenUiHost manager, String surfaceId) = setup('validation_test', {
-        'value': {'path': '/myDate'},
-        'checks': [
-          {
-            'func': 'required',
-            'args': [
-              {'path': '/myDate'},
-            ],
-            'message': 'Date is required',
-          },
-        ],
-      });
+      final (GenUiContext manager, String surfaceId) = setup(
+        'validation_test',
+        {
+          'value': {'path': '/myDate'},
+          'checks': [
+            {
+              'func': 'required',
+              'args': [
+                {'path': '/myDate'},
+              ],
+              'message': 'Date is required',
+            },
+          ],
+        },
+      );
 
       await robot.pumpSurface(manager, surfaceId);
       robot.expectError('Date is required');
@@ -215,7 +221,7 @@ void main() {
   });
 }
 
-(GenUiHost, String) setup(String componentId, Map<String, dynamic> props) {
+(GenUiContext, String) setup(String componentId, Map<String, dynamic> props) {
   final catalog = Catalog([
     CoreCatalogItems.dateTimeInput,
   ], catalogId: 'test_catalog');
@@ -242,11 +248,11 @@ class DateTimeInputRobot {
 
   DateTimeInputRobot(this.tester);
 
-  Future<void> pumpSurface(GenUiHost manager, String surfaceId) async {
+  Future<void> pumpSurface(GenUiContext manager, String surfaceId) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: GenUiSurface(host: manager, surfaceId: surfaceId),
+          body: GenUiSurface(genUiContext: manager, surfaceId: surfaceId),
         ),
       ),
     );

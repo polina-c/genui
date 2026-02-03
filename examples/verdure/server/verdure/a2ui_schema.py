@@ -18,46 +18,43 @@
 A2UI_SCHEMA = r"""
 {
   "title": "A2UI Message Schema",
-  "description": "Describes a JSON payload for an A2UI (Agent to UI) message, which is used to dynamically construct and update user interfaces. A message MUST contain exactly ONE of the action properties: 'beginRendering', 'surfaceUpdate', 'dataModelUpdate', or 'deleteSurface'.",
+  "description": "Describes a JSON payload for an A2UI (Agent to UI) message, which is used to dynamically construct and update user interfaces. A message MUST contain exactly ONE of the action properties: 'createSurface', 'updateComponents', 'updateDataModel', or 'deleteSurface'.",
   "type": "object",
   "properties": {
-    "beginRendering": {
+    "createSurface": {
       "type": "object",
-      "description": "Signals the client to begin rendering a surface with a root component and specific styles.",
+      "description": "Signals the client to create a new surface with a specific catalog and theme.",
       "properties": {
         "surfaceId": {
           "type": "string",
-          "description": "The unique identifier for the UI surface to be rendered."
+          "description": "The unique identifier for the UI surface to be created."
         },
-        "root": {
+        "catalogId": {
           "type": "string",
-          "description": "The ID of the root component to render."
+          "description": "The ID of the catalog to use for this surface."
         },
-        "styles": {
+        "theme": {
           "type": "object",
-          "description": "Styling information for the UI.",
+          "description": "The theme for the surface.",
           "properties": {
             "font": {
-              "type": "string",
-              "description": "The primary font for the UI."
+              "type": "string"
             },
             "primaryColor": {
-              "type": "string",
-              "description": "The primary UI color as a hexadecimal code (e.g., '#00BFFF').",
-              "pattern": "^#[0-9a-fA-F]{6}$"
+              "type": "string"
             }
           }
         }
       },
-      "required": ["root", "surfaceId"]
+      "required": ["surfaceId", "catalogId"]
     },
-    "surfaceUpdate": {
+    "updateComponents": {
       "type": "object",
       "description": "Updates a surface with a new set of components.",
       "properties": {
         "surfaceId": {
           "type": "string",
-          "description": "The unique identifier for the UI surface to be updated. If you are adding a new surface this *must* be a new, unique identified that has never been used for any existing surfaces shown."
+          "description": "The unique identifier for the UI surface to be updated."
         },
         "components": {
           "type": "array",
@@ -714,7 +711,7 @@ A2UI_SCHEMA = r"""
       },
       "required": ["surfaceId", "components"]
     },
-    "dataModelUpdate": {
+    "updateDataModel": {
       "type": "object",
       "description": "Updates the data model for a surface.",
       "properties": {
@@ -726,55 +723,19 @@ A2UI_SCHEMA = r"""
           "type": "string",
           "description": "An optional path to a location within the data model (e.g., '/user/name'). If omitted, or set to '/', the entire data model will be replaced."
         },
-        "contents": {
-          "type": "array",
-          "description": "An array of data entries. Each entry must contain a 'key' and exactly one corresponding typed 'value*' property.",
-          "items": {
-            "type": "object",
-            "description": "A single data entry. Exactly one 'value*' property should be provided alongside the key.",
-            "properties": {
-              "key": {
-                "type": "string",
-                "description": "The key for this data entry."
-              },
-              "valueString": {
-                "type": "string"
-              },
-              "valueNumber": {
-                "type": "number"
-              },
-              "valueBoolean": {
-                "type": "boolean"
-              },
-              "valueMap": {
-                "description": "Represents a map as an adjacency list.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "One entry in the map. Exactly one 'value*' property should be provided alongside the key.",
-                  "properties": {
-                    "key": {
-                      "type": "string"
-                    },
-                    "valueString": {
-                      "type": "string"
-                    },
-                    "valueNumber": {
-                      "type": "number"
-                    },
-                    "valueBoolean": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": ["key"]
-                }
-              }
-            },
-            "required": ["key"]
-          }
+        "value": {
+          "description": "The new value to write to the data model at the specified path. Can be any valid JSON value (object, array, string, number, boolean, null).",
+          "type": [
+            "object",
+            "array",
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
         }
       },
-      "required": ["contents", "surfaceId"]
+      "required": ["surfaceId"]
     },
     "deleteSurface": {
       "type": "object",

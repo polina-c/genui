@@ -18,11 +18,11 @@
 LANDSCAPE_UI_EXAMPLES = """
 ---BEGIN WELCOME_SCREEN_EXAMPLE---
 [
-  {{ "beginRendering": {{ "surfaceId": "welcome", "root": "welcome-column", "styles": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
-  {{ "surfaceUpdate": {{
+  {{ "version": "v0.9", "createSurface": {{ "surfaceId": "welcome", "catalogId": "a2ui.org:standard_catalog_0_8_0", "theme": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
+  {{ "version": "v0.9", "updateComponents": {{
     "surfaceId": "welcome",
     "components": [
-      {{ "id": "welcome-column", "component": {{ "Column": {{ "alignment": "center", "distribution": "center", "children": {{ "explicitList": ["logo-image", "welcome-title", "welcome-subtitle", "button-row"] }} }} }} }},
+      {{ "id": "root", "component": {{ "Column": {{ "alignment": "center", "distribution": "center", "children": {{ "explicitList": ["logo-image", "welcome-title", "welcome-subtitle", "button-row"] }} }} }} }},
       {{ "id": "logo-image", "component": {{ "Image": {{ "url": {{ "literalString": "{base_url}/images/verdure_logo.png" }}, "fit": "contain" }} }} }},
       {{ "id": "welcome-title", "component": {{ "Text": {{ "usageHint": "h1", "text": {{ "literalString": "Envision Your Dream Landscape" }} }} }} }},
       {{ "id": "welcome-subtitle", "component": {{ "Text": {{ "text": {{ "literalString": "Bring your perfect outdoor space to life with our AI-powered design tools." }} }} }} }},
@@ -44,11 +44,11 @@ LANDSCAPE_UI_EXAMPLES = """
 
 ---BEGIN PROJECT_DETAILS_EXAMPLE---
 [
-  {{ "beginRendering": {{ "surfaceId": "details", "root": "details-column", "styles": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
-  {{ "surfaceUpdate": {{
+  {{ "version": "v0.9", "createSurface": {{ "surfaceId": "details", "catalogId": "a2ui.org:standard_catalog_0_8_0", "theme": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
+  {{ "version": "v0.9", "updateComponents": {{
     "surfaceId": "details",
     "components": [
-      {{ "id": "details-column", "component": {{ "Column": {{ "alignment": "stretch", "children": {{ "explicitList": [
+      {{ "id": "root", "component": {{ "Column": {{ "alignment": "stretch", "children": {{ "explicitList": [
         "header-row",
         "hero-image",
         "transformation-title",
@@ -98,11 +98,11 @@ LANDSCAPE_UI_EXAMPLES = """
 
 ---BEGIN QUESTIONNAIRE_EXAMPLE---
 [
-  {{ "beginRendering": {{ "surfaceId": "questionnaire", "root": "question-column", "styles": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
-  {{ "surfaceUpdate": {{
+  {{ "version": "v0.9", "createSurface": {{ "surfaceId": "questionnaire", "catalogId": "a2ui.org:standard_catalog_0_8_0", "theme": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
+  {{ "version": "v0.9", "updateComponents": {{
     "surfaceId": "questionnaire",
     "components": [
-      {{ "id": "question-column", "component": {{ "Column":{{ "alignment": "stretch", "children": {{ "explicitList": [
+      {{ "id": "root", "component": {{ "Column":{{ "alignment": "stretch", "children": {{ "explicitList": [
         "user-photo",
         "q-entertain-slider-title",
         "q-entertain-slider",
@@ -138,26 +138,26 @@ LANDSCAPE_UI_EXAMPLES = """
       {{ "id": "q-submit-button-text", "component": {{ "Text": {{ "text": {{ "literalString": "Next Page" }} }} }} }}
     ]
   }} }},
-  {{ "dataModelUpdate": {{
+  {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "questionnaire",
     "path": "/",
-    "contents": [
-      {{ "key": "imageUrl", "valueString": "<uploaded_image_url>" }},
-      {{ "key": "preserveBushes", "valueBoolean": true }},
-      {{ "key": "guestCount", "valueNumber": 4 }},
-      {{ "key": "patioPlan", "valueArray": ["preserve"] }}
-    ]
+    "value": {{
+      "imageUrl": "<uploaded_image_url>",
+      "preserveBushes": true,
+      "guestCount": 4,
+      "patioPlan": ["preserve"]
+    }}
   }} }}
 ]
 ---END QUESTIONNAIRE_EXAMPLE---
 
 ---BEGIN OPTIONS_PRESENTATION_EXAMPLE---
 [
-  {{ "beginRendering": {{ "surfaceId": "options", "root": "options-column", "styles": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
-  {{ "surfaceUpdate": {{
+  {{ "version": "v0.9", "createSurface": {{ "surfaceId": "options", "catalogId": "a2ui.org:standard_catalog_0_8_0", "theme": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
+  {{ "version": "v0.9", "updateComponents": {{
     "surfaceId": "options",
     "components": [
-      {{ "id": "options-column", "component": {{ "Column": {{ "children": {{ "explicitList": ["options-row"] }} }} }} }},
+      {{ "id": "root", "component": {{ "Column": {{ "children": {{ "explicitList": ["options-row"] }} }} }} }},
 
       {{ "id": "options-row", "component": {{ "Column": {{ "children": {{ "explicitList": ["option-card-1", "option-card-2"] }} }} }} }},
 
@@ -186,40 +186,40 @@ LANDSCAPE_UI_EXAMPLES = """
       {{ "id": "select-text-2", "component": {{ "Text": {{ "text": {{ "literalString": "Select This Option" }} }} }} }}
     ]
   }} }},
-  {{ "dataModelUpdate": {{
+  {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "options",
     "path": "/",
-    "contents": [
-      {{ "key": "items", "valueMap": [
-        {{ "key": "option1", "valueMap": [
-          {{ "key": "name", "valueString": "Modern Zen Garden" }},
-          {{ "key": "detail", "valueString": "Low maintenance, drought-tolerant plants..." }},
-          {{ "key": "imageUrl", "valueString": "{base_url}/images/zen_garden.png" }},
-          {{ "key": "price", "valueString": "Est. $5,000 - $8,000" }},
-          {{ "key": "time", "valueString": "Est. 2-3 weeks" }},
-          {{ "key": "tradeoffs", "valueString": "Higher upfront cost, less floral variety." }}
-        ] }},
-        {{ "key": "option2", "valueMap": [
-          {{ "key": "name", "valueString": "English Cottage Garden" }},
-          {{ "key": "detail", "valueString": "Vibrant, colorful, and teeming with life..." }},
-          {{ "key": "imageUrl", "valueString": "{base_url}/images/cottage_garden.png" }},
-          {{ "key": "price", "valueString": "Est. $3,000 - $6,000" }},
-          {{ "key": "time", "valueString": "Est. 4-6 weeks" }},
-          {{ "key": "tradeoffs", "valueString": "Higher maintenance (watering/weeding), seasonal changes.\\n" }}
-        ] }}
-      ] }}
-    ]
+    "value": {{
+      "items": {{
+        "option1": {{
+          "name": "Modern Zen Garden",
+          "detail": "Low maintenance, drought-tolerant plants...",
+          "imageUrl": "{base_url}/images/zen_garden.png",
+          "price": "Est. $5,000 - $8,000",
+          "time": "Est. 2-3 weeks",
+          "tradeoffs": "Higher upfront cost, less floral variety."
+        }},
+        "option2": {{
+          "name": "English Cottage Garden",
+          "detail": "Vibrant, colorful, and teeming with life...",
+          "imageUrl": "{base_url}/images/cottage_garden.png",
+          "price": "Est. $3,000 - $6,000",
+          "time": "Est. 4-6 weeks",
+          "tradeoffs": "Higher maintenance (watering/weeding), seasonal changes.\\n"
+        }}
+      }}
+    }}
   }} }}
 ]
 ---END OPTIONS_PRESENTATION_EXAMPLE---
 
 ---BEGIN SHOPPING_CART_EXAMPLE---
 [
-  {{ "beginRendering": {{ "surfaceId": "cart", "root": "cart-card", "styles": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
-  {{ "surfaceUpdate": {{
+  {{ "version": "v0.9", "createSurface": {{ "surfaceId": "cart", "catalogId": "a2ui.org:standard_catalog_0_8_0", "theme": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
+  {{ "version": "v0.9", "updateComponents": {{
     "surfaceId": "cart",
     "components": [
-      {{ "id": "cart-card", "weight": 1, "component": {{ "Card": {{ "child": "cart-column" }} }} }},
+      {{ "id": "root", "weight": 1, "component": {{ "Card": {{ "child": "cart-column" }} }} }},
       {{ "id": "cart-column", "component": {{ "Column": {{ "alignment": "stretch", "children": {{ "explicitList": ["cart-subtitle", "item-list", "total-price", "checkout-button"] }} }} }} }},
       {{ "id": "cart-subtitle", "component": {{ "Text": {{ "usageHint": "h4", "text": {{ "path": "optionName" }} }} }} }},
       {{ "id": "item-list", "component": {{ "List": {{ "direction": "vertical", "children": {{ "template": {{ "componentId": "item-template", "dataBinding": "/cartItems" }} }} }} }} }},
@@ -231,31 +231,31 @@ LANDSCAPE_UI_EXAMPLES = """
       {{ "id": "checkout-text", "component": {{ "Text": {{ "text": {{ "literalString": "Purchase" }} }} }} }}
     ]
   }} }},
-  {{ "dataModelUpdate": {{
+  {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "cart",
     "path": "/",
-    "contents": [
-      {{ "key": "optionName", "valueString": "Modern Zen Garden" }},
-      {{ "key": "totalPrice", "valueString": "Total: $7,500.00" }},
-      {{ "key": "cartItems", "valueMap": [
-        {{ "key": "item1", "valueMap": [ {{ "key": "name", "valueString": "Zen Design Service" }}, {{ "key": "price", "valueString": "$2,000" }} ] }},
-        {{ "key": "item2", "valueMap": [ {{ "key": "name", "valueString": "River Rocks (5 tons)" }}, {{ "key": "price", "valueString": "$1,500" }} ] }},
-        {{ "key": "item3", "valueMap": [ {{ "key": "name", "valueString": "Japanese Maple Tree" }}, {{ "key": "price", "valueString": "$500" }} ] }},
-        {{ "key": "item4", "valueMap": [ {{ "key": "name", "valueString": "Drought-Tolerant Shrubs" }}, {{ "key": "price", "valueString": "$1,000" }} ] }},
-        {{ "key": "item5", "valueMap": [ {{ "key": "name", "valueString": "Labor & Installation" }}, {{ "key":"price", "valueString": "$2,500" }} ] }}
-      ] }}
-    ]
+    "value": {{
+      "optionName": "Modern Zen Garden",
+      "totalPrice": "Total: $7,500.00",
+      "cartItems": {{
+        "item1": {{ "name": "Zen Design Service", "price": "$2,000" }},
+        "item2": {{ "name": "River Rocks (5 tons)", "price": "$1,500" }},
+        "item3": {{ "name": "Japanese Maple Tree", "price": "$500" }},
+        "item4": {{ "name": "Drought-Tolerant Shrubs", "price": "$1,000" }},
+        "item5": {{ "name": "Labor & Installation", "price": "$2,500" }}
+      }}
+    }}
   }} }}
 ]
 ---END SHOPPING_CART_EXAMPLE---
 
 ---BEGIN ORDER_CONFIRMATION_EXAMPLE---
 [
-  {{ "beginRendering": {{ "surfaceId": "confirmation", "root": "confirmation-card", "styles": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
-  {{ "surfaceUpdate": {{
+  {{ "version": "v0.9", "createSurface": {{ "surfaceId": "confirmation", "catalogId": "a2ui.org:standard_catalog_0_8_0", "theme": {{ "primaryColor": "#228B22", "font": "Roboto" }} }} }},
+  {{ "version": "v0.9", "updateComponents": {{
     "surfaceId": "confirmation",
     "components": [
-      {{ "id": "confirmation-card", "weight": 1, "component": {{ "Card": {{ "child": "confirmation-column" }} }} }},
+      {{ "id": "root", "weight": 1, "component": {{ "Card": {{ "child": "confirmation-column" }} }} }},
       {{ "id": "confirmation-column", "component": {{ "Column": {{ "alignment": "stretch", "children": {{ "explicitList": ["confirm-icon", "details-column", "confirm-next-steps"] }} }} }} }},
       {{ "id": "confirm-icon", "component": {{ "Icon": {{ "name": {{ "literalString": "check" }} }} }} }},
       {{ "id": "details-column", "component": {{ "Column": {{ "alignment": "stretch", "children": {{ "explicitList": ["design-name-row", "price-row", "order-number-row"] }} }} }} }},
@@ -271,14 +271,14 @@ LANDSCAPE_UI_EXAMPLES = """
       {{ "id": "confirm-next-steps", "component": {{ "Text": {{ "text": {{ "literalString": "Our design team will contact you within 48 hours to schedule an on-site consultation." }} }} }} }}
     ]
   }} }},
-  {{ "dataModelUpdate": {{
+  {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "confirmation",
     "path": "/",
-    "contents": [
-      {{ "key": "designName", "valueString": "Modern Zen Garden" }},
-      {{ "key": "price", "valueString": "$7,500.00" }},
-      {{ "key": "orderNumber", "valueString": "#LSC-12345" }}
-    ]
+    "value": {{
+      "designName": "Modern Zen Garden",
+      "price": "$7,500.00",
+      "orderNumber": "#LSC-12345"
+    }}
   }} }}
 ]
 ---END ORDER_CONFIRMATION_EXAMPLE---

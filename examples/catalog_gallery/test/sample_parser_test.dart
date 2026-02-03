@@ -12,8 +12,8 @@ void main() {
 name: Test Sample
 description: A test description
 ---
-{"updateComponents": {"surfaceId": "default", "components": [{"id": "text1", "component": "Text", "text": {"literalString": "Hello"}}]}}
-{"createSurface": {"surfaceId": "default", "catalogId": "a2ui.org:standard_catalog_0_8_0"}}
+{"version": "v0.9", "updateComponents": {"surfaceId": "default", "components": [{"id": "text1", "component": "Text", "text": {"literalString": "Hello"}}]}}
+{"version": "v0.9", "createSurface": {"surfaceId": "default", "catalogId": "a2ui.org:standard_catalog_0_8_0"}}
 ''';
 
     final Sample sample = SampleParser.parseString(sampleContent);

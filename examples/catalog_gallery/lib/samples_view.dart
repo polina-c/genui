@@ -229,7 +229,7 @@ class _SamplesViewState extends State<SamplesView> {
                           ? const Center(child: Text('No surfaces'))
                           : GenUiSurface(
                               key: ValueKey(_surfaceIds[_currentSurfaceIndex]),
-                              host: _a2uiMessageProcessor,
+                              genUiContext: _a2uiMessageProcessor,
                               surfaceId: _surfaceIds[_currentSurfaceIndex],
                             ),
                     ),

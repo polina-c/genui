@@ -159,7 +159,7 @@ class _IntegrationTesterState extends State<_IntegrationTester> {
     }
     return GenUiSurface(
       surfaceId: surfaceId,
-      host: _a2uiMessageProcessor,
+      genUiContext: _a2uiMessageProcessor,
       defaultBuilder: (_) => const Text('Fallback to defaultBuilder'),
     );
   }

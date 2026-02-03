@@ -13,73 +13,7 @@ import '../model/chat_message.dart';
 import '../model/data_model.dart';
 import '../model/ui_models.dart';
 import '../primitives/logging.dart';
-
-/// A sealed class representing an update to the UI managed by
-/// [A2uiMessageProcessor].
-///
-/// This class has three subclasses: [SurfaceAdded], [UpdateComponents], and
-/// [SurfaceRemoved].
-sealed class GenUiUpdate {
-  /// Creates a [GenUiUpdate] for the given [surfaceId].
-  const GenUiUpdate(this.surfaceId);
-
-  /// The ID of the surface that was updated.
-  final String surfaceId;
-}
-
-/// Fired when a new surface is created.
-class SurfaceAdded extends GenUiUpdate {
-  /// Creates a [SurfaceAdded] event for the given [surfaceId] and
-  /// [definition].
-  const SurfaceAdded(super.surfaceId, this.definition);
-
-  /// The definition of the new surface.
-  final UiDefinition definition;
-}
-
-/// Fired when an existing surface is modified.
-class ComponentsUpdated extends GenUiUpdate {
-  /// Creates a [ComponentsUpdated] event for the given [surfaceId] and
-  /// [definition].
-  const ComponentsUpdated(super.surfaceId, this.definition);
-
-  /// The new definition of the surface.
-  final UiDefinition definition;
-}
-
-/// Fired when a surface is deleted.
-class SurfaceRemoved extends GenUiUpdate {
-  /// Creates a [SurfaceRemoved] event for the given [surfaceId].
-  const SurfaceRemoved(super.surfaceId);
-}
-
-/// An interface for a class that hosts UI surfaces.
-///
-/// This is used by `GenUiSurface` to get the UI definition for a surface,
-/// listen for updates, and notify the host of user interactions.
-abstract interface class GenUiHost {
-  /// A stream of updates for the surfaces managed by this host.
-  ///
-  /// Implementations may choose to filter redundant updates. Consumers should
-  /// rely on [getSurfaceNotifier] for the current state of a specific
-  /// surface.
-  Stream<GenUiUpdate> get surfaceUpdates;
-
-  /// Returns a [ValueNotifier] for the surface with the given [surfaceId].
-  ValueNotifier<UiDefinition?> getSurfaceNotifier(String surfaceId);
-
-  /// The catalogs of UI components available to the AI.
-  Iterable<Catalog> get catalogs;
-
-  /// A map of data models for storing the UI state of each surface.
-  Map<String, DataModel> get dataModels;
-
-  /// The data model for storing the UI state for a given surface.
-  DataModel dataModelForSurface(String surfaceId);
-
-  /// A callback to handle an action from a surface.
-  void handleUiEvent(UiEvent event);
-}
+import 'interfaces.dart';
 
 /// Policies for cleaning up old surfaces when new ones are created.
 enum SurfaceCleanupPolicy {
@@ -101,7 +35,7 @@ enum SurfaceCleanupPolicy {
 /// `updateDataModel`, `deleteSurface`) that the AI uses to manipulate the UI.
 /// It exposes a stream of `GenUiUpdate` events so that the application can
 /// react to changes.
-class A2uiMessageProcessor implements GenUiHost {
+class A2uiMessageProcessor implements GenUiContext, A2uiMessageSink {
   /// Creates a new [A2uiMessageProcessor] with a list of supported widget
   /// catalogs.
   A2uiMessageProcessor({
@@ -202,6 +136,7 @@ class A2uiMessageProcessor implements GenUiHost {
   }
 
   /// Handles an [A2uiMessage] and updates the UI accordingly.
+  @override
   void handleMessage(A2uiMessage message) {
     try {
       _handleMessageInternal(message);

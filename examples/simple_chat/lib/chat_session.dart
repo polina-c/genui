@@ -21,6 +21,9 @@ class ChatSession extends ChangeNotifier {
   final List<MessageController> _messages = [];
   List<MessageController> get messages => List.unmodifiable(_messages);
 
+  late final A2uiMessageProcessor _messageProcessor;
+  GenUiContext get genUiContext => _messageProcessor;
+
   late final GenUiController _genUiController;
   GenUiController get genUiController => _genUiController;
 
@@ -34,11 +37,17 @@ class ChatSession extends ChangeNotifier {
   void _init() {
     final Catalog catalog = CoreCatalogItems.asCatalog();
 
-    // Initialize GenUiController
-    _genUiController = GenUiController(catalogs: [catalog]);
+    // Initialize Message Processor
+    _messageProcessor = A2uiMessageProcessor(catalogs: [catalog]);
 
-    // Listen to UI state updates from the controller
-    _genUiController.stateStream.listen((update) {
+    // Initialize GenUiController
+    _genUiController = GenUiController();
+
+    // Wire controller to processor
+    _genUiController.messageStream.listen(_messageProcessor.handleMessage);
+
+    // Listen to UI state updates from the processor
+    _messageProcessor.surfaceUpdates.listen((update) {
       if (update is SurfaceAdded) {
         // Check if we already have a message with this surfaceId
         final bool exists = _messages.any(
@@ -59,7 +68,7 @@ class ChatSession extends ChangeNotifier {
     });
 
     // Listen to client events (interactions) from the UI
-    _genUiController.onClientEvent.listen(_handleChatMessage);
+    _messageProcessor.onSubmit.listen(_handleChatMessage);
 
     final String a2uiSchema = A2uiMessage.a2uiMessageSchema(
       catalog,
@@ -156,6 +165,7 @@ ${GenUiPromptFragments.basicChat}''';
 
   @override
   void dispose() {
+    _messageProcessor.dispose();
     _genUiController.dispose();
     super.dispose();
   }

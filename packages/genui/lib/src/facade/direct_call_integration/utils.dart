@@ -48,7 +48,10 @@ ParsedToolCall parseToolCall(
 ) {
   assert(toolCall.name == toolName);
 
-  final Map<String, Object?> messageJson = {'updateComponents': toolCall.args};
+  final Map<String, Object?> messageJson = {
+    'version': 'v0.9',
+    'updateComponents': toolCall.args,
+  };
   final surfaceUpdateMessage = A2uiMessage.fromJson(messageJson);
 
   final surfaceId = (toolCall.args as JsonMap)[surfaceIdKey] as String;
@@ -70,7 +73,10 @@ ToolCall catalogExampleToToolCall(
   String toolName,
   String surfaceId,
 ) {
-  final messageJson = {'updateComponents': example};
+  final Map<String, Object> messageJson = {
+    'version': 'v0.9',
+    'updateComponents': example,
+  };
   final surfaceUpdateMessage = A2uiMessage.fromJson(messageJson);
 
   return ToolCall(

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:genui/src/core/a2ui_message_processor.dart';
 import 'package:genui/src/model/a2ui_message.dart';
+
 import 'package:genui/src/transport/gen_ui_controller.dart';
 import 'package:test/test.dart';
 
@@ -12,7 +12,7 @@ void main() {
     late GenUiController controller;
 
     setUp(() {
-      controller = GenUiController(catalogs: []);
+      controller = GenUiController();
     });
 
     tearDown(() {
@@ -35,9 +35,9 @@ void main() {
 ```''';
 
       final Future<dynamic> stateFuture = expectLater(
-        controller.stateStream,
+        controller.messageStream,
         emits(
-          isA<SurfaceAdded>().having((e) => e.surfaceId, 'id', 'test_chunk'),
+          isA<CreateSurface>().having((e) => e.surfaceId, 'id', 'test_chunk'),
         ),
       );
 
@@ -52,9 +52,9 @@ void main() {
       );
 
       final Future<dynamic> stateFuture = expectLater(
-        controller.stateStream,
+        controller.messageStream,
         emits(
-          isA<SurfaceAdded>().having((e) => e.surfaceId, 'id', 'direct_msg'),
+          isA<CreateSurface>().having((e) => e.surfaceId, 'id', 'direct_msg'),
         ),
       );
 

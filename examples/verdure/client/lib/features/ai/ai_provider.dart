@@ -78,7 +78,7 @@ class Ai extends _$Ai {
     // unless we need it for something else? A2uiContentGenerator used it.
     // But A2uiAgentConnector seems self-contained.
 
-    final controller = GenUiController(messageProcessor: a2uiMessageProcessor);
+    final controller = GenUiController();
 
     // Wire up connector to controller
     connector.stream.listen(controller.addMessage);
@@ -86,6 +86,8 @@ class Ai extends _$Ai {
 
     final conversation = GenUiConversation(
       controller: controller,
+      messageSink: a2uiMessageProcessor,
+      context: a2uiMessageProcessor,
       onSend: (message, history) async {
         // Send request via connector
         await connector.connectAndSend(message);

@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 
 import '../core/a2ui_message_processor.dart';
 import '../core/genui_surface.dart';
+import '../core/interfaces.dart';
+import '../model/ui_models.dart';
 
 /// A widget that manages and displays multiple GenUI surfaces.
 ///
-/// This widget listens to [GenUiHost.surfaceUpdates] and automatically
+/// This widget listens to [GenUiContext.surfaceUpdates] and automatically
 /// adds, updates, or removes [GenUiSurface] widgets based on the active
 /// surfaces managed by the host.
 ///
@@ -28,7 +30,7 @@ class GenUiSurfaceManager extends StatefulWidget {
   });
 
   /// The host that manages the surfaces.
-  final GenUiHost host;
+  final GenUiContext host;
 
   /// A builder that constructs the layout for the list of surface widgets.
   ///
@@ -96,7 +98,11 @@ class _GenUiSurfaceManagerState extends State<GenUiSurfaceManager> {
       if (widget.surfaceBuilder != null) {
         return widget.surfaceBuilder!(context, id);
       }
-      return GenUiSurface(key: ValueKey(id), host: widget.host, surfaceId: id);
+      return GenUiSurface(
+        key: ValueKey(id),
+        genUiContext: widget.host,
+        surfaceId: id,
+      );
     }).toList();
 
     if (widget.layoutBuilder != null) {

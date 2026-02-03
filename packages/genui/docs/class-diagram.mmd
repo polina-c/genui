@@ -1,69 +1,94 @@
 classDiagram
-    class GenUiHost {
-        <<interface>>
-        +Stream~GenUiUpdate~ surfaceUpdates
-        +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
-        +Iterable~Catalog~ catalogs
-        +Map~String, DataModel~ dataModels
-        +DataModel dataModelForSurface(String surfaceId)
-        +void handleUiEvent(UiEvent event)
+    namespace Facade {
+        class GenUiConversation {
+            +GenUiController controller
+            +GenUiContext host
+            +ValueListenable~List~ChatMessage~~ conversation
+            +ValueListenable~bool~ isProcessing
+            +Future~void~ sendRequest(ChatMessage message)
+            +void dispose()
+        }
     }
 
-    class A2uiMessageProcessor {
-        +void handleMessage(A2uiMessage message)
-        +Stream~GenUiUpdate~ surfaceUpdates
-        +Stream~ChatMessage~ onSubmit
-        +Map~String, DataModel~ dataModels
-        +DataModel dataModelForSurface(String surfaceId)
-        +Map~String, Object?~ getClientDataModel()
-        +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
-        +void dispose()
+    namespace Transport {
+        class GenUiController {
+            +void addChunk(String text)
+            +void addMessage(A2uiMessage message)
+            +Stream~String~ textStream
+            +Stream~A2uiMessage~ messageStream
+            +void dispose()
+        }
     }
 
-    class GenUiController {
-        +void addChunk(String text)
-        +void addMessage(A2uiMessage message)
-        +Stream~String~ textStream
-        +Stream~GenUiState~ stateStream
-        +Stream~ChatMessage~ onClientEvent
-        +void dispose()
+    namespace Core {
+        class GenUiContext {
+            <<interface>>
+            +Stream~GenUiUpdate~ surfaceUpdates
+            +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
+            +Iterable~Catalog~ catalogs
+            +Map~String, DataModel~ dataModels
+            +DataModel dataModelForSurface(String surfaceId)
+            +void handleUiEvent(UiEvent event)
+        }
+
+        class A2uiMessageSink {
+            <<interface>>
+            +void handleMessage(A2uiMessage message)
+        }
+
+        class A2uiMessageProcessor {
+            +void handleMessage(A2uiMessage message)
+            +Stream~GenUiUpdate~ surfaceUpdates
+            +Stream~ChatMessage~ onSubmit
+            +Map~String, DataModel~ dataModels
+            +DataModel dataModelForSurface(String surfaceId)
+            +Map~String, Object?~ getClientDataModel()
+            +ValueNotifier~UiDefinition?~ getSurfaceNotifier(String surfaceId)
+            +void dispose()
+        }
     }
 
-    class GenUiSurface {
-        +GenUiHost host
-        +String surfaceId
-        +WidgetBuilder? defaultBuilder
+    namespace UI {
+        class GenUiSurface {
+            +GenUiContext genUiContext
+            +String surfaceId
+            +WidgetBuilder? defaultBuilder
+        }
     }
 
-    class Catalog {
-        +String? catalogId
-        +Iterable~CatalogItem~ items
-        +Schema definition
-        +Widget buildWidget(CatalogItemContext context)
-        +Catalog copyWith(List~CatalogItem~ newItems)
-        +Catalog copyWithout(Iterable~CatalogItem~ itemNames)
+    namespace Model {
+        class Catalog {
+            +String? catalogId
+            +Iterable~CatalogItem~ items
+            +Schema definition
+            +Widget buildWidget(CatalogItemContext context)
+            +Catalog copyWith(List~CatalogItem~ newItems)
+            +Catalog copyWithout(Iterable~CatalogItem~ itemNames)
+        }
+
+        class CatalogItem {
+            +String name
+            +Schema dataSchema
+            +CatalogWidgetBuilder widgetBuilder
+            +List~ExampleBuilderCallback~ exampleData
+        }
+
+        class DataModel {
+            +void update(DataPath? path, Object? contents)
+            +ValueNotifier subscribe(DataPath path)
+            +ValueNotifier subscribeToValue(DataPath path)
+            +T? getValue(DataPath path)
+            +void bindExternalState(DataPath path, ValueListenable source)
+            +void dispose()
+        }
     }
 
-    class CatalogItem {
-        +String name
-        +Schema dataSchema
-        +CatalogWidgetBuilder widgetBuilder
-        +List~ExampleBuilderCallback~ exampleData
-    }
-
-    class DataModel {
-        +void update(DataPath? path, Object? contents)
-        +ValueNotifier subscribe(DataPath path)
-        +ValueNotifier subscribeToValue(DataPath path)
-        +T? getValue(DataPath path)
-        +void bindExternalState(DataPath path, ValueListenable source)
-        +void dispose()
-    }
-
-    GenUiHost <|.. A2uiMessageProcessor
-    GenUiHost <|.. GenUiController
-    GenUiController --> A2uiMessageProcessor : wraps
-    GenUiSurface --> GenUiHost : uses
-    A2uiMessageProcessor --> Catalog : uses
+    GenUiContext <|.. A2uiMessageProcessor
+    A2uiMessageSink <|.. A2uiMessageProcessor
+    GenUiSurface --> GenUiContext : uses
     Catalog --> CatalogItem : contains
-    GenUiHost --> DataModel : manages
+    GenUiContext --> DataModel : manages
+    GenUiConversation --> GenUiController : uses
+    GenUiConversation --> GenUiContext : uses
+    GenUiConversation --> A2uiMessageSink : converts messages to
+    A2uiMessageProcessor --> Catalog : uses

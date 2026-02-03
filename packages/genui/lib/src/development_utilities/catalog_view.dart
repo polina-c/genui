@@ -119,7 +119,7 @@ class _DebugCatalogViewState extends State<DebugCatalogView> {
       itemBuilder: (BuildContext context, int index) {
         final String surfaceId = surfaceIds[index];
         final surfaceWidget = GenUiSurface(
-          host: _a2uiMessageProcessor,
+          genUiContext: _a2uiMessageProcessor,
           surfaceId: surfaceId,
         );
         return Card(

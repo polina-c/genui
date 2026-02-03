@@ -32,7 +32,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GenUiSurface(host: messageProcessor!, surfaceId: surfaceId),
+            body: GenUiSurface(
+              genUiContext: messageProcessor!,
+              surfaceId: surfaceId,
+            ),
           ),
         ),
       );

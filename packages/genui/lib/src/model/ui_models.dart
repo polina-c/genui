@@ -389,3 +389,41 @@ class GenUiValidationException implements Exception {
   @override
   String toString() => 'GenUiValidationException: $message (at $path)';
 }
+
+/// A sealed class representing an update to the UI managed by the system.
+///
+/// This class has three subclasses: [SurfaceAdded], [ComponentsUpdated], and
+/// [SurfaceRemoved].
+sealed class GenUiUpdate {
+  /// Creates a [GenUiUpdate] for the given [surfaceId].
+  const GenUiUpdate(this.surfaceId);
+
+  /// The ID of the surface that was updated.
+  final String surfaceId;
+}
+
+/// Fired when a new surface is created.
+class SurfaceAdded extends GenUiUpdate {
+  /// Creates a [SurfaceAdded] event for the given [surfaceId] and
+  /// [definition].
+  const SurfaceAdded(super.surfaceId, this.definition);
+
+  /// The definition of the new surface.
+  final UiDefinition definition;
+}
+
+/// Fired when an existing surface is modified.
+class ComponentsUpdated extends GenUiUpdate {
+  /// Creates a [ComponentsUpdated] event for the given [surfaceId] and
+  /// [definition].
+  const ComponentsUpdated(super.surfaceId, this.definition);
+
+  /// The new definition of the surface.
+  final UiDefinition definition;
+}
+
+/// Fired when a surface is deleted.
+class SurfaceRemoved extends GenUiUpdate {
+  /// Creates a [SurfaceRemoved] event for the given [surfaceId].
+  const SurfaceRemoved(super.surfaceId);
+}

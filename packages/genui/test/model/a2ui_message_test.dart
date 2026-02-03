@@ -2,12 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:genui/src/catalog/core_catalog.dart';
 import 'package:genui/src/model/a2ui_message.dart';
+import 'package:genui/src/model/catalog.dart';
 import 'package:genui/src/primitives/simple_items.dart';
+import 'package:json_schema_builder/src/schema/schema.dart';
 
 void main() {
   group('A2uiMessage', () {
+// ... existing tests ...
     test('CreateSurface.fromJson parses correctly', () {
       final Map<String, Object> json = {
         'version': 'v0.9',
@@ -126,6 +131,29 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('a2uiMessageSchema requires version field', () {
+      final Catalog catalog = CoreCatalogItems.asCatalog();
+      final Schema schema = A2uiMessage.a2uiMessageSchema(catalog);
+      final json = jsonDecode(schema.toJson()) as Map<String, Object?>;
+
+      // Structure is combined -> allOf -> [object]
+      expect(json['allOf'], isA<List<Object?>>());
+      final allOf = json['allOf'] as List<Object?>;
+      expect(allOf, isNotEmpty);
+      final mainSchema = allOf.first as Map<String, Object?>;
+
+      final properties = mainSchema['properties'] as Map<String, Object?>;
+      expect(properties, contains('version'));
+
+      final required = mainSchema['required'] as List<Object?>;
+      expect(required, contains('version'));
+
+      final versionSchema = properties['version'] as Map<String, Object?>;
+      // Depending on json_schema_builder version, it might be 'const' or 'enum'
+      // But we expect it to enforce 'v0.9'
+      expect(versionSchema, containsPair('const', 'v0.9'));
     });
   });
 }

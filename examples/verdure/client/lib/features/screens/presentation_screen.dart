@@ -60,7 +60,7 @@ class _PresentationScreenState extends ConsumerState<PresentationScreen> {
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: GenUiSurface(
-                      host: aiState.a2uiMessageProcessor,
+                      genUiContext: aiState.a2uiMessageProcessor,
                       surfaceId: 'options',
                     ),
                   );

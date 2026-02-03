@@ -6,7 +6,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../core/a2ui_message_processor.dart';
+import '../core/interfaces.dart';
+import '../model/a2ui_message.dart';
 import '../model/chat_message.dart';
 import '../model/ui_models.dart';
 import '../transport/gen_ui_controller.dart';
@@ -29,22 +30,27 @@ class GenUiConversation {
   /// the AI.
   GenUiConversation({
     required this.controller,
+    required A2uiMessageSink messageSink,
+    required GenUiContext context,
     required this.onSend,
     this.onSurfaceAdded,
     this.onComponentsUpdated,
     this.onSurfaceDeleted,
     this.onTextResponse,
     this.onError,
-  }) {
-    _onClientEventSubscription = controller.onClientEvent.listen(sendRequest);
-    _surfaceUpdateSubscription = controller.stateStream.listen(
+  }) : _context = context {
+    _messageSubscription = controller.messageStream.listen((message) {
+      messageSink.handleMessage(message);
+    });
+    _surfaceUpdateSubscription = context.surfaceUpdates.listen(
       _handleUpdateComponents,
     );
     _textSubscription = controller.textStream.listen(_handleTextResponse);
   }
 
-  /// The [GenUiController] managing the UI state.
+  /// The [GenUiController] managing the transport.
   final GenUiController controller;
+  final GenUiContext _context;
 
   /// The callback to call when the user sends a message.
   ///
@@ -72,7 +78,7 @@ class GenUiConversation {
   /// A callback for when an error occurs.
   final ValueChanged<Object>? onError;
 
-  late final StreamSubscription<ChatMessage> _onClientEventSubscription;
+  late final StreamSubscription<A2uiMessage> _messageSubscription;
   late final StreamSubscription<GenUiUpdate> _surfaceUpdateSubscription;
   late final StreamSubscription<String> _textSubscription;
 
@@ -140,7 +146,7 @@ class GenUiConversation {
 
   /// Disposes of the resources used by this conversation.
   void dispose() {
-    _onClientEventSubscription.cancel();
+    _messageSubscription.cancel();
     _surfaceUpdateSubscription.cancel();
     _textSubscription.cancel();
     controller.dispose();
@@ -149,7 +155,7 @@ class GenUiConversation {
   }
 
   /// The host for the UI surfaces managed by this agent.
-  GenUiHost get host => controller;
+  GenUiContext get host => _context;
 
   /// A [ValueListenable] that provides the current conversation history.
   ValueListenable<List<ChatMessage>> get conversation => _conversation;
@@ -159,7 +165,7 @@ class GenUiConversation {
 
   /// Returns a [ValueNotifier] for the given [surfaceId].
   ValueNotifier<UiDefinition?> surface(String surfaceId) {
-    return controller.getSurfaceNotifier(surfaceId);
+    return _context.getSurfaceNotifier(surfaceId);
   }
 
   /// Sends a user message to the AI.

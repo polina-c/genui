@@ -54,7 +54,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: GenUiSurface(host: processor, surfaceId: surfaceId),
+        home: GenUiSurface(genUiContext: processor, surfaceId: surfaceId),
       ),
     );
 
@@ -86,7 +86,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: GenUiSurface(host: processor, surfaceId: surfaceId),
+        home: GenUiSurface(genUiContext: processor, surfaceId: surfaceId),
       ),
     );
     await tester.pumpAndSettle();
@@ -121,7 +121,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: GenUiSurface(host: processor, surfaceId: surfaceId),
+          home: GenUiSurface(genUiContext: processor, surfaceId: surfaceId),
         ),
       );
 

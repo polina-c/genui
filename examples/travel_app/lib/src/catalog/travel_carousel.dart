@@ -106,10 +106,7 @@ extension type _TravelCarouselData.fromMap(Map<String, Object?> _json) {
   factory _TravelCarouselData({
     JsonMap? title,
     required List<Map<String, Object?>> items,
-  }) => _TravelCarouselData.fromMap({
-    'title': ?title,
-    'items': items,
-  });
+  }) => _TravelCarouselData.fromMap({'title': ?title, 'items': items});
 
   Object? get title => _json['title'];
   Iterable<_TravelCarouselItemSchemaData> get items => (_json['items'] as List)

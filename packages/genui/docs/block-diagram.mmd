@@ -20,6 +20,5 @@ graph TD
     MessageProcessor -- "updates state" --> GenUiSurface;
     GenUiSurface -- "renders UI" --> UserInteraction;
     UserInteraction -- "creates event" --> MessageProcessor;
-    MessageProcessor -- "emits client event" --> GenUiController;
-    GenUiController -- "forwards event" --> GenUiConversation;
+    MessageProcessor -- "emits client event" --> GenUiConversation;
     GenUiConversation -- "loops back" --> ExternalLLM;

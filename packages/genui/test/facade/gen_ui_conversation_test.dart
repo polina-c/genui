@@ -10,19 +10,24 @@ import 'package:genui/genui.dart';
 void main() {
   group('GenUiConversation', () {
     late GenUiController controller;
+    late A2uiMessageProcessor processor;
 
     setUp(() {
-      controller = GenUiController(catalogs: []);
+      controller = GenUiController();
+      processor = A2uiMessageProcessor(catalogs: []);
     });
 
     tearDown(() {
       controller.dispose();
+      processor.dispose();
     });
 
     test('updates isProcessing state during request', () async {
       final completer = Completer<void>();
       final conversation = GenUiConversation(
         controller: controller,
+        messageSink: processor,
+        context: processor,
         onSend: (message, history) async {
           await completer.future;
         },
@@ -49,6 +54,8 @@ void main() {
 
       final conversation = GenUiConversation(
         controller: controller,
+        messageSink: processor,
+        context: processor,
         onSend: (message, history) async {
           capturedMessage = message;
           capturedHistory = history;
