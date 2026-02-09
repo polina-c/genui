@@ -80,16 +80,10 @@ class ComponentChildrenBuilder extends StatelessWidget {
     final List<String>? explicitList = (childrenData is List)
         ? (childrenData as List).map((e) {
             if (e is String) return e;
-            if (e is Map && e.containsKey('literalString')) {
-              return e['literalString'] as String;
-            }
             return e.toString();
           }).toList()
         : ((childrenData as JsonMap?)?['explicitList'] as List?)?.map((e) {
             if (e is String) return e;
-            if (e is Map && e.containsKey('literalString')) {
-              return e['literalString'] as String;
-            }
             return e.toString();
           }).toList();
 

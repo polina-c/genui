@@ -393,16 +393,14 @@ Widgets are "bound" to data in this model. When data in the model changes, only 
 
 #### Binding to the Data Model
 
-To bind a widget's property to the data model, you use a special JSON object in the data sent from the AI. This object can contain either a `literalString` (for static values) or a `path` (to bind to a value in the data model).
+To bind a widget's property to the data model, you use a special JSON object in the data sent from the AI. Properties can be either a direct value (for static values) or a `path` object (to bind to a value in the data model).
 
 For example, to display a user's name in a `Text` widget, the AI would generate:
 
 ```json
 {
   "Text": {
-    "text": {
-      "literalString": "Welcome to GenUI"
-    },
+    "text": "Welcome to GenUI",
     "hint": "h1"
   }
 }
@@ -413,9 +411,7 @@ For example, to display a user's name in a `Text` widget, the AI would generate:
 ```json
 {
   "Image": {
-    "url": {
-      "literalString": "https://example.com/image.png"
-    },
+    "url": "https://example.com/image.png",
     "hint": "mediumFeature"
   }
 }

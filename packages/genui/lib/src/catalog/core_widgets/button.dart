@@ -44,9 +44,6 @@ extension type _ButtonData.fromMap(JsonMap _json) {
   String get child {
     final Object? val = _json['child'];
     if (val is String) return val;
-    if (val is JsonMap && val.containsKey('literalString')) {
-      return val['literalString'] as String;
-    }
     throw ArgumentError('Invalid child: $val');
   }
 

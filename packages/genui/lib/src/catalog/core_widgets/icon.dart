@@ -15,7 +15,7 @@ final _schema = S.object(
     'component': S.string(enumValues: ['Icon']),
     'name': A2uiSchemas.stringReference(
       description:
-          '''The name of the icon to display. This can be a literal string ('literalString') or a reference to a value in the data model ('path', e.g. '/icon/name').''',
+          '''The name of the icon to display. This can be a literal string or a reference to a value in the data model ('path', e.g. '/icon/name').''',
       enumValues: AvailableIcons.allAvailable,
     ),
   },
@@ -31,7 +31,6 @@ extension type _IconData.fromMap(JsonMap _json) {
   String? get literalName {
     final Object? name = _name;
     if (name is String) return name;
-    if (name is JsonMap) return name['literalString'] as String?;
     return null;
   }
 

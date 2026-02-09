@@ -33,9 +33,6 @@ extension type _ModalData.fromMap(JsonMap _json) {
   String get trigger {
     final Object? val = _json['trigger'] ?? _json['entryPointChild'];
     if (val is String) return val;
-    if (val is JsonMap && val.containsKey('literalString')) {
-      return val['literalString'] as String;
-    }
 
     if (val == null) {
       return '';
@@ -46,9 +43,6 @@ extension type _ModalData.fromMap(JsonMap _json) {
   String get content {
     final Object? val = _json['content'] ?? _json['contentChild'];
     if (val is String) return val;
-    if (val is JsonMap && val.containsKey('literalString')) {
-      return val['literalString'] as String;
-    }
     throw ArgumentError('Invalid content: $val');
   }
 }
