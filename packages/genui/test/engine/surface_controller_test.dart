@@ -186,6 +186,7 @@ void main() {
       expect(message.parts.uiInteractionParts, hasLength(1));
 
       final String expectedJson = jsonEncode({
+        'version': 'v0.9',
         'action': {
           'surfaceId': 'testSurface',
           'name': 'testAction',
@@ -200,6 +201,30 @@ void main() {
       // UiInteractionPart.interaction is String.
       expect(part.interaction, expectedJson);
     });
+
+    test(
+      'handleMessage reports validation error with correct structure',
+      () async {
+        // Trigger validation error by using an empty surface ID.
+        final Future<ChatMessage> messageFuture = controller.onSubmit.first;
+        controller.handleMessage(
+          const CreateSurface(surfaceId: '', catalogId: 'test_catalog'),
+        );
+
+        final ChatMessage message = await messageFuture;
+        expect(message.role, ChatMessageRole.user);
+        final UiInteractionPart part = message.parts.uiInteractionParts.first;
+        final errorJson = jsonDecode(part.interaction) as Map<String, dynamic>;
+
+        expect(errorJson['version'], 'v0.9');
+        final Object? errorObj = errorJson['error'];
+        expect(errorObj, isA<Map<String, dynamic>>());
+        final errorMap = errorObj! as Map<String, dynamic>;
+        expect(errorMap['code'], 'VALIDATION_FAILED');
+        expect(errorMap['surfaceId'], '');
+        expect(errorMap['path'], 'surfaceId');
+      },
+    );
 
     test('drops pending updates after timeout', () async {
       // Create controller with short timeout

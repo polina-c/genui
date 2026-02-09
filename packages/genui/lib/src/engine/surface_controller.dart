@@ -107,9 +107,9 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
       _handleMessageInternal(message);
     } on A2uiValidationException catch (e) {
       genUiLogger.warning('Validation failed for surface ${e.surfaceId}: $e');
-      final Map<String, Map<String, Object>> errorMsg = {
+      final Map<String, Object> errorMsg = {
+        'version': 'v0.9',
         'error': {
-          'version': 'v0.9',
           'code': 'VALIDATION_FAILED',
           'surfaceId': e.surfaceId,
           'path': e.path,
@@ -241,7 +241,9 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
       ChatMessage.user(
         '',
         parts: [
-          UiInteractionPart.create(jsonEncode({'action': event.toMap()})),
+          UiInteractionPart.create(
+            jsonEncode({'version': 'v0.9', 'action': event.toMap()}),
+          ),
         ],
       ),
     );
