@@ -23,9 +23,7 @@
                     "component": "Heading",
                     "id": "heading",
                     "level": "2",
-                    "text": {
-                      "literalString": "What can I help you with?"
-                    }
+                    "text": "What can I help you with?"
                   },
                   {
                     "component": "MultipleChoice",
@@ -34,20 +32,14 @@
                     "options": [
                       {
                         "value": "answer_questions",
-                        "label": {
-                          "literalString": "Answer questions"
-                        }
+                        "label": "Answer questions"
                       },
                       {
                         "value": "generate_ui",
-                        "label": {
-                          "literalString": "Generate UI"
-                        }
+                        "label": "Generate UI"
                       },
                       {
-                        "label": {
-                          "literalString": "Write code"
-                        },
+                        "label": "Write code",
                         "value": "write_code"
                       }
                     ],

@@ -22,9 +22,7 @@
                     "component": "Heading",
                     "id": "heading_1",
                     "level": "1",
-                    "text": {
-                      "literalString": "How can I help you?"
-                    }
+                    "text": "How can I help you?"
                   },
                   {
                     "component": "MultipleChoice",
@@ -34,22 +32,16 @@
                     },
                     "options": [
                       {
-                        "label": {
-                          "literalString": "Generate UI"
-                        },
+                        "label": "Generate UI",
                         "value": "generate_ui"
                       },
                       {
-                        "label": {
-                          "literalString": "Answer questions"
-                        },
+                        "label": "Answer questions",
                         "value": "answer_questions"
                       },
                       {
                         "value": "summarize_text",
-                        "label": {
-                          "literalString": "Summarize text"
-                        }
+                        "label": "Summarize text"
                       }
                     ]
                   }

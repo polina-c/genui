@@ -12,36 +12,26 @@
                     "component": "Heading",
                     "id": "heading_1",
                     "level": "3",
-                    "text": {
-                      "literalString": "Here are some of the things I can help you with:"
-                    }
+                    "text": "Here are some of the things I can help you with:"
                   },
                   {
                     "id": "multiple_choice_1",
                     "component": "MultipleChoice",
                     "options": [
                       {
-                        "label": {
-                          "literalString": "Show a cat fact"
-                        },
+                        "label": "Show a cat fact",
                         "value": "Show a cat fact"
                       },
                       {
-                        "label": {
-                          "literalString": "Show a dog fact"
-                        },
+                        "label": "Show a dog fact",
                         "value": "Show a dog fact"
                       },
                       {
                         "value": "Help me generate UI",
-                        "label": {
-                          "literalString": "Help me generate UI"
-                        }
+                        "label": "Help me generate UI"
                       },
                       {
-                        "label": {
-                          "literalString": "Answer a question"
-                        },
+                        "label": "Answer a question",
                         "value": "Answer a question"
                       }
                     ],
