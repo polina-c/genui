@@ -7,12 +7,17 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
+import '../../primitives/simple_items.dart';
+import '../../widgets/widget_utilities.dart';
 
 final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['AudioPlayer']),
     'url': A2uiSchemas.stringReference(
       description: 'The URL of the audio to play.',
+    ),
+    'description': A2uiSchemas.stringReference(
+      description: 'A description of the audio, such as a title or summary.',
     ),
   },
   required: ['component', 'url'],
@@ -30,9 +35,21 @@ final audioPlayer = CatalogItem(
   name: 'AudioPlayer',
   dataSchema: _schema,
   widgetBuilder: (itemContext) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 200, maxHeight: 100),
-      child: const Placeholder(child: Center(child: Text('AudioPlayer'))),
+    final Object? description = (itemContext.data as JsonMap)['description'];
+    final ValueNotifier<String?> descriptionNotifier = itemContext.dataContext
+        .subscribeToString(description);
+
+    return ValueListenableBuilder<String?>(
+      valueListenable: descriptionNotifier,
+      builder: (context, description, child) {
+        return Semantics(
+          label: description,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200, maxHeight: 100),
+            child: const Placeholder(child: Center(child: Text('AudioPlayer'))),
+          ),
+        );
+      },
     );
   },
   exampleData: [

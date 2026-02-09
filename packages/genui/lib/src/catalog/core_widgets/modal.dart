@@ -31,7 +31,7 @@ extension type _ModalData.fromMap(JsonMap _json) {
       _ModalData.fromMap({'trigger': trigger, 'content': content});
 
   String get trigger {
-    final Object? val = _json['trigger'] ?? _json['entryPointChild'];
+    final Object? val = _json['trigger'];
     if (val is String) return val;
 
     if (val == null) {
@@ -41,7 +41,7 @@ extension type _ModalData.fromMap(JsonMap _json) {
   }
 
   String get content {
-    final Object? val = _json['content'] ?? _json['contentChild'];
+    final Object? val = _json['content'];
     if (val is String) return val;
     throw ArgumentError('Invalid content: $val');
   }
@@ -50,14 +50,14 @@ extension type _ModalData.fromMap(JsonMap _json) {
 /// A catalog item representing a modal bottom sheet.
 ///
 /// This component doesn't render the modal content directly. Instead, it
-/// renders the `entryPointChild` widget. The `entryPointChild` is expected to
-/// trigger an action (e.g., on button press) that causes the `contentChild` to
+/// renders the `trigger` widget. The `trigger` is expected to
+/// trigger an action (e.g., on button press) that causes the `content` to
 /// be displayed within a modal bottom sheet by the [Surface].
 ///
 /// ## Parameters:
 ///
-/// - `entryPointChild`: The ID of the widget that opens the modal.
-/// - `contentChild`: The ID of the widget to display in the modal.
+/// - `trigger`: The ID of the widget that opens the modal.
+/// - `content`: The ID of the widget to display in the modal.
 final modal = CatalogItem(
   name: 'Modal',
   dataSchema: _schema,

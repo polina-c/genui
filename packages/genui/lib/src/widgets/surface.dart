@@ -224,13 +224,12 @@ class DefaultActionDelegate implements ActionDelegate {
       final Component? modalComponent = definition.components[modalId];
       if (modalComponent == null) return true;
 
-      // The 'contentChild' property is expected to be a direct property of the
+      // The 'content' property is expected to be a direct property of the
       // Modal component.
-      final contentChildId =
-          modalComponent.properties['contentChild'] as String?;
+      final contentChildId = modalComponent.properties['content'] as String?;
 
       if (contentChildId == null) {
-        genUiLogger.severe('Modal component missing "contentChild" property.');
+        genUiLogger.severe('Modal component missing "content" property.');
         return true;
       }
 

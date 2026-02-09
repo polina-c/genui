@@ -18,7 +18,7 @@ typedef TemplateListWidgetBuilder =
       BuildContext context,
       Map<String, Object?> data,
       String componentId,
-      String dataBinding,
+      String path,
     );
 
 /// Builder function for creating a parent widget given a list of pre-built
@@ -43,7 +43,7 @@ typedef ExplicitListWidgetBuilder =
 ///
 /// The `childrenData` can be a `List<String>` of child IDs, or a `JsonMap`
 /// with either an `explicitList` key (with a `List<String>` value) or a
-/// `template` key. The `template` is a `JsonMap` with `dataBinding` and
+/// `template` key. The `template` is a `JsonMap` with `path` and
 /// `componentId` keys.
 class ComponentChildrenBuilder extends StatelessWidget {
   /// Creates a new [ComponentChildrenBuilder].
@@ -100,13 +100,13 @@ class ComponentChildrenBuilder extends StatelessWidget {
       final childrenMap = childrenData as JsonMap;
       final template = childrenMap['template'] as JsonMap?;
       if (template != null) {
-        final dataBinding = template['dataBinding'] as String;
+        final path = template['path'] as String;
         final componentId = template['componentId'] as String;
         genUiLogger.finest(
           'Widget $componentId subscribing to ${dataContext.path}',
         );
         final ValueNotifier<Map<String, Object?>?> dataNotifier = dataContext
-            .subscribe<Map<String, Object?>>(DataPath(dataBinding));
+            .subscribe<Map<String, Object?>>(DataPath(path));
         return ValueListenableBuilder<Map<String, Object?>?>(
           valueListenable: dataNotifier,
           builder: (context, data, child) {
@@ -119,7 +119,7 @@ class ComponentChildrenBuilder extends StatelessWidget {
                 context,
                 data,
                 componentId,
-                dataBinding,
+                path,
               );
             }
             return const SizedBox.shrink();

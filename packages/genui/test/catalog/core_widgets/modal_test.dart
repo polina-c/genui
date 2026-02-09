@@ -24,7 +24,7 @@ void main() {
       const Component(
         id: 'root',
         type: 'Modal',
-        properties: {'entryPointChild': 'button', 'contentChild': 'text'},
+        properties: {'trigger': 'button', 'content': 'text'},
       ),
       const Component(
         id: 'button',

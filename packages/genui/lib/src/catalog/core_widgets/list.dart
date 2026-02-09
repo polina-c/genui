@@ -16,16 +16,25 @@ final _schema = S.object(
     'component': S.string(enumValues: ['List']),
     'children': A2uiSchemas.componentArrayReference(),
     'direction': S.string(enumValues: ['vertical', 'horizontal']),
+    'align': S.string(enumValues: ['start', 'center', 'end', 'stretch']),
   },
   required: ['component', 'children'],
 );
 
 extension type _ListData.fromMap(JsonMap _json) {
-  factory _ListData({required Object? children, String? direction}) =>
-      _ListData.fromMap({'children': children, 'direction': direction});
+  factory _ListData({
+    required Object? children,
+    String? direction,
+    String? align,
+  }) => _ListData.fromMap({
+    'children': children,
+    'direction': direction,
+    'align': align,
+  });
 
   Object? get children => _json['children'];
   String? get direction => _json['direction'] as String?;
+  String? get align => _json['align'] as String?;
 }
 
 /// A catalog item representing a scrollable list of widgets.
@@ -36,8 +45,10 @@ extension type _ListData.fromMap(JsonMap _json) {
 /// ## Parameters:
 ///
 /// - `children`: A list of child widget IDs to display in the list.
-/// - `direction`: The direction of the list. Can be `vertical` or
-///   `horizontal`. Defaults to `vertical`.
+/// - `direction`: The direction of the list. Can be `vertical` or `horizontal`.
+///   Defaults to `vertical`.
+/// - `align`: The alignment of children along the cross axis. One of `start`,
+///   `center`, `end`, `stretch`.
 final list = CatalogItem(
   name: 'List',
   dataSchema: _schema,
@@ -55,7 +66,10 @@ final list = CatalogItem(
         return ListView(
           shrinkWrap: true,
           scrollDirection: direction,
-          children: childIds.map((id) => buildChild(id, dataContext)).toList(),
+          children: childIds.map((id) {
+            final Widget child = buildChild(id, dataContext);
+            return _applyAlignment(child, listData.align, direction);
+          }).toList(),
         );
       },
       templateListWidgetBuilder:
@@ -69,7 +83,11 @@ final list = CatalogItem(
               itemBuilder: (context, index) {
                 final DataContext itemDataContext = itemContext.dataContext
                     .nested(DataPath('$dataBinding/${keys[index]}'));
-                return itemContext.buildChild(componentId, itemDataContext);
+                final Widget child = itemContext.buildChild(
+                  componentId,
+                  itemDataContext,
+                );
+                return _applyAlignment(child, listData.align, direction);
               },
             );
           },
@@ -101,3 +119,21 @@ final list = CatalogItem(
   ],
   isImplicitlyFlexible: true,
 );
+
+Widget _applyAlignment(Widget child, String? align, Axis direction) {
+  if (align == null || align == 'stretch') {
+    return child;
+  }
+
+  final AlignmentGeometry alignment = switch ((direction, align)) {
+    (Axis.vertical, 'start') => Alignment.centerLeft,
+    (Axis.vertical, 'center') => Alignment.center,
+    (Axis.vertical, 'end') => Alignment.centerRight,
+    (Axis.horizontal, 'start') => Alignment.topCenter,
+    (Axis.horizontal, 'center') => Alignment.center,
+    (Axis.horizontal, 'end') => Alignment.bottomCenter,
+    _ => Alignment.center,
+  };
+
+  return Align(alignment: alignment, child: child);
+}

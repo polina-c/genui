@@ -64,7 +64,7 @@ void main() {
                   type: 'Image',
                   data: {
                     'url': 'https://example.com/avatar.png',
-                    'usageHint': 'avatar',
+                    'variant': 'avatar',
                   },
                   id: 'test_image_avatar',
                   buildChild: (_, [_]) => const SizedBox(),
@@ -111,7 +111,7 @@ void main() {
                   type: 'Image',
                   data: {
                     'url': 'https://example.com/header.png',
-                    'usageHint': 'header',
+                    'variant': 'header',
                   },
                   id: 'test_image_header',
                   buildChild: (_, [_]) => const SizedBox(),

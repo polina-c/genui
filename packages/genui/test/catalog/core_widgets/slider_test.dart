@@ -53,4 +53,40 @@ void main() {
       greaterThan(0.5),
     );
   });
+
+  testWidgets('Slider widget renders label', (WidgetTester tester) async {
+    final manager = SurfaceController(
+      catalogs: [
+        Catalog([CoreCatalogItems.slider], catalogId: 'test_catalog'),
+      ],
+    );
+    const surfaceId = 'testSurface';
+    final components = [
+      const Component(
+        id: 'root',
+        type: 'Slider',
+        properties: {
+          'value': {'path': '/myValue'},
+          'label': 'Volume',
+        },
+      ),
+    ];
+    manager.handleMessage(
+      UpdateComponents(surfaceId: surfaceId, components: components),
+    );
+    manager.handleMessage(
+      const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
+    );
+    manager.contextFor(surfaceId).dataModel.update(DataPath('/myValue'), 0.5);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Surface(genUiContext: manager.contextFor(surfaceId)),
+        ),
+      ),
+    );
+
+    expect(find.text('Volume'), findsOneWidget);
+  });
 }

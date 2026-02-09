@@ -169,4 +169,82 @@ void main() {
     expect(checkboxes.elementAt(1).value, true); // B
     expect(checkboxes.elementAt(2).value, false); // C
   });
+
+  testWidgets('ChoicePicker renders chips and supports filtering', (
+    WidgetTester tester,
+  ) async {
+    final catalog = Catalog([choicePicker], catalogId: 'std');
+    final controller = SurfaceController(catalogs: [catalog]);
+
+    final createSurface = const CreateSurface(
+      surfaceId: 'chipsTest',
+      catalogId: 'std',
+    );
+    final updateData = const UpdateDataModel(
+      surfaceId: 'chipsTest',
+      value: {
+        'tags': ['flutter'],
+      },
+      path: DataPath.root,
+    );
+    final updateComponents = const UpdateComponents(
+      surfaceId: 'chipsTest',
+      components: [
+        Component(
+          id: 'root',
+          type: 'ChoicePicker',
+          properties: {
+            'label': 'Tags',
+            'variant': 'multipleSelection',
+            'displayStyle': 'chips',
+            'filterable': true,
+            'options': [
+              {'label': 'Flutter', 'value': 'flutter'},
+              {'label': 'Dart', 'value': 'dart'},
+              {'label': 'GenUI', 'value': 'genui'},
+            ],
+            'value': {'path': '/tags'},
+          },
+        ),
+      ],
+    );
+
+    controller.handleMessage(createSurface);
+    controller.handleMessage(updateData);
+    controller.handleMessage(updateComponents);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Surface(genUiContext: controller.contextFor('chipsTest')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tags'), findsOneWidget);
+    // Find FilterChips
+    expect(find.byType(FilterChip), findsNWidgets(3));
+    expect(find.text('Flutter'), findsOneWidget);
+
+    // Verify 'Flutter' is selected
+    final FilterChip flutterChip = tester.widget<FilterChip>(
+      find.widgetWithText(FilterChip, 'Flutter'),
+    );
+    expect(flutterChip.selected, true);
+
+    // Verify filterable TextField exists
+    expect(find.byType(TextField), findsOneWidget);
+
+    // Filter by "Gen"
+    await tester.enterText(find.byType(TextField), 'Gen');
+    await tester.pumpAndSettle();
+
+    // Flutter and Dart should be hidden (or at least filtered out visually)
+    // The implementation might return SizedBox.shrink for filtered items.
+    // Let's verify visible widgets.
+    expect(find.text('GenUI'), findsOneWidget);
+    expect(find.text('Flutter'), findsNothing);
+    expect(find.text('Dart'), findsNothing);
+  });
 }

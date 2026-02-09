@@ -9,6 +9,7 @@ import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
 import '../../model/data_model.dart';
 import '../../primitives/simple_items.dart';
+import '../../widgets/widget_utilities.dart';
 
 final _schema = S.object(
   properties: {
@@ -16,6 +17,9 @@ final _schema = S.object(
     'value': A2uiSchemas.numberReference(),
     'min': S.number(description: 'The minimum value. Defaults to 0.0.'),
     'max': S.number(description: 'The maximum value. Defaults to 1.0.'),
+    'label': A2uiSchemas.stringReference(
+      description: 'The label for the slider.',
+    ),
   },
   required: ['component', 'value'],
 );
@@ -29,6 +33,14 @@ extension type _SliderData.fromMap(JsonMap _json) {
       ((_json['min'] ?? _json['minValue']) as num?)?.toDouble() ?? 0.0;
   double get max =>
       ((_json['max'] ?? _json['maxValue']) as num?)?.toDouble() ?? 1.0;
+  String? get label {
+    final Object? val = _json['label'];
+    if (val is String) return val;
+    if (val is Map && val.containsKey('value')) {
+      return val['value'] as String?;
+    }
+    return null;
+  }
 }
 
 /// A catalog item representing a Material Design slider.
@@ -42,6 +54,7 @@ extension type _SliderData.fromMap(JsonMap _json) {
 /// - `value`: The current value of the slider.
 /// - `min`: The minimum value of the slider. Defaults to 0.0.
 /// - `max`: The maximum value of the slider. Defaults to 1.0.
+/// - `label`: The label for the slider.
 final slider = CatalogItem(
   name: 'Slider',
   dataSchema: _schema,
@@ -55,6 +68,10 @@ final slider = CatalogItem(
     final ValueNotifier<num?> valueNotifier = itemContext.dataContext
         .subscribe<num>(DataPath(path));
 
+    final ValueNotifier<String?> labelNotifier = sliderData.label != null
+        ? itemContext.dataContext.subscribeToString(sliderData.label!)
+        : ValueNotifier(null);
+
     return ValueListenableBuilder<num?>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
@@ -67,7 +84,7 @@ final slider = CatalogItem(
           }
         }
 
-        return Padding(
+        final Widget sliderWidget = Padding(
           padding: const EdgeInsetsDirectional.only(end: 16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -88,6 +105,23 @@ final slider = CatalogItem(
               ),
             ],
           ),
+        );
+
+        return ValueListenableBuilder<String?>(
+          valueListenable: labelNotifier,
+          builder: (context, label, child) {
+            if (label == null || label.isEmpty) {
+              return sliderWidget;
+            }
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: Theme.of(context).textTheme.bodySmall),
+                sliderWidget,
+              ],
+            );
+          },
         );
       },
     );

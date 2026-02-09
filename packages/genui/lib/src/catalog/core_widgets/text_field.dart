@@ -25,7 +25,7 @@ final _schema = S.object(
     ),
     'label': A2uiSchemas.stringReference(),
     'variant': S.string(
-      enumValues: ['shortText', 'longText', 'number', 'date', 'obscured'],
+      enumValues: ['shortText', 'longText', 'number', 'obscured'],
     ),
     'checks': S.list(items: A2uiSchemas.validationCheck()),
     'validationRegexp': S.string(),
@@ -159,7 +159,6 @@ class _TextFieldState extends State<_TextField> {
       keyboardType: switch (widget.textFieldType) {
         'number' => TextInputType.number,
         'longText' => TextInputType.multiline,
-        'date' => TextInputType.datetime,
         _ => TextInputType.text,
       },
       onChanged: (val) {

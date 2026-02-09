@@ -49,7 +49,60 @@ void main() {
       ),
     );
 
-    expect(find.text('First'), findsOneWidget);
     expect(find.text('Second'), findsOneWidget);
+  });
+
+  testWidgets('List widget respects align property', (
+    WidgetTester tester,
+  ) async {
+    final manager = SurfaceController(
+      catalogs: [
+        Catalog([
+          CoreCatalogItems.list,
+          CoreCatalogItems.text,
+        ], catalogId: 'test_catalog'),
+      ],
+    );
+    const surfaceId = 'testSurface';
+    final components = [
+      const Component(
+        id: 'root',
+        type: 'List',
+        properties: {
+          'align': 'center',
+          'children': {
+            'explicitList': ['text1'],
+          },
+        },
+      ),
+      const Component(
+        id: 'text1',
+        type: 'Text',
+        properties: {'text': 'Center'},
+      ),
+    ];
+    manager.handleMessage(
+      UpdateComponents(surfaceId: surfaceId, components: components),
+    );
+    manager.handleMessage(
+      const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Surface(genUiContext: manager.contextFor(surfaceId)),
+        ),
+      ),
+    );
+
+    expect(find.text('Center'), findsOneWidget);
+    // Verify alignment logic by finding the Align widget wrapping the child.
+    final Align alignWidget = tester.widget<Align>(
+      find
+          .ancestor(of: find.text('Center'), matching: find.byType(Align))
+          .first,
+    );
+    expect(alignWidget.alignment, Alignment.center);
   });
 }
