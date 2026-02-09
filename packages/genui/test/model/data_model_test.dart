@@ -168,38 +168,6 @@ void main() {
       });
     });
 
-    group('subscribeToValue', () {
-      test('notifies on direct updates', () {
-        final ValueNotifier<int?> notifier = dataModel.subscribeToValue<int>(
-          DataPath('/a'),
-        );
-        int? value;
-        notifier.addListener(() => value = notifier.value);
-        dataModel.update(DataPath('/a'), 1);
-        expect(value, 1);
-      });
-
-      test('does not notify on child updates', () {
-        final ValueNotifier<Map<Object?, Object?>?> notifier = dataModel
-            .subscribeToValue<Map<Object?, Object?>>(DataPath('/a'));
-        var callCount = 0;
-        notifier.addListener(() => callCount++);
-        dataModel.update(DataPath('/a/b'), 1);
-        expect(callCount, 0);
-      });
-
-      test('does not notify on parent updates', () {
-        dataModel.update(DataPath('/a/b'), 1);
-        final ValueNotifier<int?> notifier = dataModel.subscribeToValue<int>(
-          DataPath('/a/b'),
-        );
-        var callCount = 0;
-        notifier.addListener(() => callCount++);
-        dataModel.update(DataPath('/a'), {'b': 1});
-        expect(callCount, 0);
-      });
-    });
-
     group('DataModel Update Parsing', () {
       test('parses contents with simple string', () {
         dataModel.update(DataPath.root, {'a': 'hello'});

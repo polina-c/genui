@@ -137,7 +137,7 @@ class DataContext {
 class DataModel {
   JsonMap _data = {};
   final Map<DataPath, ValueNotifier<Object?>> _subscriptions = {};
-  final Map<DataPath, ValueNotifier<Object?>> _valueSubscriptions = {};
+
   final List<VoidCallback> _cleanupCallbacks = [];
 
   /// The full contents of the data model.
@@ -189,20 +189,6 @@ class DataModel {
     return notifier;
   }
 
-  /// Subscribes to a specific absolute path in the data model, only notifying
-  /// when the value at that exact path changes.
-  ValueNotifier<T?> subscribeToValue<T>(DataPath absolutePath) {
-    genUiLogger.finer('DataModel.subscribeToValue: path=$absolutePath');
-    final T? initialValue = getValue<T>(absolutePath);
-    if (_valueSubscriptions.containsKey(absolutePath)) {
-      final notifier = _valueSubscriptions[absolutePath]! as ValueNotifier<T?>;
-      return notifier;
-    }
-    final notifier = ValueNotifier<T?>(initialValue);
-    _valueSubscriptions[absolutePath] = notifier;
-    return notifier;
-  }
-
   final List<VoidCallback> _externalSubscriptions = [];
 
   /// Binds an external state [source] to a [path] in the DataModel.
@@ -235,7 +221,7 @@ class DataModel {
         );
       } else {
         final ValueNotifier<T> notifier = source;
-        final ValueNotifier<T?> subscription = subscribeToValue<T>(path);
+        final ValueNotifier<T?> subscription = subscribe<T>(path);
 
         void onModelChanged() {
           final T? modelValue = subscription.value;
@@ -268,10 +254,6 @@ class DataModel {
       notifier.dispose();
     }
     _subscriptions.clear();
-    for (final ValueNotifier<Object?> notifier in _valueSubscriptions.values) {
-      notifier.dispose();
-    }
-    _valueSubscriptions.clear();
   }
 
   /// Retrieves a static, one-time value from the data model at the
@@ -369,9 +351,6 @@ class DataModel {
     if (_subscriptions.containsKey(path)) {
       _subscriptions[path]!.value = getValue(path);
     }
-    if (_valueSubscriptions.containsKey(path)) {
-      _valueSubscriptions[path]!.value = getValue(path);
-    }
 
     var parent = path;
     while (!parent.isAbsolute || parent.segments.isNotEmpty) {
@@ -387,11 +366,6 @@ class DataModel {
     for (final DataPath p in _subscriptions.keys) {
       if (p.startsWith(path) && p != path) {
         _subscriptions[p]!.value = getValue(p);
-      }
-    }
-    for (final DataPath p in _valueSubscriptions.keys) {
-      if (p.startsWith(path) && p != path) {
-        _valueSubscriptions[p]!.value = getValue(p);
       }
     }
   }
