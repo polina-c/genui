@@ -146,7 +146,8 @@ class _DateTimeInputState extends State<_DateTimeInput> {
     }
 
     for (final JsonMap check in widget.checks!) {
-      final bool isValid = widget.parser!.evaluateLogic(check);
+      final Object? condition = check['condition'];
+      final bool isValid = widget.parser!.evaluateCondition(condition);
       if (!isValid) {
         return check['message'] as String? ?? 'Invalid value';
       }

@@ -48,30 +48,25 @@ void main() {
         dataModel.update(DataPath('/count'), 42);
         expect(parser.parse(r'Count: ${/count}'), 'Count: 42');
       });
-
-      test('handles nested braces in generic way (?)', () {
-        // The parser logic for nested braces is simple depth counting
-        // It should handle ${func({})} if implemented
-      });
     });
 
-    group('evaluateLogic', () {
+    group('evaluateFunctionCall (Logic)', () {
       test('and', () {
         expect(
-          parser.evaluateLogic({
-            'and': [
-              {'true': null},
-              {'true': null},
-            ],
+          parser.evaluateFunctionCall({
+            'call': 'and',
+            'args': {
+              'values': [true, true],
+            },
           }),
           isTrue,
         );
         expect(
-          parser.evaluateLogic({
-            'and': [
-              {'true': null},
-              {'false': null},
-            ],
+          parser.evaluateFunctionCall({
+            'call': 'and',
+            'args': {
+              'values': [true, false],
+            },
           }),
           isFalse,
         );
@@ -79,20 +74,20 @@ void main() {
 
       test('or', () {
         expect(
-          parser.evaluateLogic({
-            'or': [
-              {'true': null},
-              {'false': null},
-            ],
+          parser.evaluateFunctionCall({
+            'call': 'or',
+            'args': {
+              'values': [false, true],
+            },
           }),
           isTrue,
         );
         expect(
-          parser.evaluateLogic({
-            'or': [
-              {'false': null},
-              {'false': null},
-            ],
+          parser.evaluateFunctionCall({
+            'call': 'or',
+            'args': {
+              'values': [false, false],
+            },
           }),
           isFalse,
         );
@@ -100,35 +95,54 @@ void main() {
 
       test('not', () {
         expect(
-          parser.evaluateLogic({
-            'not': {'true': null},
+          parser.evaluateFunctionCall({
+            'call': 'not',
+            'args': {'value': true},
           }),
           isFalse,
         );
         expect(
-          parser.evaluateLogic({
-            'not': {'false': null},
+          parser.evaluateFunctionCall({
+            'call': 'not',
+            'args': {'value': false},
           }),
           isTrue,
         );
       });
 
-      test('func', () {
-        // Need to register a function first or use a standard one
-        // Standard 'required' function
+      test('standard function', () {
+        // 'required' is a standard function
         expect(
-          parser.evaluateLogic({
-            'func': 'required',
+          parser.evaluateFunctionCall({
+            'call': 'required',
             'args': {'value': 'something'},
           }),
           isTrue,
         );
         expect(
-          parser.evaluateLogic({
-            'func': 'required',
+          parser.evaluateFunctionCall({
+            'call': 'required',
             'args': {'value': ''},
           }),
           isFalse,
+        );
+      });
+
+      test('nested function calls', () {
+        // not(and(true, false)) -> not(false) -> true
+        expect(
+          parser.evaluateFunctionCall({
+            'call': 'not',
+            'args': {
+              'value': {
+                'call': 'and',
+                'args': {
+                  'values': [true, false],
+                },
+              },
+            },
+          }),
+          isTrue,
         );
       });
     });

@@ -125,9 +125,8 @@ class _TextFieldState extends State<_TextField> {
     for (final JsonMap check in widget.checks!) {
       // Support both 'condition' wrapper (as seen in some samples) and direct
       // logic expression
-      final JsonMap logic = (check['condition'] as JsonMap?) ?? check;
-
-      final bool isValid = widget.parser!.evaluateLogic(logic);
+      final Object? condition = check['condition'];
+      final bool isValid = widget.parser!.evaluateCondition(condition);
       if (!isValid) {
         return check['message'] as String? ?? 'Invalid value';
       }
@@ -282,7 +281,7 @@ final textField = CatalogItem(
                   );
                 } else if (actionData.containsKey('functionCall')) {
                   final funcMap = actionData['functionCall'] as JsonMap;
-                  final callName = funcMap['func'] as String;
+                  final callName = funcMap['call'] as String;
                   if (callName == 'closeModal') {
                     Navigator.of(itemContext.buildContext).pop();
                     return;

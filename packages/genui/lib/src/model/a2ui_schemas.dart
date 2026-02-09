@@ -26,6 +26,9 @@ abstract final class A2uiSchemas {
           _formatNumberFunction(),
           _formatCurrencyFunction(),
           _formatDateFunction(),
+          _andFunction(),
+          _orFunction(),
+          _notFunction(),
         ],
       ),
     );
@@ -35,16 +38,16 @@ abstract final class A2uiSchemas {
     required String name,
     required String description,
     required String returnType,
-    required Schema parameters,
+    required Schema args,
   }) {
     return S.object(
+      description: description,
       properties: {
-        'name': S.string(constValue: name),
-        'description': S.string(constValue: description),
+        'call': S.string(constValue: name),
+        'args': args,
         'returnType': S.string(constValue: returnType),
-        'parameters': parameters,
       },
-      required: ['name', 'description', 'returnType', 'parameters'],
+      required: ['call', 'args'],
     );
   }
 
@@ -53,9 +56,9 @@ abstract final class A2uiSchemas {
       name: 'required',
       description: 'Checks that the value is not null, undefined, or empty.',
       returnType: 'boolean',
-      parameters: S.list(
-        items: S.combined(anyOf: [S.any()]), // DynamicValue reference
-        minItems: 1,
+      args: S.object(
+        properties: {'value': S.any(description: 'The value to check.')},
+        required: ['value'],
       ),
     );
   }
@@ -65,14 +68,14 @@ abstract final class A2uiSchemas {
       name: 'regex',
       description: 'Checks that the value matches a regular expression string.',
       returnType: 'boolean',
-      parameters: S.list(
-        items: S.combined(
-          oneOf: [
-            S.any(), // DynamicValue
-            S.string(description: 'The regex pattern to match against.'),
-          ],
-        ),
-        minItems: 2,
+      args: S.object(
+        properties: {
+          'value': S.any(), // DynamicString
+          'pattern': S.string(
+            description: 'The regex pattern to match against.',
+          ),
+        },
+        required: ['value', 'pattern'],
       ),
     );
   }
@@ -82,35 +85,19 @@ abstract final class A2uiSchemas {
       name: 'length',
       description: 'Checks string length constraints.',
       returnType: 'boolean',
-      parameters: S.list(
-        items: S.combined(
-          oneOf: [
-            S.any(), // DynamicValue
-            S.combined(
-              allOf: [
-                S.object(
-                  properties: {
-                    'min': S.integer(
-                      minimum: 0,
-                      description: 'The minimum allowed length.',
-                    ),
-                    'max': S.integer(
-                      minimum: 0,
-                      description: 'The maximum allowed length.',
-                    ),
-                  },
-                ),
-                S.combined(
-                  anyOf: [
-                    S.object(required: ['min']),
-                    S.object(required: ['max']),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-        minItems: 2,
+      args: S.object(
+        properties: {
+          'value': S.any(), // DynamicString
+          'min': S.integer(
+            minimum: 0,
+            description: 'The minimum allowed length.',
+          ),
+          'max': S.integer(
+            minimum: 0,
+            description: 'The maximum allowed length.',
+          ),
+        },
+        required: ['value'],
       ),
     );
   }
@@ -120,29 +107,13 @@ abstract final class A2uiSchemas {
       name: 'numeric',
       description: 'Checks numeric range constraints.',
       returnType: 'boolean',
-      parameters: S.list(
-        items: S.combined(
-          oneOf: [
-            S.any(), // DynamicValue
-            S.combined(
-              allOf: [
-                S.object(
-                  properties: {
-                    'min': S.number(description: 'The minimum allowed value.'),
-                    'max': S.number(description: 'The maximum allowed value.'),
-                  },
-                ),
-                S.combined(
-                  anyOf: [
-                    S.object(required: ['min']),
-                    S.object(required: ['max']),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-        minItems: 2,
+      args: S.object(
+        properties: {
+          'value': S.any(), // DynamicNumber
+          'min': S.number(description: 'The minimum allowed value.'),
+          'max': S.number(description: 'The maximum allowed value.'),
+        },
+        required: ['value'],
       ),
     );
   }
@@ -152,9 +123,11 @@ abstract final class A2uiSchemas {
       name: 'email',
       description: 'Checks that the value is a valid email address.',
       returnType: 'boolean',
-      parameters: S.list(
-        items: S.combined(anyOf: [S.any()]), // DynamicValue
-        minItems: 1,
+      args: S.object(
+        properties: {
+          'value': S.any(), // DynamicString
+        },
+        required: ['value'],
       ),
     );
   }
@@ -165,12 +138,10 @@ abstract final class A2uiSchemas {
       description:
           '''Performs string interpolation of data model values and other functions.''',
       returnType: 'string',
-      // Note: json_schema_builder doesn't support 'additionalItems' or tuple
-      // validation easily in S.list. We use a generic list of DynamicValue for
-      // now.
-      parameters: S.list(
-        items: S.any(), // DynamicValue
-        minItems: 1,
+      args: S.object(
+        properties: {'value': S.any(description: 'The string to format.')},
+        required: ['value'],
+        additionalProperties: true, // Allow other interpolation args
       ),
     );
   }
@@ -181,20 +152,18 @@ abstract final class A2uiSchemas {
       description:
           'Formats a number with the specified grouping and decimal precision.',
       returnType: 'string',
-      parameters: S.list(
-        items: S.combined(
-          oneOf: [
-            S.number(description: 'The number to format.'), // DynamicNumber
-            S.number(
-              description: 'Optional. The number of decimal places to show.',
-            ), // DynamicNumber
-            S.boolean(
-              description:
-                  '''Optional. If true, uses locale-specific grouping separators.''',
-            ), // DynamicBoolean
-          ],
-        ),
-        minItems: 1,
+      args: S.object(
+        properties: {
+          'value': S.number(description: 'The number to format.'),
+          'decimalPlaces': S.integer(
+            description: 'Optional. The number of decimal places to show.',
+          ),
+          'useGrouping': S.boolean(
+            description:
+                '''Optional. If true, uses locale-specific grouping separators.''',
+          ),
+        },
+        required: ['value'],
       ),
     );
   }
@@ -204,16 +173,14 @@ abstract final class A2uiSchemas {
       name: 'formatCurrency',
       description: 'Formats a number as a currency string.',
       returnType: 'string',
-      parameters: S.list(
-        items: S.combined(
-          oneOf: [
-            S.number(description: 'The monetary amount.'), // DynamicNumber
-            S.string(
-              description: "The ISO 4217 currency code (e.g., 'USD', 'EUR').",
-            ), // DynamicString
-          ],
-        ),
-        minItems: 2,
+      args: S.object(
+        properties: {
+          'value': S.number(description: 'The monetary amount.'),
+          'currencyCode': S.string(
+            description: "The ISO 4217 currency code (e.g., 'USD', 'EUR').",
+          ),
+        },
+        required: ['value', 'currencyCode'],
       ),
     );
   }
@@ -223,52 +190,62 @@ abstract final class A2uiSchemas {
       name: 'formatDate',
       description: 'Formats a timestamp into a string using a pattern.',
       returnType: 'string',
-      parameters: S.list(
-        items: S.combined(
-          oneOf: [
-            S.string(
-              description: 'The ISO 8601 timestamp string.',
-            ), // DynamicString
-            S.string(
-              description: 'The format pattern (e.g. "MM/dd/yyyy").',
-            ), // DynamicString
-          ],
-        ),
-        minItems: 2,
+      args: S.object(
+        properties: {
+          'value': S.any(description: 'The date to format.'),
+          'pattern': S.string(
+            description: 'The format pattern (e.g. "MM/dd/yyyy").',
+          ),
+        },
+        required: ['value', 'pattern'],
       ),
+    );
+  }
+
+  static Schema _andFunction() {
+    return _functionDefinition(
+      name: 'and',
+      description: 'Performs logical AND on a list of values.',
+      returnType: 'boolean',
+      args: S.object(
+        properties: {'values': S.list(items: S.any(), minItems: 2)},
+        required: ['values'],
+      ),
+    );
+  }
+
+  static Schema _orFunction() {
+    return _functionDefinition(
+      name: 'or',
+      description: 'Performs logical OR on a list of values.',
+      returnType: 'boolean',
+      args: S.object(
+        properties: {'values': S.list(items: S.any(), minItems: 2)},
+        required: ['values'],
+      ),
+    );
+  }
+
+  static Schema _notFunction() {
+    return _functionDefinition(
+      name: 'not',
+      description: 'Performs logical NOT on a value.',
+      returnType: 'boolean',
+      args: S.object(properties: {'value': S.any()}, required: ['value']),
     );
   }
 
   /// Schema for a function call.
   static Schema functionCall() => S.object(
     properties: {
-      'func': S.string(description: 'The name of the function to call.'),
-      'args': S.list(
+      'call': S.string(description: 'The name of the function to call.'),
+      'args': S.object(
         description: 'Arguments to pass to the function.',
-        items: S.any(),
+        additionalProperties: true,
       ),
     },
-    required: ['func', 'args'],
+    required: ['call'],
   );
-
-  /// Schema for a logic expression used in validation.
-  static Schema logicExpression({String? description}) {
-    return S.object(
-      description: description,
-      properties: {
-        'func': S.string(description: 'Function to call.'),
-        'args': S.list(
-          items: S.any(),
-          description: 'Arguments for the function.',
-        ),
-        'and': S.list(items: S.object(), description: 'Logical AND.'),
-        'or': S.list(items: S.object(), description: 'Logical OR.'),
-        'not': S.object(description: 'Logical NOT.'),
-        'true': S.boolean(description: 'Always true.'),
-        'false': S.boolean(description: 'Always false.'),
-      },
-    );
-  }
 
   /// Schema for a validation check, including logic and an error message.
   static Schema validationCheck({String? description}) {
@@ -276,18 +253,13 @@ abstract final class A2uiSchemas {
       description: description,
       properties: {
         'message': S.string(description: 'Error message if validation fails.'),
-        'func': S.string(description: 'Function to call.'),
-        'args': S.list(
-          items: S.any(),
-          description: 'Arguments for the function.',
+        'condition': S.any(
+          description:
+              'DynamicBoolean condition (FunctionCall, DataBinding, or '
+              'literal).',
         ),
-        'and': S.list(items: S.object(), description: 'Logical AND.'),
-        'or': S.list(items: S.object(), description: 'Logical OR.'),
-        'not': S.object(description: 'Logical NOT.'),
-        'true': S.boolean(description: 'Always true.'),
-        'false': S.boolean(description: 'Always false.'),
       },
-      required: ['message'],
+      required: ['message', 'condition'],
     );
   }
 

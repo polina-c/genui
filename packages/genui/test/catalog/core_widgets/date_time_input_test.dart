@@ -204,9 +204,11 @@ void main() {
         'value': {'path': '/myDate'},
         'checks': [
           {
-            'call': 'required',
-            'args': {
-              'value': {'path': '/myDate'},
+            'condition': {
+              'call': 'required',
+              'args': {
+                'value': {'path': '/myDate'},
+              },
             },
             'message': 'Date is required',
           },

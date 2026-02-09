@@ -34,51 +34,36 @@ class ExpressionParser {
     return _parseStringWithInterpolations(input);
   }
 
-  /// Evaluates a logic expression against the current context.
+  /// Evaluates a dynamic boolean condition.
   ///
-  /// Supports `and`, `or`, `not`, `call`, `true`, and `false` keys in the
-  /// [expression] map.
+  /// The [condition] can be:
+  /// - [bool]: Returns the boolean value directly.
+  /// - [Map]:
+  ///   - If it has a 'call' key, it is evaluated as a function call.
+  ///   - If it has a 'path' key, it is evaluated as a data binding.
+  /// - [String]: Parsed as an expression, then checked for truthiness.
+  bool evaluateCondition(Object? condition) {
+    if (condition == null) return false;
+    if (condition is bool) return condition;
 
-  bool evaluateLogic(Object? expression) {
-    if (expression is bool) return expression;
-    if (expression is! Map) return false;
-    final jsonEx = expression as JsonMap;
-
-    if (jsonEx.containsKey('true')) return true;
-    if (jsonEx.containsKey('false')) return false;
-
-    if (jsonEx.containsKey('and')) {
-      final Object? list = jsonEx['and'];
-      if (list is List) {
-        return list.every(evaluateLogic);
+    Object? result;
+    if (condition is String) {
+      result = parse(condition);
+    } else if (condition is Map) {
+      if (condition.containsKey('call')) {
+        result = evaluateFunctionCall(condition as JsonMap);
+      } else if (condition.containsKey('path')) {
+        result = _resolvePath(condition['path'] as String);
+      } else {
+        // Unknown map format, return false safely.
+        return false;
       }
-      return false;
+    } else {
+      result = condition;
     }
 
-    if (jsonEx.containsKey('or')) {
-      final Object? list = jsonEx['or'];
-      if (list is List) {
-        return list.any(evaluateLogic);
-      }
-      return false;
-    }
-
-    if (jsonEx.containsKey('not')) {
-      return !evaluateLogic(jsonEx['not']);
-    }
-
-    if (jsonEx.containsKey('call') || jsonEx.containsKey('func')) {
-      final Object? result = evaluateFunctionCall(jsonEx);
-      return result == true;
-    }
-
-    // Support DataBinding (path)
-    if (jsonEx.containsKey('path')) {
-      final Object? val = _resolvePath(jsonEx['path'] as String);
-      return val == true;
-    }
-
-    return false;
+    if (result is bool) return result;
+    return result != null;
   }
 
   /// Evaluates a function call defined in [callDefinition].
@@ -86,7 +71,12 @@ class ExpressionParser {
   /// The [callDefinition] must contain a 'call' key with the function name
   /// and an optional 'args' key with a map of arguments.
   Object? evaluateFunctionCall(JsonMap callDefinition) {
-    final name = (callDefinition['call'] ?? callDefinition['func']) as String;
+    final name = callDefinition['call'] as String?;
+    if (name == null) {
+      // Not a function call or missing 'call' property.
+      return null;
+    }
+
     final Map<String, Object?> args = {};
     final Object? argsJson = callDefinition['args'];
 
@@ -98,23 +88,17 @@ class ExpressionParser {
           args[argName] = parse(value);
         } else if (value is Map && value.containsKey('path')) {
           args[argName] = _resolvePath(value['path'] as String);
-        } else if (value is Map &&
-            (value.containsKey('call') || value.containsKey('func'))) {
+        } else if (value is Map && value.containsKey('call')) {
           // Recursive evaluation for nested calls
           args[argName] = evaluateFunctionCall(value as JsonMap);
         } else {
           args[argName] = value;
         }
       }
-    } else if (argsJson is List) {
-      // Graceful fallback for legacy list args - best effort or error?
-      // Since we are enforcing named args, this might fail unless we map by
-      // index?
-      // But we don't know parameter names here.
-      // We'll log a warning and possibly fail.
+    } else if (argsJson != null) {
       genUiLogger.warning(
-        'Function $name called with List args, expected Map. '
-        'Arguments dropped.',
+        'Function $name called with invalid args type: '
+        '${argsJson.runtimeType}. Expected Map. Arguments dropped.',
       );
     }
 
@@ -234,10 +218,6 @@ class ExpressionParser {
         final String valueStr = segment.substring(colonIndex + 1).trim();
         args[key] = _parseArg(valueStr, depth);
       } else {
-        // Fallback for positional args? Or ignore?
-        // We could support implicit value arg if strictly 1 arg and no name?
-        // But let's stick to named.
-        // Effectively we ignore or treat as error.
         genUiLogger.warning(
           'Invalid named argument format (missing colon): $segment',
         );

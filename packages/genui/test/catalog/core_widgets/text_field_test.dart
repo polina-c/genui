@@ -134,10 +134,12 @@ void main() {
           'checks': [
             {
               'message': 'Must be at least 6 chars',
-              'call': 'length',
-              'args': {
-                'value': {'path': 'inputValue'},
-                'min': 6,
+              'condition': {
+                'call': 'length',
+                'args': {
+                  'value': {'path': 'inputValue'},
+                  'min': 6,
+                },
               },
             },
           ],
