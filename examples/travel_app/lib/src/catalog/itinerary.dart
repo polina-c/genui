@@ -157,36 +157,20 @@ final itinerary = CatalogItem(
         {
           "id": "root",
           "component": "Itinerary",
-          "title": {
-            "literalString": "My Awesome Trip"
-          },
-          "subheading": {
-            "literalString": "A 3-day adventure"
-          },
+          "title": "My Awesome Trip",
+          "subheading": "A 3-day adventure",
           "imageChildId": "image1",
           "days": [
             {
-              "title": {
-                "literalString": "Day 1"
-              },
-              "subtitle": {
-                "literalString": "Arrival and Exploration"
-              },
-              "description": {
-                "literalString": "Welcome to the city!"
-              },
+              "title": "Day 1",
+              "subtitle": "Arrival and Exploration",
+              "description": "Welcome to the city!",
               "imageChildId": "image2",
               "entries": [
                 {
-                  "title": {
-                    "literalString": "Check-in to Hotel"
-                  },
-                  "bodyText": {
-                    "literalString": "Check-in to your hotel and relax."
-                  },
-                  "time": {
-                    "literalString": "3:00 PM"
-                  },
+                  "title": "Check-in to Hotel",
+                  "bodyText": "Check-in to your hotel and relax.",
+                  "time": "3:00 PM",
                   "type": "accommodation",
                   "status": "noBookingRequired"
                 }
@@ -197,16 +181,12 @@ final itinerary = CatalogItem(
         {
           "id": "image1",
           "component": "Image",
-          "url": {
-            "literalString": "assets/travel_images/canyonlands_national_park_utah.jpg"
-          }
+          "url": "assets/travel_images/canyonlands_national_park_utah.jpg"
         },
         {
           "id": "image2",
           "component": "Image",
-          "url": {
-            "literalString": "assets/travel_images/brooklyn_bridge_new_york.jpg"
-          }
+          "url": "assets/travel_images/brooklyn_bridge_new_york.jpg"
         }
       ]
     ''',

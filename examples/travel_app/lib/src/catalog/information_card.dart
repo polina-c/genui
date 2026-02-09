@@ -56,23 +56,15 @@ final informationCard = CatalogItem(
         {
           "id": "root",
           "component": "InformationCard",
-          "title": {
-            "literalString": "Beautiful Scenery"
-          },
-          "subtitle": {
-            "literalString": "A stunning view"
-          },
-          "body": {
-            "literalString": "This is a beautiful place to visit in the summer."
-          },
+          "title": "Beautiful Scenery",
+          "subtitle": "A stunning view",
+          "body": "This is a beautiful place to visit in the summer.",
           "imageChildId": "image1"
         },
         {
           "id": "image1",
           "component": "Image",
-          "url": {
-            "literalString": "assets/travel_images/canyonlands_national_park_utah.jpg"
-          }
+          "url": "assets/travel_images/canyonlands_national_park_utah.jpg"
         }
       ]
     ''',

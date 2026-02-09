@@ -27,7 +27,7 @@ void main() {
 name: Test Sample
 description: A test description
 ---
-{"surfaceUpdate": {"surfaceId": "default", "components": [{"id": "text1", "component": {"Text": {"text": {"literalString": "Hello"}}}}]}}
+{"surfaceUpdate": {"surfaceId": "default", "components": [{"id": "text1", "component": {"Text": {"text": "Hello"}}}]}}
 ''');
 
     await tester.pumpWidget(CatalogGalleryApp(samplesDir: samplesDir, fs: fs));

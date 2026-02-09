@@ -17,14 +17,14 @@ void main() {
         final Map<String, List<Map<String, Object>>> data = {
           'items': [
             {
-              'description': {'literalString': 'Item 1'},
+              'description': 'Item 1',
               'imageChildId': 'imageId1',
               'action': {
                 'event': {'name': 'selectItem'},
               },
             },
             {
-              'description': {'literalString': 'Item 2'},
+              'description': 'Item 2',
               'imageChildId': 'imageId2',
               'action': {
                 'event': {'name': 'selectItem'},
@@ -87,7 +87,7 @@ void main() {
         final Map<String, List<Map<String, Object>>> data = {
           'items': [
             {
-              'description': {'literalString': 'Item 1'},
+              'description': 'Item 1',
               'imageChildId': 'imageId1',
               'listingSelectionId': 'listing1',
               'action': {
@@ -95,7 +95,7 @@ void main() {
               },
             },
             {
-              'description': {'literalString': 'Item 2'},
+              'description': 'Item 2',
               'imageChildId': 'imageId2',
               'action': {
                 'event': {'name': 'selectItem'},

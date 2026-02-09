@@ -48,9 +48,7 @@ final textInputChip = CatalogItem(
         {
           "id": "root",
           "component": "TextInputChip",
-          "value": {
-            "literalString": "John Doe"
-          },
+          "value": "John Doe",
           "label": "Enter your name"
         }
       ]

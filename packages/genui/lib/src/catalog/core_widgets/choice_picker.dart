@@ -63,7 +63,7 @@ final choicePicker = CatalogItem(
         : '${itemContext.id}.value';
 
     final ValueNotifier<Object?> selectionsNotifier = itemContext.dataContext
-        .subscribeToValue<Object>({'path': path});
+        .subscribe<Object>(DataPath(path));
 
     final isMutuallyExclusive = data.variant == 'mutuallyExclusive';
 

@@ -60,9 +60,7 @@ final inputGroup = CatalogItem(
         {
           "id": "root",
           "component": "InputGroup",
-          "submitLabel": {
-            "literalString": "Submit"
-          },
+          "submitLabel": "Submit",
           "children": [
             "check_in",
             "check_out",
@@ -78,9 +76,7 @@ final inputGroup = CatalogItem(
         {
           "id": "check_in",
           "component": "DateInputChip",
-          "value": {
-            "literalString": "2026-07-22"
-          },
+          "value": "2026-07-22",
           "label": "Check-in date"
         },
         {
@@ -91,9 +87,7 @@ final inputGroup = CatalogItem(
         {
           "id": "text_input1",
           "component": "TextInputChip",
-          "value": {
-            "literalString": "John Doe"
-          },
+          "value": "John Doe",
           "label": "Enter your name"
         },
         {

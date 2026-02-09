@@ -44,35 +44,21 @@ class OptionalValueBuilder<T> extends StatelessWidget {
 /// Extension methods for [DataContext] to simplify data binding.
 extension DataContextExtensions on DataContext {
   /// Subscribes to a value, which can be a literal or a data-bound path.
-  ValueNotifier<T?> subscribeToValue<T>(Object? value) {
-    genUiLogger.info('DataContext.subscribeToValue: value=$value');
+  /// Subscribes to a value, which can be a literal or a data-bound path.
+  ValueNotifier<T?> subscribe<T>(Object? value) {
+    genUiLogger.info('DataContext.subscribe: value=$value');
     if (value == null) return ValueNotifier<T?>(null);
 
     if (value is Map) {
       if (value.containsKey('path')) {
         final path = value['path'] as String;
-        return subscribe<T>(DataPath(path));
-      }
-      if (value.containsKey('literalString')) {
-        return ValueNotifier<T?>(value['literalString'] as T?);
-      }
-      if (value.containsKey('literalNumber')) {
-        return ValueNotifier<T?>(value['literalNumber'] as T?);
-      }
-      if (value.containsKey('literalBoolean')) {
-        return ValueNotifier<T?>(value['literalBoolean'] as T?);
+        // Explicitly cast to DataContext to ensure we call the instance method
+        // instead of recursively calling this extension method.
+        return this.subscribe<T>(DataPath(path));
       }
     }
 
-    try {
-      return ValueNotifier<T?>(value as T?);
-    } catch (e) {
-      genUiLogger.warning(
-        'DataContext.subscribeToValue: value $value is not of type $T. '
-        'Returning null.',
-      );
-      return ValueNotifier<T?>(null);
-    }
+    return ValueNotifier<T?>(value as T?);
   }
 
   /// Subscribes to a string value, which can be a literal or a data-bound path.
@@ -80,37 +66,40 @@ extension DataContextExtensions on DataContext {
   /// This method is robust against type mismatches in the data model. If the
   /// underlying value is not a String, it will be converted using [toString].
   ValueNotifier<String?> subscribeToString(Object? value) {
+    debugPrint(
+      'DEBUG: subscribeToString value=$value type=${value.runtimeType}',
+    );
     if (value is Map && value.containsKey('path')) {
-      final ValueNotifier<Object?> raw = subscribeToValue<Object?>(value);
+      final ValueNotifier<Object?> raw = subscribe<Object?>(value);
       return _ToStringNotifier(raw);
     }
-    return subscribeToValue<String>(value);
+    return subscribe<String>(value);
   }
 
   /// Subscribes to a boolean value, which can be a literal or a data-bound
   /// path.
   ValueNotifier<bool?> subscribeToBool(Object? value) {
     if (value is Map && value.containsKey('path')) {
-      final ValueNotifier<Object?> raw = subscribeToValue<Object?>(value);
+      final ValueNotifier<Object?> raw = subscribe<Object?>(value);
       return _ToBoolNotifier(raw);
     }
-    return subscribeToValue<bool>(value);
+    return subscribe<bool>(value);
   }
 
   /// Subscribes to a list of objects, which can be a literal or a data-bound
   /// path.
   ValueNotifier<List<Object?>?> subscribeToObjectArray(Object? value) {
-    return subscribeToValue<List<Object?>>(value);
+    return subscribe<List<Object?>>(value);
   }
 
   /// Subscribes to a number value, which can be a literal or a data-bound
   /// path.
   ValueNotifier<num?> subscribeToNumber(Object? value) {
     if (value is Map && value.containsKey('path')) {
-      final ValueNotifier<Object?> raw = subscribeToValue<Object?>(value);
+      final ValueNotifier<Object?> raw = subscribe<Object?>(value);
       return _ToNumberNotifier(raw);
     }
-    return subscribeToValue<num>(value);
+    return subscribe<num>(value);
   }
 }
 

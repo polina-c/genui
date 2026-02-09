@@ -301,16 +301,12 @@ abstract final class A2uiSchemas {
       description: 'A literal string value.',
       enumValues: enumValues,
     );
-    final verboseLiteral = S.object(
-      properties: {'literalString': S.string(enumValues: enumValues)},
-      required: ['literalString'],
-    );
     final Schema binding = dataBindingSchema(
       description: 'A path to a string.',
     );
     final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding, function],
+      oneOf: [literal, binding, function],
       description: description,
     );
   }
@@ -319,16 +315,12 @@ abstract final class A2uiSchemas {
   /// data-bound path to a number in the DataModel.
   static Schema numberReference({String? description}) {
     final literal = S.number(description: 'A literal number value.');
-    final verboseLiteral = S.object(
-      properties: {'literalNumber': S.number()},
-      required: ['literalNumber'],
-    );
     final Schema binding = dataBindingSchema(
       description: 'A path to a number.',
     );
     final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding, function],
+      oneOf: [literal, binding, function],
       description: description,
     );
   }
@@ -337,16 +329,12 @@ abstract final class A2uiSchemas {
   /// data-bound path to a boolean in the DataModel.
   static Schema booleanReference({String? description}) {
     final literal = S.boolean(description: 'A literal boolean value.');
-    final verboseLiteral = S.object(
-      properties: {'literalBoolean': S.boolean()},
-      required: ['literalBoolean'],
-    );
     final Schema binding = dataBindingSchema(
       description: 'A path to a boolean.',
     );
     final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding, function],
+      oneOf: [literal, binding, function],
       description: description,
     );
   }
@@ -412,16 +400,12 @@ abstract final class A2uiSchemas {
   /// data-bound path to an array of strings.
   static Schema stringArrayReference({String? description}) {
     final literal = S.list(items: S.string());
-    final verboseLiteral = S.object(
-      properties: {'literalArray': S.list(items: S.string())},
-      required: ['literalArray'],
-    );
     final Schema binding = dataBindingSchema(
       description: 'A path to a string list.',
     );
     final Schema function = functionCall();
     return S.combined(
-      oneOf: [literal, verboseLiteral, binding, function],
+      oneOf: [literal, binding, function],
       description: description,
     );
   }

@@ -89,12 +89,10 @@ final checkboxFilterChipsInput = CatalogItem(
             "Pool",
             "Parking"
           ],
-          "selectedOptions": {
-            "literalArray": [
-              "Wifi",
-              "Gym"
-            ]
-          }
+          "selectedOptions": [
+            "Wifi",
+            "Gym"
+          ]
         }
       ]
     ''',
@@ -135,10 +133,6 @@ final checkboxFilterChipsInput = CatalogItem(
         if (effectiveSelections == null) {
           if (selectedOptionsRef is List) {
             effectiveSelections = selectedOptionsRef;
-          } else if (selectedOptionsRef is Map &&
-              selectedOptionsRef.containsKey('literalArray')) {
-            effectiveSelections =
-                selectedOptionsRef['literalArray'] as List<Object?>;
           }
         }
 

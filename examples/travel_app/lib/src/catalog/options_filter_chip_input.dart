@@ -82,9 +82,7 @@ final optionsFilterChipInput = CatalogItem(
           "component": "OptionsFilterChipInput",
           "chipLabel": "Budget",
           "options": ["Low", "Medium", "High"],
-          "value": {
-            "literalString": "Medium"
-          }
+          "value": "Medium"
         }
       ]
     ''',

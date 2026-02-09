@@ -102,7 +102,7 @@ final listingsBooker = CatalogItem(
           'id': 'root',
           'component': 'ListingsBooker',
           'listingSelectionIds': [listingSelectionId1, listingSelectionId2],
-          'itineraryName': {'literalString': 'Dart and Flutter deep dive'},
+          'itineraryName': 'Dart and Flutter deep dive',
         },
       ]);
     },

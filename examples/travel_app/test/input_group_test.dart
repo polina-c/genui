@@ -13,7 +13,7 @@ void main() {
       'renders children and dispatches submit event on button press',
       (WidgetTester tester) async {
         final Map<String, Object> data = {
-          'submitLabel': {'literalString': 'Submit'},
+          'submitLabel': 'Submit',
           'children': ['child1', 'child2'],
           'action': {
             'event': {'name': 'submitAction'},
@@ -69,7 +69,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final Map<String, Object> data = {
-        'submitLabel': {'literalString': 'Submit'},
+        'submitLabel': 'Submit',
         'children': <String>[],
         'action': {
           'event': {'name': 'submitAction'},

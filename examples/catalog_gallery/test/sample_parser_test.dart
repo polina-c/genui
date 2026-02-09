@@ -12,7 +12,7 @@ void main() {
 name: Test Sample
 description: A test description
 ---
-{"version": "v0.9", "updateComponents": {"surfaceId": "default", "components": [{"id": "text1", "component": "Text", "text": {"literalString": "Hello"}}]}}
+{"version": "v0.9", "updateComponents": {"surfaceId": "default", "components": [{"id": "text1", "component": "Text", "text": "Hello"}]}}
 {"version": "v0.9", "createSurface": {"surfaceId": "default", "catalogId": "a2ui.org:standard_catalog_0_8_0"}}
 ''';
 
