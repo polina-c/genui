@@ -467,7 +467,7 @@ Here is an example of creating a trip planner UI.
       {
         "id": "mexico_city_image",
         "component": "Image",
-        "url": { "literalString": "assets/travel_images/mexico_city.jpg" }
+        "url": "assets/travel_images/mexico_city.jpg"
       },
       {
         "id": "itinerary_details",
@@ -486,7 +486,7 @@ Here is an example of creating a trip planner UI.
       {
         "id": "day1_image",
         "component": "Image",
-        "url": { "literalString": "assets/travel_images/mexico_city.jpg" }
+        "url": "assets/travel_images/mexico_city.jpg"
       },
       {
         "id": "day1_entry1",
