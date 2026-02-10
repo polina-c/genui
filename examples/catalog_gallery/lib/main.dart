@@ -41,7 +41,10 @@ class CatalogGalleryApp extends StatefulWidget {
     super.key,
     this.samplesDir,
     this.fs = const LocalFileSystem(),
+    this.splashFactory,
   });
+
+  final InteractiveInkFeatureFactory? splashFactory;
 
   @override
   State<CatalogGalleryApp> createState() => _CatalogGalleryAppState();
@@ -56,8 +59,13 @@ class _CatalogGalleryAppState extends State<CatalogGalleryApp> {
         widget.samplesDir != null && widget.samplesDir!.existsSync();
 
     return MaterialApp(
-      theme: ThemeData(
+      theme: ThemeData.light().copyWith(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        splashFactory: widget.splashFactory,
+      ),
+      darkTheme: ThemeData.dark().copyWith(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        splashFactory: widget.splashFactory,
       ),
       home: DefaultTabController(
         length: showSamples ? 2 : 1,

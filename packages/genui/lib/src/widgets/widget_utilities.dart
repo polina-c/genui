@@ -67,9 +67,6 @@ extension DataContextExtensions on DataContext {
   /// This method is robust against type mismatches in the data model. If the
   /// underlying value is not a String, it will be converted using [toString].
   ValueNotifier<String?> subscribeToString(Object? value) {
-    debugPrint(
-      'DEBUG: subscribeToString value=$value type=${value.runtimeType}',
-    );
     if (value is Map && value.containsKey('path')) {
       final ValueNotifier<Object?> raw = subscribe<Object?>(value);
       return _ToStringNotifier(raw);

@@ -6,14 +6,16 @@ import 'package:catalog_gallery/main.dart';
 import 'package:file/memory.dart';
 import 'package:file/src/interface/directory.dart';
 import 'package:file/src/interface/file.dart';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('Smoke test', (WidgetTester tester) async {
     final fs = MemoryFileSystem();
     // Build the app and trigger a frame.
-    await tester.pumpWidget(CatalogGalleryApp(fs: fs));
+    await tester.pumpWidget(
+      CatalogGalleryApp(fs: fs, splashFactory: NoSplash.splashFactory),
+    );
     expect(find.text('Catalog Gallery'), findsOneWidget);
   });
 
@@ -30,7 +32,13 @@ description: A test description
 {"surfaceUpdate": {"surfaceId": "default", "components": [{"id": "text1", "component": {"Text": {"text": "Hello"}}}]}}
 ''');
 
-    await tester.pumpWidget(CatalogGalleryApp(samplesDir: samplesDir, fs: fs));
+    await tester.pumpWidget(
+      CatalogGalleryApp(
+        samplesDir: samplesDir,
+        fs: fs,
+        splashFactory: NoSplash.splashFactory,
+      ),
+    );
     await tester.pumpAndSettle();
 
     // Verify that the "Samples" tab is present (since we provided a valid

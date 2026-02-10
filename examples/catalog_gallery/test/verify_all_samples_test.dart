@@ -31,7 +31,6 @@ void main() {
 
       for (final file in files) {
         try {
-          print('Parsing ${file.path}...');
           await SampleParser.parseFile(file);
         } catch (e, s) {
           fail('Failed to parse ${file.path}: $e\n$s');
