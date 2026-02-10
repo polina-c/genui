@@ -31,7 +31,20 @@ class ExpressionParser {
     if (!input.contains(r'${')) {
       return input;
     }
-    return _parseStringWithInterpolations(input);
+    return _parseStringWithInterpolations(input, null);
+  }
+
+  /// Extracts all data paths referenced in the given input string.
+  ///
+  /// This method parses the string without evaluating functions, collecting
+  /// all paths that would be accessed during evaluation.
+  Set<DataPath> extractDependencies(String input) {
+    if (!input.contains(r'${')) {
+      return {};
+    }
+    final Set<DataPath> dependencies = {};
+    _parseStringWithInterpolations(input, dependencies);
+    return dependencies;
   }
 
   /// Evaluates a dynamic boolean condition.
@@ -53,7 +66,7 @@ class ExpressionParser {
       if (condition.containsKey('call')) {
         result = evaluateFunctionCall(condition as JsonMap);
       } else if (condition.containsKey('path')) {
-        result = _resolvePath(condition['path'] as String);
+        result = _resolvePath(condition['path'] as String, null);
       } else {
         // Unknown map format, return false safely.
         return false;
@@ -70,7 +83,10 @@ class ExpressionParser {
   ///
   /// The [callDefinition] must contain a 'call' key with the function name
   /// and an optional 'args' key with a map of arguments.
-  Object? evaluateFunctionCall(JsonMap callDefinition) {
+  Object? evaluateFunctionCall(
+    JsonMap callDefinition, {
+    Set<DataPath>? dependencies,
+  }) {
     final name = callDefinition['call'] as String?;
     if (name == null) {
       // Not a function call or missing 'call' property.
@@ -85,12 +101,15 @@ class ExpressionParser {
         final argName = key.toString();
         final Object? value = argsJson[key];
         if (value is String) {
-          args[argName] = parse(value);
+          args[argName] = _parseStringWithInterpolations(value, dependencies);
         } else if (value is Map && value.containsKey('path')) {
-          args[argName] = _resolvePath(value['path'] as String);
+          args[argName] = _resolvePath(value['path'] as String, dependencies);
         } else if (value is Map && value.containsKey('call')) {
           // Recursive evaluation for nested calls
-          args[argName] = evaluateFunctionCall(value as JsonMap);
+          args[argName] = evaluateFunctionCall(
+            value as JsonMap,
+            dependencies: dependencies,
+          );
         } else {
           args[argName] = value;
         }
@@ -102,10 +121,17 @@ class ExpressionParser {
       );
     }
 
+    if (dependencies != null) {
+      return null; // Don't execute function if collecting dependencies
+    }
+
     return _functions.invoke(name, args);
   }
 
-  Object? _parseStringWithInterpolations(String input) {
+  Object? _parseStringWithInterpolations(
+    String input,
+    Set<DataPath>? dependencies,
+  ) {
     var i = 0;
 
     final parts = <Object?>[];
@@ -136,7 +162,7 @@ class ExpressionParser {
         break;
       }
 
-      final Object? value = _evaluateExpression(content, 0);
+      final Object? value = _evaluateExpression(content, 0, dependencies);
       parts.add(value);
 
       i = endIndex + 1; // Skip closing '}'
@@ -144,6 +170,10 @@ class ExpressionParser {
 
     if (parts.length == 1 && parts[0] is! String) {
       return parts[0];
+    }
+
+    if (dependencies != null) {
+      return null;
     }
 
     return parts.map((e) => e?.toString() ?? '').join('');
@@ -176,7 +206,11 @@ class ExpressionParser {
     return ('', -1);
   }
 
-  Object? _evaluateExpression(String content, int depth) {
+  Object? _evaluateExpression(
+    String content,
+    int depth,
+    Set<DataPath>? dependencies,
+  ) {
     if (depth > _maxRecursionDepth) {
       genUiLogger.warning(
         'Max recursion depth reached in expression: $content',
@@ -192,14 +226,26 @@ class ExpressionParser {
     if (match != null && content.endsWith(')')) {
       final String funcName = match.group(1)!;
       final String argsStr = content.substring(match.end, content.length - 1);
-      final Map<String, Object?> args = _parseNamedArgs(argsStr, depth + 1);
+      final Map<String, Object?> args = _parseNamedArgs(
+        argsStr,
+        depth + 1,
+        dependencies,
+      );
+
+      if (dependencies != null) {
+        return null;
+      }
       return _functions.invoke(funcName, args);
     }
 
-    return _resolvePath(content);
+    return _resolvePath(content, dependencies);
   }
 
-  Map<String, Object?> _parseNamedArgs(String argsStr, int depth) {
+  Map<String, Object?> _parseNamedArgs(
+    String argsStr,
+    int depth,
+    Set<DataPath>? dependencies,
+  ) {
     final args = <String, Object?>{};
     var i = 0;
 
@@ -241,7 +287,12 @@ class ExpressionParser {
       }
 
       // Parse Value
-      final (Object? value, int nextIndex) = _parseValue(argsStr, i, depth);
+      final (Object? value, int nextIndex) = _parseValue(
+        argsStr,
+        i,
+        depth,
+        dependencies,
+      );
       args[key] = value;
       i = nextIndex;
 
@@ -258,7 +309,12 @@ class ExpressionParser {
     return args;
   }
 
-  (Object?, int) _parseValue(String input, int start, int depth) {
+  (Object?, int) _parseValue(
+    String input,
+    int start,
+    int depth,
+    Set<DataPath>? dependencies,
+  ) {
     if (start >= input.length) return (null, start);
 
     final String char = input[start];
@@ -277,7 +333,7 @@ class ExpressionParser {
         // Found closing quote
         final String val = input.substring(start + 1, i);
         // Recursively parse string for interpolations
-        return (_parseStringWithInterpolations(val), i + 1);
+        return (_parseStringWithInterpolations(val, dependencies), i + 1);
       }
       return (input.substring(start), input.length); // Unclosed string
     }
@@ -289,37 +345,14 @@ class ExpressionParser {
         start + 2,
       );
       if (end != -1) {
-        final Object? val = _evaluateExpression(content, depth);
+        final Object? val = _evaluateExpression(content, depth, dependencies);
         return (val, end + 1);
       }
     }
 
-    // Heuristic: Identifier followed by '(' indicates a function call.
-    final Match? match = RegExp(
-      r'^([a-zA-Z0-9_]+)\s*\(',
-    ).matchAsPrefix(input.substring(start));
-    if (match != null) {
-      // Find closing parenthesis ensuring balance
-      var balance = 0;
-      int i = start + match.end - 1; // start at '('
-      while (i < input.length) {
-        if (input[i] == '(') {
-          balance++;
-        } else if (input[i] == ')') {
-          balance--;
-          if (balance == 0) {
-            final String funcName = match.group(1)!;
-            final String argsInner = input.substring(start + match.end, i);
-            final Map<String, Object?> argsMap = _parseNamedArgs(
-              argsInner,
-              depth + 1,
-            );
-            return (_functions.invoke(funcName, argsMap), i + 1);
-          }
-        }
-        i++;
-      }
-    }
+    // Heuristic for function calls REMOVED.
+    // Arguments must be Literals (quoted strings, booleans, numbers)
+    // or Nested Expressions (${...}).
 
     // Number / Boolean / Null / Path
     // Read the next token, stopping at delimiters like comma, parenthesis, or
@@ -349,11 +382,15 @@ class ExpressionParser {
     if (numVal != null) return (numVal, i);
 
     // Treat as a DataPath if no other type matches.
-    return (_resolvePath(token), i);
+    return (_resolvePath(token, dependencies), i);
   }
 
-  Object? _resolvePath(String pathStr) {
+  Object? _resolvePath(String pathStr, Set<DataPath>? dependencies) {
     pathStr = pathStr.trim();
+    if (dependencies != null) {
+      dependencies.add(context.resolvePath(DataPath(pathStr)));
+      return null;
+    }
     return context.getValue(pathStr);
   }
 }

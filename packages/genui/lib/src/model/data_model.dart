@@ -159,13 +159,11 @@ class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
   final List<VoidCallback> unsubscribers = [];
 
   void initialEvaluation() {
-    // Parse the expression to find what paths it accesses.
-    // This is a "best effort" reactive binding for now, using regex extraction.
-    // TODO: Update ExpressionParser to report accessed paths for robust
-    // dependency tracking.
-
-    // Attempt to extract paths roughly
-    final Set<DataPath> paths = extractPaths(expression);
+    // Use ExpressionParser to robustly extract paths, including those in
+    // function calls and nested expressions.
+    final Set<DataPath> paths = ExpressionParser(
+      context,
+    ).extractDependencies(expression);
 
     for (final path in paths) {
       final ValueNotifier<dynamic> notifier = context.subscribe(
@@ -182,22 +180,6 @@ class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
     final parser = ExpressionParser(context);
     final Object? result = parser.parse(expression);
     value = result as T?;
-  }
-
-  Set<DataPath> extractPaths(String expr) {
-    final paths = <DataPath>{};
-    // Basic extraction of ${path}.
-    // TODO: Support function calls and nested expressions in dependency
-    // extraction.
-    final exp = RegExp(r'\$\{([^}]+)\}');
-    for (final RegExpMatch match in exp.allMatches(expression)) {
-      String content = match.group(1)!;
-      content = content.trim();
-      if (!content.contains('(')) {
-        paths.add(context.resolvePath(DataPath(content)));
-      }
-    }
-    return paths;
   }
 
   @override

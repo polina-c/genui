@@ -173,5 +173,91 @@ void main() {
         );
       });
     });
+
+    group('extractDependencies', () {
+      test('returns empty for no expressions', () {
+        expect(parser.extractDependencies('hello'), isEmpty);
+      });
+
+      test('returns single path', () {
+        expect(parser.extractDependencies(r'${/foo}'), {DataPath('/foo')});
+      });
+
+      test('returns multiple paths', () {
+        expect(parser.extractDependencies(r'${/foo} ${/bar}'), {
+          DataPath('/foo'),
+          DataPath('/bar'),
+        });
+      });
+
+      test('returns paths in function calls', () {
+        expect(parser.extractDependencies(r'${formatString(value: ${/foo})}'), {
+          DataPath('/foo'),
+        });
+      });
+
+      test('returns paths in nested function calls', () {
+        expect(
+          parser.extractDependencies(
+            r'${upper(value: ${lower(value: ${/foo})})}',
+          ),
+          {DataPath('/foo')},
+        );
+      });
+
+      test('returns paths in nested interpolations', () {
+        expect(parser.extractDependencies(r'${foo(val: ${/bar})}'), {
+          DataPath('/bar'),
+        });
+      });
+
+      test('returns paths with whitespace', () {
+        expect(parser.extractDependencies(r'${  /foo  }'), {DataPath('/foo')});
+      });
+
+      test('returns paths with mixed content', () {
+        expect(parser.extractDependencies(r'Value: ${/foo}, Count: ${/bar}'), {
+          DataPath('/foo'),
+          DataPath('/bar'),
+        });
+      });
+    });
+
+    group('Invalid syntax', () {
+      test('rejects function call with raw function call as argument', () {
+        // ${foo(bar())} should NOT parse bar() as a function call.
+        // It should be treated as a path "bar()" which likely resolves to
+        // null, or fail to parse the outer function call due to syntax error
+        // (missing colon).
+        //
+        // "bar()" is not a valid named argument key (missing colon).
+        // So _parseNamedArgs will likely return empty map or partial map.
+        // "foo" will be called with empty/partial args.
+        //
+        // Verify that "bar" is NOT invoked.
+        parser = ExpressionParser(context);
+
+        // ${not(true)} -> false.
+        // ${not(not(false))} -> true (if nested).
+        // ${not(not(false))} -> invalid syntax "not(false)" is not
+        //   "key: value".
+        expect(parser.parse(r'${not(not(false))}'), isNot(true));
+      });
+
+      test(
+        'rejects function call with raw function call as named argument value',
+        () {
+          // ${not(value: not(value: false))}
+          // Inner "not(value: false)" is NOT a string literal or ${...}.
+          // It is treated as a path "not(value: false)".
+          // So outer not receives "value": null (result of path lookup).
+          // not(null) -> true.
+          // But if it was parsed as function, not(true) -> false.
+          // So if it returns true, it means it FAILED to parse inner
+          // function.
+          expect(parser.parse(r'${not(value: not(value: false))}'), true);
+        },
+      );
+    });
   });
 }

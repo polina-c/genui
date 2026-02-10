@@ -145,10 +145,7 @@ final checkboxFilterChipsInput = CatalogItem(
           icon: icon,
           selectedOptions: selectedOptionsSet,
           onChanged: (newSelectedOptions) {
-            context.dataContext.update(
-              path,
-              newSelectedOptions.toList(),
-            );
+            context.dataContext.update(path, newSelectedOptions.toList());
           },
         );
       },

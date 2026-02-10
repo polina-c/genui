@@ -387,9 +387,7 @@ class A2uiValidationException implements Exception {
 
   @override
   String toString() {
-    final buffer = StringBuffer(
-      'A2uiValidationException: $message',
-    );
+    final buffer = StringBuffer('A2uiValidationException: $message');
     if (surfaceId != null) buffer.write(' (surface: $surfaceId)');
     if (path != null) buffer.write(' (path: $path)');
     if (cause != null) buffer.write('\nCause: $cause');

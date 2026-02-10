@@ -5,6 +5,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../functions/expression_parser.dart';
 import '../model/data_model.dart';
 import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
@@ -179,10 +180,14 @@ JsonMap resolveContext(DataContext dataContext, JsonMap? contextDefinition) {
   final resolved = <String, Object?>{};
   if (contextDefinition == null) return resolved;
 
+  final parser = ExpressionParser(dataContext);
+
   for (final MapEntry<String, Object?> entry in contextDefinition.entries) {
     final String key = entry.key;
     final Object? value = entry.value;
-    if (value is Map && value.containsKey('path')) {
+    if (value is String) {
+      resolved[key] = parser.parse(value);
+    } else if (value is Map && value.containsKey('path')) {
       resolved[key] = dataContext.getValue(value['path'] as String);
     } else {
       resolved[key] = value;

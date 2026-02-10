@@ -260,10 +260,9 @@ class _ChoicePickerState extends State<_ChoicePicker> {
                         // ignore: deprecated_member_use
                         onChanged: (newValue) {
                           if (newValue == null) return;
-                          widget.itemContext.dataContext.update(
-                            widget.path,
-                            [newValue],
-                          );
+                          widget.itemContext.dataContext.update(widget.path, [
+                            newValue,
+                          ]);
                         },
                       );
                     } else {
@@ -307,9 +306,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
   ) {
     if (widget.isMutuallyExclusive) {
       if (selected) {
-        widget.itemContext.dataContext.update(widget.path, [
-          optionValue,
-        ]);
+        widget.itemContext.dataContext.update(widget.path, [optionValue]);
       }
     } else {
       final newSelections = List<String>.from(currentStrings);
@@ -320,10 +317,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
       } else {
         newSelections.remove(optionValue);
       }
-      widget.itemContext.dataContext.update(
-        widget.path,
-        newSelections,
-      );
+      widget.itemContext.dataContext.update(widget.path, newSelections);
     }
   }
 }
