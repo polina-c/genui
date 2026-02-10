@@ -93,12 +93,12 @@ void main() {
     );
 
     expect(find.text('Center'), findsOneWidget);
-    // Verify alignment logic by finding the Align widget wrapping the child.
-    final Align alignWidget = tester.widget<Align>(
+    // Verify alignment logic by finding the Flex widget wrapping the child.
+    final Flex flexWidget = tester.widget<Flex>(
       find
-          .ancestor(of: find.text('Center'), matching: find.byType(Align))
+          .ancestor(of: find.text('Center'), matching: find.byType(Flex))
           .first,
     );
-    expect(alignWidget.alignment, Alignment.center);
+    expect(flexWidget.crossAxisAlignment, CrossAxisAlignment.center);
   });
 }
