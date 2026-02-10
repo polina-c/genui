@@ -143,8 +143,6 @@ class GoogleGenerativeAiClient implements AiClient {
   }
 
   /// Sends a request to the AI model.
-  ///
-  /// Note: [clientDataModel] is currently ignored by this implementation.
   @override
   Future<void> sendRequest(
     ChatMessage message, {
@@ -155,23 +153,12 @@ class GoogleGenerativeAiClient implements AiClient {
   }) async {
     _isProcessing.value = true;
     try {
-      // TODO: Include clientDataModel in the request/prompt if needed.
       final messages = [...?history, message];
-      final Object? response = await _generate(
+      await _generate(
         messages: messages,
         cancellationSignal: cancellationSignal,
+        clientDataModel: clientDataModel,
       );
-
-      if (response != null) {
-        if (response is Map<String, Object?>) {
-          // If we got a JSON object, it might be an A2UI message or just
-          // context. For now, we assume A2UI messages are emitted via the
-          // controller during parsing in _generate, but if the return value is
-          // just the object, we might want to check it. However, _generate now
-          // returns the *text* or the *result*. Let's assume _generate handles
-          // emitting A2UI messages.
-        }
-      }
     } on CancellationException {
       genUiLogger.info('Request cancelled');
     } catch (e, st) {
@@ -451,6 +438,7 @@ class GoogleGenerativeAiClient implements AiClient {
   Future<Object?> _generate({
     required Iterable<ChatMessage> messages,
     CancellationSignal? cancellationSignal,
+    Map<String, Object?>? clientDataModel,
   }) async {
     final converter = GoogleContentConverter();
     final adapter = GoogleSchemaAdapter();
@@ -503,6 +491,12 @@ class GoogleGenerativeAiClient implements AiClient {
       final String catalogJson = A2uiMessage.a2uiMessageSchema(
         catalog,
       ).toJson(indent: '  ');
+      if (clientDataModel != null) {
+        final String dataString = const JsonEncoder.withIndent(
+          '  ',
+        ).convert(clientDataModel);
+        parts.add(google_ai.Part(text: 'Client Data Model:\n$dataString'));
+      }
       parts.add(google_ai.Part(text: 'A2UI Message Schema:\n$catalogJson'));
 
       final systemInstructionContent = parts.isNotEmpty

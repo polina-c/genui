@@ -359,9 +359,9 @@ to the user.
     the itinerary, include all necessary `itineraryEntry` items for hotels and
     transport with generic details and a status of `choiceRequired`.
 
-    Note that during this step, the user may change their search parameters and
-    resubmit, in which case you should regenerate the itinerary to match their
-    desires, updating the existing surface.
+    During this step, the user may change their search parameters and resubmit,
+    in which case you should regenerate the itinerary to match their desires,
+    updating the existing surface.
 
 4.  Booking: Booking each part of the itinerary one step at a time. This
     involves booking every accommodation, transport and activity in the

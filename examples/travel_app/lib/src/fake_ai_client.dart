@@ -26,6 +26,9 @@ class FakeAiClient implements AiClient {
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,
+    A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   }) async {
     sendRequestCallCount++;
     if (sendRequestCompleter != null) {

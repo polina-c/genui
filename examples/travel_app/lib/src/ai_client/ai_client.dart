@@ -24,6 +24,9 @@ abstract interface class AiClient {
   Future<void> sendRequest(
     ChatMessage message, {
     Iterable<ChatMessage>? history,
+    A2UiClientCapabilities? clientCapabilities,
+    Map<String, Object?>? clientDataModel,
+    CancellationSignal? cancellationSignal,
   });
 
   /// Dispose of resources.

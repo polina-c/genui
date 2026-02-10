@@ -144,9 +144,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.filterable) {
-      // Filtering is handled in the build method of the options.
-    }
+    // Filtering is handled in the build method of the options.
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
