@@ -247,4 +247,57 @@ void main() {
     expect(find.text('Flutter'), findsNothing);
     expect(find.text('Dart'), findsNothing);
   });
+
+  testWidgets(
+    'ChoicePicker handles null/missing data in valid path reference',
+    (WidgetTester tester) async {
+      final catalog = Catalog([choicePicker], catalogId: 'std');
+      final controller = SurfaceController(catalogs: [catalog]);
+
+      final createSurface = const CreateSurface(
+        surfaceId: 'nullTest',
+        catalogId: 'std',
+      );
+      // Note: We are NOT sending UpdateDataModel with the value initially.
+      final updateComponents = const UpdateComponents(
+        surfaceId: 'nullTest',
+        components: [
+          Component(
+            id: 'root',
+            type: 'ChoicePicker',
+            properties: {
+              'label': 'Null Check',
+              'variant': 'multipleSelection',
+              'options': [
+                {'label': 'A', 'value': 'A'},
+              ],
+              // Points to a path that doesn't exist yet
+              'value': {'path': '/missing_path'},
+            },
+          ),
+        ],
+      );
+
+      controller.handleMessage(createSurface);
+      controller.handleMessage(updateComponents);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Surface(genUiContext: controller.contextFor('nullTest')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Should render without error (title visible)
+      expect(find.text('Null Check'), findsOneWidget);
+      // Should have no selections
+      final Iterable<Checkbox> checkboxes = tester.widgetList<Checkbox>(
+        find.byType(Checkbox),
+      );
+      expect(checkboxes.length, 1);
+      expect(checkboxes.first.value, false);
+    },
+  );
 }

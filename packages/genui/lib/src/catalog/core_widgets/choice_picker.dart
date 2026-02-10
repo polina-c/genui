@@ -196,9 +196,11 @@ class _ChoicePickerState extends State<_ChoicePicker> {
             } else if (effectiveSelections is! List) {
               effectiveSelections = [effectiveSelections];
             }
-            final List<String> currentStrings = (effectiveSelections as List)
-                .map((e) => e.toString())
-                .toList();
+            final List<String> currentStrings =
+                (effectiveSelections as List?)
+                    ?.map((e) => e.toString())
+                    .toList() ??
+                [];
 
             final List<Widget> optionWidgets = [];
 
@@ -250,7 +252,6 @@ class _ChoicePickerState extends State<_ChoicePicker> {
                         dense: true,
                         title: Text(
                           label ?? '',
-                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         value: optionValue,
                         // ignore: deprecated_member_use
