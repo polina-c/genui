@@ -122,7 +122,7 @@ class _CatalogGalleryAppState extends State<CatalogGalleryApp> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }

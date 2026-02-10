@@ -85,29 +85,43 @@ class DataContext {
   final DataModel _dataModel;
   final DataPath path;
 
+  /// The underlying data model for this context.
+  DataModel get dataModel => _dataModel;
+
   /// Subscribes to a path or expression, resolving it against the current
   /// context.
-  ValueNotifier<T?> subscribe<T>(String pathOrExpression) {
-    if (pathOrExpression.contains(r'${')) {
+  ValueNotifier<T?> subscribe<T>(Object? pathOrExpression) {
+    if (pathOrExpression is String && pathOrExpression.contains(r'${')) {
       // Expressions require reactivity based on their dependencies.
       // Since `ExpressionParser` doesn't currently return dependencies, we use
       // a `_ComputedValueNotifier` that attempts to extract paths from the
       // expression.
       return _createComputedNotifier<T>(pathOrExpression);
+    } else if (pathOrExpression is Map) {
+      // Map expressions (e.g. function calls)
+      return _createComputedNotifier<T>(pathOrExpression);
+    } else if (pathOrExpression is String) {
+      final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
+      return _dataModel.subscribe<T>(absolutePath);
     }
-
-    final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
-    return _dataModel.subscribe<T>(absolutePath);
+    // Fallback for direct values (e.g. constant subscription?)
+    // Or return a constant notifier?
+    return ValueNotifier<T?>(pathOrExpression as T?);
   }
 
   /// Gets a value, resolving the path/expression against the current context.
-  T? getValue<T>(String pathOrExpression) {
-    if (pathOrExpression.contains(r'${')) {
+  T? getValue<T>(Object? pathOrExpression) {
+    if (pathOrExpression is String && pathOrExpression.contains(r'${')) {
       final parser = ExpressionParser(this);
       return parser.parse(pathOrExpression) as T?;
+    } else if (pathOrExpression is Map) {
+      final parser = ExpressionParser(this);
+      return parser.evaluate(pathOrExpression) as T?;
+    } else if (pathOrExpression is String) {
+      final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
+      return _dataModel.getValue<T>(absolutePath);
     }
-    final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
-    return _dataModel.getValue<T>(absolutePath);
+    return pathOrExpression as T?;
   }
 
   /// Updates the data model, resolving the path against the current context.
@@ -141,10 +155,9 @@ class DataContext {
     return value;
   }
 
-  ValueNotifier<T?> _createComputedNotifier<T>(String expression) {
+  ValueNotifier<T?> _createComputedNotifier<T>(Object? expression) {
     // Create a notifier that re-evaluates the expression when its dependencies
     // change.
-    // Currently uses a heuristic to extract paths from the expression string.
     return _ComputedValueNotifier<T>(this, expression);
   }
 }
@@ -155,7 +168,7 @@ class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
   }
 
   final DataContext context;
-  final String expression;
+  final Object? expression;
   final List<VoidCallback> unsubscribers = [];
 
   void initialEvaluation() {
@@ -163,7 +176,7 @@ class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
     // function calls and nested expressions.
     final Set<DataPath> paths = ExpressionParser(
       context,
-    ).extractDependencies(expression);
+    ).extractDependenciesFrom(expression);
 
     for (final path in paths) {
       final ValueNotifier<dynamic> notifier = context.subscribe(
@@ -178,7 +191,7 @@ class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
 
   void evaluate() {
     final parser = ExpressionParser(context);
-    final Object? result = parser.parse(expression);
+    final Object? result = parser.evaluate(expression);
     value = result as T?;
   }
 

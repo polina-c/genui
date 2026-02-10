@@ -30,9 +30,7 @@ final _schema = S.object(
         'stretch', // Added stretch
       ],
     ),
-    'align': S.string(
-      enumValues: ['start', 'center', 'end', 'stretch', 'baseline'],
-    ),
+    'align': S.string(enumValues: ['start', 'center', 'end', 'stretch']),
   },
   required: ['component', 'children'],
 );
@@ -81,8 +79,6 @@ CrossAxisAlignment _parseCrossAxisAlignment(String? alignment) {
       return CrossAxisAlignment.end;
     case 'stretch':
       return CrossAxisAlignment.stretch;
-    case 'baseline':
-      return CrossAxisAlignment.baseline;
     default:
       return CrossAxisAlignment.start;
   }
@@ -100,8 +96,7 @@ CrossAxisAlignment _parseCrossAxisAlignment(String? alignment) {
 /// - `distribution`: How the children should be placed along the main axis. Can
 ///   be `start`, `center`, `end`, `spaceBetween`, `spaceAround`, or
 ///   `spaceEvenly`. Defaults to `start`.
-/// - `alignment`: How the children should be placed along the cross axis. Can
-///   be `start`, `center`, `end`, `stretch`, or `baseline`. Defaults to
+///   be `start`, `center`, `end`, or `stretch`. Defaults to
 ///   `start`.
 final row = CatalogItem(
   name: 'Row',
@@ -118,25 +113,28 @@ final row = CatalogItem(
           mainAxisAlignment: _parseMainAxisAlignment(rowData.justify),
           crossAxisAlignment: _parseCrossAxisAlignment(rowData.align),
           mainAxisSize: MainAxisSize.min,
-          children: childIds
-              .map(
-                (componentId) => buildWeightedChild(
-                  componentId: componentId,
-                  dataContext: dataContext,
-                  buildChild: buildChild,
-                  weight:
-                      getComponent(componentId)?.properties['weight'] as int? ??
-                      (itemContext
-                                  .getCatalogItem(
-                                    getComponent(componentId)?.type ?? '',
-                                  )
-                                  ?.isImplicitlyFlexible ??
-                              false
-                          ? 1
-                          : null),
-                ),
-              )
-              .toList(),
+          children: childIds.map((componentId) {
+            final explicitWeight =
+                getComponent(componentId)?.properties['weight'] as int?;
+            final bool isImplicitlyFlexible =
+                itemContext
+                    .getCatalogItem(getComponent(componentId)?.type ?? '')
+                    ?.isImplicitlyFlexible ??
+                false;
+            final int? weight =
+                explicitWeight ?? (isImplicitlyFlexible ? 1 : null);
+            final FlexFit fit = explicitWeight != null
+                ? FlexFit.tight
+                : FlexFit.loose;
+
+            return buildWeightedChild(
+              componentId: componentId,
+              dataContext: dataContext,
+              buildChild: buildChild,
+              weight: weight,
+              flexFit: fit,
+            );
+          }).toList(),
         );
       },
       templateListWidgetBuilder: (context, data, componentId, dataBinding) {
@@ -154,14 +152,17 @@ final row = CatalogItem(
         }
 
         final Component? component = itemContext.getComponent(componentId);
-        final int? weight =
-            component?.properties['weight'] as int? ??
-            (itemContext
-                        .getCatalogItem(component?.type ?? '')
-                        ?.isImplicitlyFlexible ??
-                    false
-                ? 1
-                : null);
+        final explicitWeight = component?.properties['weight'] as int?;
+
+        final bool isImplicitlyFlexible =
+            itemContext
+                .getCatalogItem(component?.type ?? '')
+                ?.isImplicitlyFlexible ??
+            false;
+        final int? weight = explicitWeight ?? (isImplicitlyFlexible ? 1 : null);
+        final FlexFit fit = explicitWeight != null
+            ? FlexFit.tight
+            : FlexFit.loose;
 
         return Row(
           mainAxisAlignment: _parseMainAxisAlignment(rowData.justify),
@@ -176,6 +177,8 @@ final row = CatalogItem(
                 ),
                 buildChild: itemContext.buildChild,
                 weight: weight,
+                flexFit: fit,
+                key: ValueKey(keys[i]),
               ),
             ],
           ],

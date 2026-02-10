@@ -27,6 +27,17 @@ class ExpressionParser {
   ///
   /// This method is the entry point for expression resolution. It handles
   /// escaping of the `${` sequence using a backslash (e.g. `\${`).
+  /// Parses the input string and resolves any embedded expressions.
+  ///
+  /// If the string contains a single expression that encompasses the entire
+  /// string (e.g. "${/foo}"), the return value may be of any type (not just
+  /// [String]).
+  ///
+  /// If the string contains text mixed with expressions (e.g. "Value: ${/foo}"),
+  /// the return value will always be a [String].
+  ///
+  /// This method is the entry point for expression resolution. It handles
+  /// escaping of the `${` sequence using a backslash (e.g. `\${`).
   Object? parse(String input) {
     if (!input.contains(r'${')) {
       return input;
@@ -34,9 +45,25 @@ class ExpressionParser {
     return _parseStringWithInterpolations(input, null);
   }
 
-  /// Extracts all data paths referenced in the given input string.
+  /// Evaluates an expression which can be a String, Map (function call/path), etc.
+  Object? evaluate(Object? expression) {
+    if (expression is String) {
+      return parse(expression);
+    }
+    if (expression is Map) {
+      if (expression.containsKey('call')) {
+        return evaluateFunctionCall(expression as JsonMap);
+      }
+      if (expression.containsKey('path')) {
+        return _resolvePath(expression['path'] as String, null);
+      }
+    }
+    return expression;
+  }
+
+  /// Extracts all data paths referenced in the given input.
   ///
-  /// This method parses the string without evaluating functions, collecting
+  /// This method parses the input without evaluating functions, collecting
   /// all paths that would be accessed during evaluation.
   Set<DataPath> extractDependencies(String input) {
     if (!input.contains(r'${')) {
@@ -45,6 +72,44 @@ class ExpressionParser {
     final Set<DataPath> dependencies = {};
     _parseStringWithInterpolations(input, dependencies);
     return dependencies;
+  }
+
+  /// Extracts all data paths referenced in the given expression (String or
+  /// Map).
+  Set<DataPath> extractDependenciesFrom(Object? expression) {
+    final Set<DataPath> dependencies = {};
+    _extractDependenciesFrom(expression, dependencies);
+    return dependencies;
+  }
+
+  void _extractDependenciesFrom(
+    Object? expression,
+    Set<DataPath> dependencies,
+  ) {
+    if (expression is String) {
+      if (expression.contains(r'${')) {
+        _parseStringWithInterpolations(expression, dependencies);
+      }
+    } else if (expression is Map) {
+      if (expression.containsKey('path')) {
+        dependencies.add(
+          context.resolvePath(DataPath(expression['path'] as String)),
+        );
+      } else if (expression.containsKey('call')) {
+        evaluateFunctionCall(expression as JsonMap, dependencies: dependencies);
+      } else {
+        // Recursively check values for other map types if necessary?
+        // Usually expressions are structured strictly.
+        // But functions args are maps.
+        for (final Object? value in expression.values) {
+          _extractDependenciesFrom(value, dependencies);
+        }
+      }
+    } else if (expression is List) {
+      for (final Object? item in expression) {
+        _extractDependenciesFrom(item, dependencies);
+      }
+    }
   }
 
   /// Evaluates a dynamic boolean condition.

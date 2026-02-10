@@ -133,10 +133,15 @@ Widget buildWeightedChild({
   required DataContext dataContext,
   required ChildBuilderCallback buildChild,
   required int? weight,
+  Key? key,
+  FlexFit flexFit = FlexFit.loose,
 }) {
   final Widget childWidget = buildChild(componentId, dataContext);
   if (weight != null) {
-    return Flexible(flex: weight, child: childWidget);
+    return Flexible(key: key, flex: weight, fit: flexFit, child: childWidget);
+  }
+  if (key != null) {
+    return KeyedSubtree(key: key, child: childWidget);
   }
   return childWidget;
 }

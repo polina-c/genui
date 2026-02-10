@@ -57,19 +57,26 @@ final list = CatalogItem(
     final Axis direction = listData.direction == 'horizontal'
         ? Axis.horizontal
         : Axis.vertical;
+
+    Widget buildList(Widget child) {
+      return child;
+    }
+
     return ComponentChildrenBuilder(
       childrenData: listData.children,
       dataContext: itemContext.dataContext,
       buildChild: itemContext.buildChild,
       getComponent: itemContext.getComponent,
       explicitListBuilder: (childIds, buildChild, getComponent, dataContext) {
-        return ListView(
-          shrinkWrap: true,
-          scrollDirection: direction,
-          children: childIds.map((id) {
-            final Widget child = buildChild(id, dataContext);
-            return _applyAlignment(child, listData.align, direction);
-          }).toList(),
+        return buildList(
+          ListView(
+            shrinkWrap: true,
+            scrollDirection: direction,
+            children: childIds.map((id) {
+              final Widget child = buildChild(id, dataContext);
+              return _applyAlignment(child, listData.align, direction);
+            }).toList(),
+          ),
         );
       },
       templateListWidgetBuilder:
@@ -87,19 +94,24 @@ final list = CatalogItem(
               return const SizedBox.shrink();
             }
 
-            return ListView.builder(
-              shrinkWrap: true,
-              scrollDirection: direction,
-              itemCount: values.length,
-              itemBuilder: (context, index) {
-                final DataContext itemDataContext = itemContext.dataContext
-                    .nested('$dataBinding/${keys[index]}');
-                final Widget child = itemContext.buildChild(
-                  componentId,
-                  itemDataContext,
-                );
-                return _applyAlignment(child, listData.align, direction);
-              },
+            return buildList(
+              ListView.builder(
+                shrinkWrap: true,
+                scrollDirection: direction,
+                itemCount: values.length,
+                itemBuilder: (context, index) {
+                  final DataContext itemDataContext = itemContext.dataContext
+                      .nested('$dataBinding/${keys[index]}');
+                  final Widget child = itemContext.buildChild(
+                    componentId,
+                    itemDataContext,
+                  );
+                  return KeyedSubtree(
+                    key: ValueKey(keys[index]),
+                    child: _applyAlignment(child, listData.align, direction),
+                  );
+                },
+              ),
             );
           },
     );

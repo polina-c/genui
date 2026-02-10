@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 
 import '../functions/expression_parser.dart';
 import '../model/data_model.dart';
-import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
 
 /// A builder widget that simplifies handling of nullable `ValueListenable`s.
@@ -44,24 +43,6 @@ class OptionalValueBuilder<T> extends StatelessWidget {
 
 /// Extension methods for [DataContext] to simplify data binding.
 extension DataContextExtensions on DataContext {
-  /// Subscribes to a value, which can be a literal or a data-bound path.
-  /// Subscribes to a value, which can be a literal or a data-bound path.
-  ValueNotifier<T?> subscribe<T>(Object? value) {
-    genUiLogger.info('DataContext.subscribe: value=$value');
-    if (value == null) return ValueNotifier<T?>(null);
-
-    if (value is Map) {
-      if (value.containsKey('path')) {
-        final path = value['path'] as String;
-        // Explicitly cast to DataContext to ensure we call the instance method
-        // instead of recursively calling this extension method.
-        return this.subscribe<T>(path);
-      }
-    }
-
-    return ValueNotifier<T?>(value as T?);
-  }
-
   /// Subscribes to a string value, which can be a literal or a data-bound path.
   ///
   /// This method is robust against type mismatches in the data model. If the
@@ -70,6 +51,9 @@ extension DataContextExtensions on DataContext {
     if (value is Map && value.containsKey('path')) {
       final ValueNotifier<Object?> raw = subscribe<Object?>(value);
       return _ToStringNotifier(raw);
+    }
+    if (value is String && !value.contains(r'${')) {
+      return ValueNotifier<String?>(value);
     }
     return subscribe<String>(value);
   }

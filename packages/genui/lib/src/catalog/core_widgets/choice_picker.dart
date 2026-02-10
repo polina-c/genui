@@ -52,7 +52,7 @@ final _schema = S.object(
 extension type _ChoicePickerData.fromMap(JsonMap _json) {
   Object? get label => _json['label'];
   String? get variant => _json['variant'] as String?;
-  List<JsonMap> get options => (_json['options'] as List).cast<JsonMap>();
+  Object? get options => _json['options'];
   Object get value => _json['value'] as Object;
   String? get displayStyle =>
       _json['displayStyle'] as String? ?? _json['type'] as String?;
@@ -76,9 +76,19 @@ final choicePicker = CatalogItem(
     final isMutuallyExclusive = data.variant == 'mutuallyExclusive';
     final isChips = data.displayStyle == 'chips';
 
+    final Object? optionsRef = data.options;
+    final ValueNotifier<List<Object?>?> optionsNotifier;
+    if (optionsRef is Map && optionsRef.containsKey('path')) {
+      optionsNotifier = itemContext.dataContext.subscribe<List<Object?>>(
+        optionsRef['path'] as String,
+      );
+    } else {
+      optionsNotifier = ValueNotifier(optionsRef as List<Object?>?);
+    }
+
     return _ChoicePicker(
       label: data.label,
-      options: data.options,
+      optionsNotifier: optionsNotifier,
       valueRef: valueRef,
       path: path,
       itemContext: itemContext,
@@ -108,7 +118,7 @@ final choicePicker = CatalogItem(
 class _ChoicePicker extends StatefulWidget {
   const _ChoicePicker({
     required this.label,
-    required this.options,
+    required this.optionsNotifier,
     required this.valueRef,
     required this.path,
     required this.itemContext,
@@ -118,7 +128,7 @@ class _ChoicePicker extends StatefulWidget {
   });
 
   final Object? label;
-  final List<JsonMap> options;
+  final ValueNotifier<List<Object?>?> optionsNotifier;
   final Object valueRef;
   final String path;
   final CatalogItemContext itemContext;
@@ -202,96 +212,108 @@ class _ChoicePickerState extends State<_ChoicePicker> {
                     .toList() ??
                 [];
 
-            final List<Widget> optionWidgets = [];
+            return ValueListenableBuilder<List<Object?>?>(
+              valueListenable: widget.optionsNotifier,
+              builder: (context, options, child) {
+                if (options == null) {
+                  return const SizedBox.shrink();
+                }
+                final List<JsonMap> castOptions = options.cast<JsonMap>();
+                final List<Widget> optionWidgets = [];
 
-            for (final JsonMap option in widget.options) {
-              final ValueNotifier<String?> labelNotifier = widget
-                  .itemContext
-                  .dataContext
-                  .subscribeToString(option['label']);
-              final optionValue = option['value'] as String;
+                for (final option in castOptions) {
+                  final ValueNotifier<String?> labelNotifier = widget
+                      .itemContext
+                      .dataContext
+                      .subscribeToString(option['label']);
+                  final optionValue = option['value'] as String;
 
-              optionWidgets.add(
-                ValueListenableBuilder<String?>(
-                  valueListenable: labelNotifier,
-                  builder: (context, label, child) {
-                    if (widget.filterable &&
-                        _filter.isNotEmpty &&
-                        label != null &&
-                        !label.toLowerCase().contains(_filter.toLowerCase())) {
-                      return const SizedBox.shrink();
-                    }
+                  optionWidgets.add(
+                    ValueListenableBuilder<String?>(
+                      valueListenable: labelNotifier,
+                      builder: (context, label, child) {
+                        if (widget.filterable &&
+                            _filter.isNotEmpty &&
+                            label != null &&
+                            !label.toLowerCase().contains(
+                              _filter.toLowerCase(),
+                            )) {
+                          return const SizedBox.shrink();
+                        }
 
-                    if (widget.isChips) {
-                      final bool selected = currentStrings.contains(
-                        optionValue,
-                      );
-                      return Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: FilterChip(
-                          label: Text(label ?? ''),
-                          selected: selected,
-                          onSelected: (bool selected) {
-                            _updateSelection(
-                              selected,
-                              optionValue,
-                              currentStrings,
-                            );
-                          },
-                        ),
-                      );
-                    }
-
-                    if (widget.isMutuallyExclusive) {
-                      final Object? groupValue = currentStrings.isNotEmpty
-                          ? currentStrings.first
-                          : null;
-
-                      return RadioListTile<String>(
-                        controlAffinity: ListTileControlAffinity.leading,
-                        dense: true,
-                        title: Text(
-                          label ?? '',
-                        ),
-                        value: optionValue,
-                        // ignore: deprecated_member_use
-                        groupValue: groupValue is String ? groupValue : null,
-                        // ignore: deprecated_member_use
-                        onChanged: (newValue) {
-                          if (newValue == null) return;
-                          widget.itemContext.dataContext.update(widget.path, [
-                            newValue,
-                          ]);
-                        },
-                      );
-                    } else {
-                      return CheckboxListTile(
-                        title: Text(label ?? ''),
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        value: currentStrings.contains(optionValue),
-                        onChanged: (newValue) {
-                          _updateSelection(
-                            newValue == true,
+                        if (widget.isChips) {
+                          final bool selected = currentStrings.contains(
                             optionValue,
-                            currentStrings,
                           );
-                        },
-                      );
-                    }
-                  },
-                ),
-              );
-            }
+                          return Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: FilterChip(
+                              label: Text(label ?? ''),
+                              selected: selected,
+                              onSelected: (bool selected) {
+                                _updateSelection(
+                                  selected,
+                                  optionValue,
+                                  currentStrings,
+                                );
+                              },
+                            ),
+                          );
+                        }
 
-            if (widget.isChips) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Wrap(children: optionWidgets),
-              );
-            }
+                        if (widget.isMutuallyExclusive) {
+                          final Object? groupValue = currentStrings.isNotEmpty
+                              ? currentStrings.first
+                              : null;
 
-            return Column(children: optionWidgets);
+                          return RadioListTile<String>(
+                            controlAffinity: ListTileControlAffinity.leading,
+                            dense: true,
+                            title: Text(label ?? ''),
+                            value: optionValue,
+                            // ignore: deprecated_member_use
+                            groupValue: groupValue is String
+                                ? groupValue
+                                : null,
+                            // ignore: deprecated_member_use
+                            onChanged: (newValue) {
+                              if (newValue == null) return;
+                              widget.itemContext.dataContext.update(
+                                widget.path,
+                                [newValue],
+                              );
+                            },
+                          );
+                        } else {
+                          return CheckboxListTile(
+                            title: Text(label ?? ''),
+                            dense: true,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            value: currentStrings.contains(optionValue),
+                            onChanged: (newValue) {
+                              _updateSelection(
+                                newValue == true,
+                                optionValue,
+                                currentStrings,
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }
+
+                if (widget.isChips) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Wrap(children: optionWidgets),
+                  );
+                }
+
+                return Column(children: optionWidgets);
+              },
+            );
           },
         ),
       ],

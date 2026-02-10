@@ -7,6 +7,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
+import '../../model/ui_models.dart';
 import '../../primitives/simple_items.dart';
 import 'widget_helpers.dart';
 
@@ -27,7 +28,7 @@ final _schema = S.object(
     ),
     'align': S.string(
       description: 'How children are aligned on the cross axis. ',
-      enumValues: ['start', 'center', 'end', 'stretch', 'baseline'],
+      enumValues: ['start', 'center', 'end', 'stretch'],
     ),
     'children': A2uiSchemas.componentArrayReference(
       description:
@@ -98,8 +99,7 @@ CrossAxisAlignment _parseCrossAxisAlignment(String? alignment) {
 /// - `distribution`: How the children should be placed along the main axis. Can
 ///   be `start`, `center`, `end`, `spaceBetween`, `spaceAround`, or
 ///   `spaceEvenly`. Defaults to `start`.
-/// - `alignment`: How the children should be placed along the cross axis. Can
-///   be `start`, `center`, `end`, `stretch`, or `baseline`. Defaults to
+///   be `start`, `center`, `end`, or `stretch`. Defaults to
 ///   `start`.
 /// - `children`: A list of child widget IDs to display in the column.
 final column = CatalogItem(
@@ -117,25 +117,28 @@ final column = CatalogItem(
           mainAxisAlignment: _parseMainAxisAlignment(columnData.justify),
           crossAxisAlignment: _parseCrossAxisAlignment(columnData.align),
           mainAxisSize: MainAxisSize.min,
-          children: childIds
-              .map(
-                (componentId) => buildWeightedChild(
-                  componentId: componentId,
-                  dataContext: dataContext,
-                  buildChild: buildChild,
-                  weight:
-                      getComponent(componentId)?.properties['weight'] as int? ??
-                      (itemContext
-                                  .getCatalogItem(
-                                    getComponent(componentId)?.type ?? '',
-                                  )
-                                  ?.isImplicitlyFlexible ??
-                              false
-                          ? 1
-                          : null),
-                ),
-              )
-              .toList(),
+          children: childIds.map((componentId) {
+            final explicitWeight =
+                getComponent(componentId)?.properties['weight'] as int?;
+            final bool isImplicitlyFlexible =
+                itemContext
+                    .getCatalogItem(getComponent(componentId)?.type ?? '')
+                    ?.isImplicitlyFlexible ??
+                false;
+            final int? weight =
+                explicitWeight ?? (isImplicitlyFlexible ? 1 : null);
+            final FlexFit fit = explicitWeight != null
+                ? FlexFit.tight
+                : FlexFit.loose;
+
+            return buildWeightedChild(
+              componentId: componentId,
+              dataContext: dataContext,
+              buildChild: buildChild,
+              weight: weight,
+              flexFit: fit,
+            );
+          }).toList(),
         );
       },
       templateListWidgetBuilder: (context, data, componentId, dataBinding) {
@@ -152,6 +155,18 @@ final column = CatalogItem(
           return const SizedBox.shrink();
         }
 
+        final Component? component = itemContext.getComponent(componentId);
+        final explicitWeight = component?.properties['weight'] as int?;
+        final bool isImplicitlyFlexible =
+            itemContext
+                .getCatalogItem(component?.type ?? '')
+                ?.isImplicitlyFlexible ??
+            false;
+        final int? weight = explicitWeight ?? (isImplicitlyFlexible ? 1 : null);
+        final FlexFit fit = explicitWeight != null
+            ? FlexFit.tight
+            : FlexFit.loose;
+
         return Column(
           mainAxisAlignment: _parseMainAxisAlignment(columnData.justify),
           crossAxisAlignment: _parseCrossAxisAlignment(columnData.align),
@@ -164,18 +179,9 @@ final column = CatalogItem(
                   '$dataBinding/${keys[i]}',
                 ),
                 buildChild: itemContext.buildChild,
-                weight:
-                    (itemContext.getComponent(componentId)?.properties['weight']
-                        as int?) ??
-                    (itemContext
-                                .getCatalogItem(
-                                  itemContext.getComponent(componentId)?.type ??
-                                      '',
-                                )
-                                ?.isImplicitlyFlexible ??
-                            false
-                        ? 1
-                        : null),
+                weight: weight,
+                flexFit: fit,
+                key: ValueKey(keys[i]),
               ),
             ],
           ],

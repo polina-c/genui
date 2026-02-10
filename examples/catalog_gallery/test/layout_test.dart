@@ -6,13 +6,20 @@ import 'dart:io';
 
 import 'package:catalog_gallery/sample_parser.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
+
+import 'src/test_http_client.dart';
 
 void main() {
   testWidgets('cinemaSeatSelection sample renders without error', (
     WidgetTester tester,
   ) async {
+    HttpOverrides.global = TestHttpOverrides();
+    addTearDown(() => HttpOverrides.global = null);
+    addTearDown(() => debugNetworkImageHttpClientProvider = null);
+
     final file = File('samples/cinemaSeatSelection.sample');
     final String content = file.readAsStringSync();
     final Sample sample = SampleParser.parseString(content);
@@ -45,6 +52,8 @@ void main() {
   testWidgets('nestedLayoutRecursive sample renders without error', (
     WidgetTester tester,
   ) async {
+    debugNetworkImageHttpClientProvider = TestHttpClient.new;
+
     final file = File('samples/nestedLayoutRecursive.sample');
     final String content = file.readAsStringSync();
     final Sample sample = SampleParser.parseString(content);

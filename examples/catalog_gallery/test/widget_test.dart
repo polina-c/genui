@@ -2,12 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
+
 import 'package:catalog_gallery/main.dart';
 import 'package:file/memory.dart';
 import 'package:file/src/interface/directory.dart';
 import 'package:file/src/interface/file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'src/test_http_client.dart';
 
 void main() {
   testWidgets('Smoke test', (WidgetTester tester) async {
@@ -22,6 +26,8 @@ void main() {
   testWidgets('Loads samples from MemoryFileSystem', (
     WidgetTester tester,
   ) async {
+    HttpOverrides.global = TestHttpOverrides();
+    addTearDown(() => HttpOverrides.global = null);
     final fs = MemoryFileSystem();
     final Directory samplesDir = fs.directory('/samples')..createSync();
     final File sampleFile = samplesDir.childFile('test.sample');

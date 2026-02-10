@@ -90,6 +90,7 @@ extension type _DateTimeInputData.fromMap(JsonMap _json) {
 
 class _DateTimeInput extends StatefulWidget {
   const _DateTimeInput({
+    required this.id,
     required this.value,
     required this.path,
     required this.data,
@@ -98,9 +99,9 @@ class _DateTimeInput extends StatefulWidget {
     this.label,
     this.checks,
     this.parser,
-    super.key,
   });
 
+  final String id;
   final String? value;
   final String path;
   final _DateTimeInputData data;
@@ -261,9 +262,7 @@ class _DateTimeInputState extends State<_DateTimeInput> {
         onTap: () => _handleTap(context),
         child: Text(
           displayText,
-          key: widget.key != null
-              ? Key('${(widget.key as ValueKey<String>).value}_text')
-              : null,
+          key: Key('${widget.id}_text'),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
@@ -322,6 +321,7 @@ final dateTimeInput = CatalogItem(
           valueListenable: labelNotifier,
           builder: (context, label, child) {
             return _DateTimeInput(
+              id: itemContext.id,
               value: effectiveValue,
               path: path,
               data: dateTimeInputData,
@@ -330,7 +330,6 @@ final dateTimeInput = CatalogItem(
               label: label,
               checks: dateTimeInputData.checks,
               parser: parser,
-              key: Key(itemContext.id),
             );
           },
         );

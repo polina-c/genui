@@ -131,6 +131,7 @@ class _TabsWidgetState extends State<_TabsWidget>
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         TabBar(
           controller: _tabController,
@@ -153,13 +154,15 @@ class _TabsWidgetState extends State<_TabsWidget>
             animation: _tabController,
             builder: (context, child) {
               final int index = _tabController.index;
-              if (index < 0 || index >= widget.tabs.length) {
-                return const SizedBox.shrink();
-              }
-              final JsonMap tabItem = widget.tabs[index];
-              final contentId =
-                  (tabItem['content'] ?? tabItem['child']) as String;
-              return widget.itemContext.buildChild(contentId);
+              return IndexedStack(
+                index: index,
+                sizing: StackFit.loose,
+                children: widget.tabs.map((tabItem) {
+                  final contentId =
+                      (tabItem['content'] ?? tabItem['child']) as String;
+                  return widget.itemContext.buildChild(contentId);
+                }).toList(),
+              );
             },
           ),
         ),

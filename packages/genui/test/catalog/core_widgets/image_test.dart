@@ -53,7 +53,8 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      // We expect the check that the image failed and is showing the broken image icon.
+      // We expect the check that the image failed and is showing the broken
+      // image icon.
       expect(find.byType(Image), findsOneWidget);
       expect(find.byIcon(Icons.broken_image), findsOneWidget);
     }, createHttpClient: (context) => _FakeHttpClient());
@@ -93,8 +94,8 @@ void main() {
 
       // Verify Image widget is present
       expect(find.byType(Image), findsOneWidget);
-      // We can't easily verify the pixels without comprehensive mocking of HttpClientResponse
-      // but we can verify no error icon.
+      // We can't easily verify the pixels without comprehensive mocking of
+      // HttpClientResponse but we can verify no error icon.
       expect(find.byIcon(Icons.broken_image), findsNothing);
     }, createHttpClient: (context) => _FakeSuccessHttpClient());
   });
