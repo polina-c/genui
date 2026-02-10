@@ -103,6 +103,10 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
   /// and an error message is sent back via [onSubmit].
   @override
   void handleMessage(A2uiMessage message) {
+    genUiLogger.info(
+      'SurfaceController.handleMessage received: ${message.runtimeType}',
+    );
+
     try {
       _handleMessageInternal(message);
     } on A2uiValidationException catch (e) {

@@ -117,7 +117,10 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
 
           final updatedMessages = List<ChatMessage>.from(_messages.value);
           if (updatedMessages.isNotEmpty &&
-              updatedMessages.last.role == ChatMessageRole.model) {
+              updatedMessages.last.role == ChatMessageRole.model &&
+              !updatedMessages.last.parts.any(
+                (p) => p is DataPart && p.isUiPart,
+              )) {
             updatedMessages.removeLast();
           }
           updatedMessages.add(ChatMessage.model(_currentStreamingText));
@@ -139,6 +142,12 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
           ),
         );
         _messages.value = updatedMessages;
+        _messages.value = updatedMessages;
+        // Reset streaming text so that any subsequent text is treated as a new
+        // message chunk after the UI component, rather than being appended to
+        // the previous text block (which would be confusing if the UI is in the
+        // middle).
+        _currentStreamingText = '';
         _scrollToBottom();
       } else if (event is ConversationComponentsUpdated) {
         _scrollToBottom();
