@@ -85,28 +85,41 @@ class DataContext {
   final DataModel _dataModel;
   final DataPath path;
 
-  /// Subscribes to a path, resolving it against the current context.
-  ValueNotifier<T?> subscribe<T>(DataPath relativeOrAbsolutePath) {
-    final DataPath absolutePath = resolvePath(relativeOrAbsolutePath);
+  /// Subscribes to a path or expression, resolving it against the current
+  /// context.
+  ValueNotifier<T?> subscribe<T>(String pathOrExpression) {
+    if (pathOrExpression.contains(r'${')) {
+      // Expressions require reactivity based on their dependencies.
+      // Since `ExpressionParser` doesn't currently return dependencies, we use
+      // a `_ComputedValueNotifier` that attempts to extract paths from the
+      // expression.
+      return _createComputedNotifier<T>(pathOrExpression);
+    }
+
+    final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
     return _dataModel.subscribe<T>(absolutePath);
   }
 
-  /// Gets a static value, resolving the path against the current context.
-  T? getValue<T>(DataPath relativeOrAbsolutePath) {
-    final DataPath absolutePath = resolvePath(relativeOrAbsolutePath);
+  /// Gets a value, resolving the path/expression against the current context.
+  T? getValue<T>(String pathOrExpression) {
+    if (pathOrExpression.contains(r'${')) {
+      final parser = ExpressionParser(this);
+      return parser.parse(pathOrExpression) as T?;
+    }
+    final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
     return _dataModel.getValue<T>(absolutePath);
   }
 
   /// Updates the data model, resolving the path against the current context.
-  void update(DataPath relativeOrAbsolutePath, Object? contents) {
-    final DataPath absolutePath = resolvePath(relativeOrAbsolutePath);
+  void update(String pathStr, Object? contents) {
+    final DataPath absolutePath = resolvePath(DataPath(pathStr));
     _dataModel.update(absolutePath, contents);
   }
 
   /// Creates a new, nested DataContext for a child widget.
   /// Used by list/template widgets for their children.
-  DataContext nested(DataPath relativePath) {
-    final DataPath newPath = resolvePath(relativePath);
+  DataContext nested(String relativePath) {
+    final DataPath newPath = resolvePath(DataPath(relativePath));
     return DataContext._(_dataModel, newPath);
   }
 
@@ -118,9 +131,6 @@ class DataContext {
   }
 
   /// Resolves any expressions in the given value.
-  ///
-  /// If the value is a String containing `${...}`, it will be parsed and
-  /// evaluated. Otherwise, the value is returned as is.
   Object? resolve(Object? value) {
     if (value is String) {
       return ExpressionParser(this).parse(value);
@@ -129,6 +139,73 @@ class DataContext {
       return ExpressionParser(this).evaluateFunctionCall(value as JsonMap);
     }
     return value;
+  }
+
+  ValueNotifier<T?> _createComputedNotifier<T>(String expression) {
+    // Create a notifier that re-evaluates the expression when its dependencies
+    // change.
+    // Currently uses a heuristic to extract paths from the expression string.
+    return _ComputedValueNotifier<T>(this, expression);
+  }
+}
+
+class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
+  _ComputedValueNotifier(this.context, this.expression) : super(null) {
+    initialEvaluation();
+  }
+
+  final DataContext context;
+  final String expression;
+  final List<VoidCallback> unsubscribers = [];
+
+  void initialEvaluation() {
+    // Parse the expression to find what paths it accesses.
+    // This is a "best effort" reactive binding for now, using regex extraction.
+    // TODO: Update ExpressionParser to report accessed paths for robust
+    // dependency tracking.
+
+    // Attempt to extract paths roughly
+    final Set<DataPath> paths = extractPaths(expression);
+
+    for (final path in paths) {
+      final ValueNotifier<dynamic> notifier = context.subscribe(
+        path.toString(),
+      ); // Re-enter subscribe for raw paths
+      void listener() => evaluate();
+      notifier.addListener(listener);
+      unsubscribers.add(() => notifier.removeListener(listener));
+    }
+    evaluate();
+  }
+
+  void evaluate() {
+    final parser = ExpressionParser(context);
+    final Object? result = parser.parse(expression);
+    value = result as T?;
+  }
+
+  Set<DataPath> extractPaths(String expr) {
+    final paths = <DataPath>{};
+    // Basic extraction of ${path}.
+    // TODO: Support function calls and nested expressions in dependency
+    // extraction.
+    final exp = RegExp(r'\$\{([^}]+)\}');
+    for (final RegExpMatch match in exp.allMatches(expression)) {
+      String content = match.group(1)!;
+      content = content.trim();
+      if (!content.contains('(')) {
+        paths.add(context.resolvePath(DataPath(content)));
+      }
+    }
+    return paths;
+  }
+
+  @override
+  void dispose() {
+    for (final VoidCallback unsub in unsubscribers) {
+      unsub();
+    }
+    super.dispose();
   }
 }
 

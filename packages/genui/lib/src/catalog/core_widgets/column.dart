@@ -7,7 +7,6 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
-import '../../model/data_model.dart';
 import '../../primitives/simple_items.dart';
 import 'widget_helpers.dart';
 
@@ -139,17 +138,30 @@ final column = CatalogItem(
               .toList(),
         );
       },
-      templateListWidgetBuilder: (context, list, componentId, dataBinding) {
+      templateListWidgetBuilder: (context, data, componentId, dataBinding) {
+        final List<Object?> values;
+        final List<String> keys;
+
+        if (data is List) {
+          values = data;
+          keys = List.generate(data.length, (index) => index.toString());
+        } else if (data is Map) {
+          values = data.values.toList();
+          keys = data.keys.map((k) => k.toString()).toList();
+        } else {
+          return const SizedBox.shrink();
+        }
+
         return Column(
           mainAxisAlignment: _parseMainAxisAlignment(columnData.justify),
           crossAxisAlignment: _parseCrossAxisAlignment(columnData.align),
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (var i = 0; i < list.length; i++) ...[
+            for (var i = 0; i < values.length; i++) ...[
               buildWeightedChild(
                 componentId: componentId,
                 dataContext: itemContext.dataContext.nested(
-                  DataPath('$dataBinding/$i'),
+                  '$dataBinding/${keys[i]}',
                 ),
                 buildChild: itemContext.buildChild,
                 weight:

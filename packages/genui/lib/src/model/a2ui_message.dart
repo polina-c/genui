@@ -17,28 +17,62 @@ sealed class A2uiMessage {
   const A2uiMessage();
 
   /// Creates an [A2uiMessage] from a JSON map.
+  /// Creates an [A2uiMessage] from a JSON map.
   factory A2uiMessage.fromJson(JsonMap json) {
     try {
       final Object? version = json['version'];
       if (version != 'v0.9' && version != '0.9') {
-        throw ArgumentError.value(
-          version,
-          'version',
+        throw A2uiValidationException(
           'A2UI message must have version "v0.9" (or "0.9")',
+          json: json,
         );
       }
       if (json.containsKey('createSurface')) {
-        return CreateSurface.fromJson(json['createSurface'] as JsonMap);
+        try {
+          return CreateSurface.fromJson(json['createSurface'] as JsonMap);
+        } catch (e) {
+          throw A2uiValidationException(
+            'Failed to parse CreateSurface message',
+            json: json,
+            cause: e,
+          );
+        }
       }
       if (json.containsKey('updateComponents')) {
-        return UpdateComponents.fromJson(json['updateComponents'] as JsonMap);
+        try {
+          return UpdateComponents.fromJson(json['updateComponents'] as JsonMap);
+        } catch (e) {
+          throw A2uiValidationException(
+            'Failed to parse UpdateComponents message',
+            json: json,
+            cause: e,
+          );
+        }
       }
       if (json.containsKey('updateDataModel')) {
-        return UpdateDataModel.fromJson(json['updateDataModel'] as JsonMap);
+        try {
+          return UpdateDataModel.fromJson(json['updateDataModel'] as JsonMap);
+        } catch (e) {
+          throw A2uiValidationException(
+            'Failed to parse UpdateDataModel message',
+            json: json,
+            cause: e,
+          );
+        }
       }
       if (json.containsKey('deleteSurface')) {
-        return DeleteSurface.fromJson(json['deleteSurface'] as JsonMap);
+        try {
+          return DeleteSurface.fromJson(json['deleteSurface'] as JsonMap);
+        } catch (e) {
+          throw A2uiValidationException(
+            'Failed to parse DeleteSurface message',
+            json: json,
+            cause: e,
+          );
+        }
       }
+    } on A2uiValidationException {
+      rethrow;
     } catch (e, st) {
       genUiLogger.severe(
         'Failed to parse A2UI message from JSON: $json',

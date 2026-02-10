@@ -100,7 +100,7 @@ void main() {
     });
 
     test('nested creates a new context', () {
-      final DataContext nested = rootContext.nested(DataPath('a'));
+      final DataContext nested = rootContext.nested('a');
       expect(nested.path, DataPath('/a'));
     });
   });

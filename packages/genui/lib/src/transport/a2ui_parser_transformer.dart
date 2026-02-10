@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import '../model/a2ui_message.dart';
 import '../model/generation_events.dart';
+import '../model/ui_models.dart';
 
 /// Transforms a stream of text chunks into a stream of logical
 /// [GenerationEvent]s.
@@ -164,6 +165,8 @@ class _A2uiParserStream {
     if (json is Map<String, Object?>) {
       try {
         _controller.add(A2uiMessageEvent(A2uiMessage.fromJson(json)));
+      } on A2uiValidationException catch (e) {
+        _controller.addError(e);
       } catch (e) {
         // Failed to parse A2UI message structure (e.g. invalid type
         // discriminator)
@@ -174,6 +177,8 @@ class _A2uiParserStream {
         if (item is Map<String, Object?>) {
           try {
             _controller.add(A2uiMessageEvent(A2uiMessage.fromJson(item)));
+          } on A2uiValidationException catch (e) {
+            _controller.addError(e);
           } catch (_) {
             _controller.add(TextEvent(jsonEncode(item)));
           }

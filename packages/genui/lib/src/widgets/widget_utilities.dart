@@ -54,7 +54,7 @@ extension DataContextExtensions on DataContext {
         final path = value['path'] as String;
         // Explicitly cast to DataContext to ensure we call the instance method
         // instead of recursively calling this extension method.
-        return this.subscribe<T>(DataPath(path));
+        return this.subscribe<T>(path);
       }
     }
 
@@ -183,7 +183,7 @@ JsonMap resolveContext(DataContext dataContext, JsonMap? contextDefinition) {
     final String key = entry.key;
     final Object? value = entry.value;
     if (value is Map && value.containsKey('path')) {
-      resolved[key] = dataContext.getValue(DataPath(value['path'] as String));
+      resolved[key] = dataContext.getValue(value['path'] as String);
     } else {
       resolved[key] = value;
     }

@@ -193,16 +193,15 @@ class UiDefinition {
       if (!matched) {
         if (errors.isNotEmpty) {
           throw A2uiValidationException(
+            'Validation failed for component ${component.id} '
+            '(${component.type}): ${errors.join("; ")}',
             surfaceId: surfaceId,
-            message:
-                'Validation failed for component ${component.id} '
-                '(${component.type}): ${errors.join("; ")}',
             path: '/components/${component.id}',
           );
         }
         throw A2uiValidationException(
+          'Unknown component type: ${component.type}',
           surfaceId: surfaceId,
-          message: 'Unknown component type: ${component.type}',
           path: '/components/${component.id}',
         );
       }
@@ -239,8 +238,8 @@ class UiDefinition {
       final Object? constVal = schema['const'];
       if (instance != constVal) {
         throw A2uiValidationException(
+          'Value mismatch. Expected $constVal, got $instance',
           surfaceId: surfaceId,
-          message: 'Value mismatch. Expected $constVal, got $instance',
           path: path,
         );
       }
@@ -250,8 +249,8 @@ class UiDefinition {
       final enums = schema['enum'] as List;
       if (!enums.contains(instance)) {
         throw A2uiValidationException(
+          'Value not in enum: $instance',
           surfaceId: surfaceId,
-          message: 'Value not in enum: $instance',
           path: path,
         );
       }
@@ -262,8 +261,8 @@ class UiDefinition {
       for (final key in required) {
         if (!instance.containsKey(key)) {
           throw A2uiValidationException(
+            'Missing required property: $key',
             surfaceId: surfaceId,
-            message: 'Missing required property: $key',
             path: path,
           );
         }
@@ -301,8 +300,8 @@ class UiDefinition {
       }
       if (!oneMatched) {
         throw A2uiValidationException(
+          'Value did not match any oneOf schema',
           surfaceId: surfaceId,
-          message: 'Value did not match any oneOf schema',
           path: path,
         );
       }
@@ -362,24 +361,41 @@ final class Component {
 
 /// Exception thrown when validation fails.
 class A2uiValidationException implements Exception {
-  /// The ID of the surface where the validation error occurred.
-  final String surfaceId;
-
-  /// A descriptive message for the validation error.
+  /// The error message.
   final String message;
 
+  /// The ID of the surface where the validation error occurred.
+  final String? surfaceId;
+
   /// The path in the data/component model where the error occurred.
-  final String path;
+  final String? path;
+
+  /// The JSON that caused the error.
+  final Object? json;
+
+  /// The underlying cause of the error.
+  final Object? cause;
 
   /// Creates a [A2uiValidationException].
-  A2uiValidationException({
-    required this.surfaceId,
-    required this.message,
-    this.path = '/',
+  A2uiValidationException(
+    this.message, {
+    this.surfaceId,
+    this.path,
+    this.json,
+    this.cause,
   });
 
   @override
-  String toString() => 'A2uiValidationException: $message (at $path)';
+  String toString() {
+    final buffer = StringBuffer(
+      'A2uiValidationException: $message',
+    );
+    if (surfaceId != null) buffer.write(' (surface: $surfaceId)');
+    if (path != null) buffer.write(' (path: $path)');
+    if (cause != null) buffer.write('\nCause: $cause');
+    if (json != null) buffer.write('\nJSON: $json');
+    return buffer.toString();
+  }
 }
 
 /// A sealed class representing an update to the UI managed by the system.

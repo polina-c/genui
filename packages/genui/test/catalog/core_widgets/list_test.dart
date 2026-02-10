@@ -22,9 +22,7 @@ void main() {
         id: 'root',
         type: 'List',
         properties: {
-          'children': {
-            'explicitList': ['text1', 'text2'],
-          },
+          'children': ['text1', 'text2'],
         },
       ),
       const Component(id: 'text1', type: 'Text', properties: {'text': 'First'}),
@@ -70,9 +68,7 @@ void main() {
         type: 'List',
         properties: {
           'align': 'center',
-          'children': {
-            'explicitList': ['text1'],
-          },
+          'children': ['text1'],
         },
       ),
       const Component(

@@ -7,7 +7,6 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
-import '../../model/data_model.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
 
@@ -209,7 +208,7 @@ final tabs = CatalogItem(
           activeTabNotifier: activeTabNotifier,
           initialTab: activeTabRef is num ? activeTabRef.toInt() : 0,
           onTabChanged: (newIndex) {
-            itemContext.dataContext.update(DataPath(path), newIndex);
+            itemContext.dataContext.update(path, newIndex);
           },
         );
       },

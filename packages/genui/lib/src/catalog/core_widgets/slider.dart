@@ -7,7 +7,6 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
-import '../../model/data_model.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
 
@@ -66,7 +65,7 @@ final slider = CatalogItem(
         : '${itemContext.id}.value';
 
     final ValueNotifier<num?> valueNotifier = itemContext.dataContext
-        .subscribe<num>(DataPath(path));
+        .subscribe<num>(path);
 
     final ValueNotifier<String?> labelNotifier = sliderData.label != null
         ? itemContext.dataContext.subscribeToString(sliderData.label!)
@@ -96,7 +95,7 @@ final slider = CatalogItem(
                   max: sliderData.max,
                   divisions: (sliderData.max - sliderData.min).toInt(),
                   onChanged: (newValue) {
-                    itemContext.dataContext.update(DataPath(path), newValue);
+                    itemContext.dataContext.update(path, newValue);
                   },
                 ),
               ),

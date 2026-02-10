@@ -127,7 +127,7 @@ final optionsFilterChipInput = CatalogItem(
           value: effectiveValue,
           onChanged: (newValue) {
             if (newValue != null) {
-              context.dataContext.update(DataPath(path), newValue);
+              context.dataContext.update(path, newValue);
             }
           },
         );

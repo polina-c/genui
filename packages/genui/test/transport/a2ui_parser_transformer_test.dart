@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:async/async.dart';
 import 'package:genui/src/model/a2ui_message.dart';
 import 'package:genui/src/model/generation_events.dart';
+import 'package:genui/src/model/ui_models.dart';
 import 'package:genui/src/transport/a2ui_parser_transformer.dart';
 import 'package:test/test.dart';
 
@@ -125,6 +126,18 @@ void main() {
         isA<TextEvent>().having((e) => e.text, 'text', '{ json'),
       );
       expect(await queue.hasNext, isFalse);
+    });
+
+    test('emits error for invalid A2UI message', () async {
+      final StreamQueue<GenerationEvent> queue = StreamQueue(stream);
+
+      // Malformed CreateSurface (missing required fields)
+      controller.add('{"version": "v0.9", "createSurface": {}}');
+
+      // Should emit error
+      expect(queue.next, throwsA(isA<A2uiValidationException>()));
+
+      await queue.cancel();
     });
   });
 }

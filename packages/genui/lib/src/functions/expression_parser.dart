@@ -14,7 +14,7 @@ class ExpressionParser {
   final DataContext context;
   final FunctionRegistry _functions = FunctionRegistry();
 
-  static const int _maxRecursionDepth = 10;
+  static const int _maxRecursionDepth = 100;
 
   /// Parses the input string and resolves any embedded expressions.
   ///
@@ -186,12 +186,12 @@ class ExpressionParser {
 
     content = content.trim();
 
-    final RegExpMatch? funcMatch = RegExp(
-      r'^([a-zA-Z0-9_]+)\((.*)\)$',
+    final RegExpMatch? match = RegExp(
+      r'^([a-zA-Z0-9_]+)\s*\(',
     ).firstMatch(content);
-    if (funcMatch != null) {
-      final String funcName = funcMatch.group(1)!;
-      final String argsStr = funcMatch.group(2)!;
+    if (match != null && content.endsWith(')')) {
+      final String funcName = match.group(1)!;
+      final String argsStr = content.substring(match.end, content.length - 1);
       final Map<String, Object?> args = _parseNamedArgs(argsStr, depth + 1);
       return _functions.invoke(funcName, args);
     }
@@ -201,89 +201,159 @@ class ExpressionParser {
 
   Map<String, Object?> _parseNamedArgs(String argsStr, int depth) {
     final args = <String, Object?>{};
-    var balanceParens = 0;
-    var balanceBraces = 0;
-    var inQuote = false;
-    var quoteChar = '';
+    var i = 0;
 
-    var start = 0;
+    while (i < argsStr.length) {
+      // Skip whitespace
+      while (i < argsStr.length && argsStr[i].trim().isEmpty) {
+        i++;
+      }
+      if (i >= argsStr.length) break;
 
-    void processArg(String segment) {
-      segment = segment.trim();
-      if (segment.isEmpty) return;
+      // Expect key
+      final keyStart = i;
+      while (i < argsStr.length &&
+          argsStr[i] != ':' &&
+          argsStr[i] != ' ' &&
+          argsStr[i] != ',') {
+        i++;
+      }
+      final String key = argsStr.substring(keyStart, i).trim();
 
-      final int colonIndex = segment.indexOf(':');
-      if (colonIndex != -1) {
-        final String key = segment.substring(0, colonIndex).trim();
-        final String valueStr = segment.substring(colonIndex + 1).trim();
-        args[key] = _parseArg(valueStr, depth);
+      // Skip whitespace after key
+      while (i < argsStr.length && argsStr[i].trim().isEmpty) {
+        i++;
+      }
+
+      // Expect colon
+      if (i < argsStr.length && argsStr[i] == ':') {
+        i++; // skip colon
       } else {
         genUiLogger.warning(
-          'Invalid named argument format (missing colon): $segment',
+          'Invalid named argument format (missing colon) at index $i: $argsStr',
         );
+        return args;
+      }
+
+      // Skip whitespace after colon
+      while (i < argsStr.length && argsStr[i].trim().isEmpty) {
+        i++;
+      }
+
+      // Parse Value
+      final (Object? value, int nextIndex) = _parseValue(argsStr, i, depth);
+      args[key] = value;
+      i = nextIndex;
+
+      // Skip whitespace after value
+      while (i < argsStr.length && argsStr[i].trim().isEmpty) {
+        i++;
+      }
+
+      // Expect comma or end
+      if (i < argsStr.length && argsStr[i] == ',') {
+        i++;
       }
     }
-
-    for (var i = 0; i < argsStr.length; i++) {
-      final String char = argsStr[i];
-
-      if (inQuote) {
-        if (char == quoteChar && (i == 0 || argsStr[i - 1] != r'\')) {
-          inQuote = false;
-        }
-        continue;
-      }
-
-      if (char == "'" || char == '"') {
-        inQuote = true;
-        quoteChar = char;
-        continue;
-      }
-
-      if (char == '(') balanceParens++;
-      if (char == ')') balanceParens--;
-      if (char == '{') balanceBraces++;
-      if (char == '}') balanceBraces--;
-
-      if (char == ',' && balanceParens == 0 && balanceBraces == 0) {
-        processArg(argsStr.substring(start, i));
-        start = i + 1;
-      }
-    }
-    processArg(argsStr.substring(start));
-
     return args;
   }
 
-  Object? _parseArg(String arg, int depth) {
-    if (arg.isEmpty) return null;
+  (Object?, int) _parseValue(String input, int start, int depth) {
+    if (start >= input.length) return (null, start);
 
-    if (arg.startsWith(r'${') && arg.endsWith(r'}')) {
-      final String content = arg.substring(2, arg.length - 1);
-      return _evaluateExpression(content, depth);
+    final String char = input[start];
+
+    // String literal
+    if (char == "'" || char == '"') {
+      final quote = char;
+      int i = start + 1;
+      while (i < input.length) {
+        if (input[i] == quote && input[i - 1] != r'\') {
+          break;
+        }
+        i++;
+      }
+      if (i < input.length) {
+        // Found closing quote
+        final String val = input.substring(start + 1, i);
+        // Recursively parse string for interpolations
+        return (_parseStringWithInterpolations(val), i + 1);
+      }
+      return (input.substring(start), input.length); // Unclosed string
     }
 
-    if (arg.startsWith("'") && arg.endsWith("'")) {
-      final String val = arg.substring(1, arg.length - 1);
-      return _parseStringWithInterpolations(val);
+    // Expression ${...}
+    if (char == r'$' && start + 1 < input.length && input[start + 1] == '{') {
+      final (String content, int end) = _extractExpressionContent(
+        input,
+        start + 2,
+      );
+      if (end != -1) {
+        final Object? val = _evaluateExpression(content, depth);
+        return (val, end + 1);
+      }
     }
-    if (arg.startsWith('"') && arg.endsWith('"')) {
-      final String val = arg.substring(1, arg.length - 1);
-      return _parseStringWithInterpolations(val);
+
+    // Heuristic: Identifier followed by '(' indicates a function call.
+    final Match? match = RegExp(
+      r'^([a-zA-Z0-9_]+)\s*\(',
+    ).matchAsPrefix(input.substring(start));
+    if (match != null) {
+      // Find closing parenthesis ensuring balance
+      var balance = 0;
+      int i = start + match.end - 1; // start at '('
+      while (i < input.length) {
+        if (input[i] == '(') {
+          balance++;
+        } else if (input[i] == ')') {
+          balance--;
+          if (balance == 0) {
+            final String funcName = match.group(1)!;
+            final String argsInner = input.substring(start + match.end, i);
+            final Map<String, Object?> argsMap = _parseNamedArgs(
+              argsInner,
+              depth + 1,
+            );
+            return (_functions.invoke(funcName, argsMap), i + 1);
+          }
+        }
+        i++;
+      }
     }
 
-    if (arg == 'true') return true;
-    if (arg == 'false') return false;
-    if (arg == 'null') return null;
+    // Number / Boolean / Null / Path
+    // Read the next token, stopping at delimiters like comma, parenthesis, or
+    // brace. This allows `_parseNamedArgs` to handle the delimiters
+    // appropriately.
 
-    final num? numVal = num.tryParse(arg);
-    if (numVal != null) return numVal;
+    var i = start;
+    while (i < input.length) {
+      final String c = input[i];
+      if (c == ',' ||
+          c == ')' ||
+          c == '}' ||
+          c == ' ' ||
+          c == '\t' ||
+          c == '\n') {
+        break;
+      }
+      i++;
+    }
 
-    return arg;
+    final String token = input.substring(start, i);
+    if (token == 'true') return (true, i);
+    if (token == 'false') return (false, i);
+    if (token == 'null') return (null, i);
+
+    final num? numVal = num.tryParse(token);
+    if (numVal != null) return (numVal, i);
+
+    // Treat as a DataPath if no other type matches.
+    return (_resolvePath(token), i);
   }
 
   Object? _resolvePath(String pathStr) {
     pathStr = pathStr.trim();
-    return context.getValue(DataPath(pathStr));
+    return context.getValue(pathStr);
   }
 }

@@ -133,8 +133,8 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
         final String surfaceId = message.surfaceId;
         if (surfaceId.isEmpty) {
           throw A2uiValidationException(
+            'Surface ID cannot be empty',
             surfaceId: surfaceId,
-            message: 'Surface ID cannot be empty',
             path: 'surfaceId',
           );
         }

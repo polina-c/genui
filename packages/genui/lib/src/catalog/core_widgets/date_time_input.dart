@@ -208,7 +208,7 @@ class _DateTimeInputState extends State<_DateTimeInput> {
       formattedValue = finalDateTime.toIso8601String();
     }
 
-    widget.dataContext.update(DataPath(widget.path), formattedValue);
+    widget.dataContext.update(widget.path, formattedValue);
     widget.onChanged();
   }
 

@@ -141,7 +141,7 @@ final dateInputChip = CatalogItem(
           initialValue: effectiveValue,
           label: datePickerData.label,
           onChanged: (newValue) {
-            context.dataContext.update(DataPath(path), newValue);
+            context.dataContext.update(path, newValue);
           },
         );
       },

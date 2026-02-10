@@ -16,7 +16,7 @@ import '../../primitives/simple_items.dart';
 typedef TemplateListWidgetBuilder =
     Widget Function(
       BuildContext context,
-      Map<String, Object?> data,
+      Object? data,
       String componentId,
       String path,
     );
@@ -77,17 +77,12 @@ class ComponentChildrenBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String>? explicitList = (childrenData is List)
-        ? (childrenData as List).map((e) {
-            if (e is String) return e;
-            return e.toString();
-          }).toList()
-        : ((childrenData as JsonMap?)?['explicitList'] as List?)?.map((e) {
-            if (e is String) return e;
-            return e.toString();
-          }).toList();
+    if (childrenData is List) {
+      final List<String> explicitList = (childrenData as List).map((e) {
+        if (e is String) return e;
+        return e.toString();
+      }).toList();
 
-    if (explicitList != null) {
       return explicitListBuilder(
         explicitList,
         buildChild,
@@ -98,16 +93,16 @@ class ComponentChildrenBuilder extends StatelessWidget {
 
     if (childrenData is JsonMap) {
       final childrenMap = childrenData as JsonMap;
-      final template = childrenMap['template'] as JsonMap?;
-      if (template != null) {
-        final path = template['path'] as String;
-        final componentId = template['componentId'] as String;
+      if (childrenMap.containsKey('path') &&
+          childrenMap.containsKey('componentId')) {
+        final path = childrenMap['path'] as String;
+        final componentId = childrenMap['componentId'] as String;
         genUiLogger.finest(
           'Widget $componentId subscribing to ${dataContext.path}',
         );
-        final ValueNotifier<Map<String, Object?>?> dataNotifier = dataContext
-            .subscribe<Map<String, Object?>>(DataPath(path));
-        return ValueListenableBuilder<Map<String, Object?>?>(
+        final ValueNotifier<Object?> dataNotifier = dataContext
+            .subscribe<Object?>(path);
+        return ValueListenableBuilder<Object?>(
           valueListenable: dataNotifier,
           builder: (context, data, child) {
             genUiLogger.info(

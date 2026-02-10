@@ -7,7 +7,6 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
-import '../../model/data_model.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
 
@@ -72,7 +71,7 @@ final choicePicker = CatalogItem(
         ? valueRef['path'] as String
         : '${itemContext.id}.value';
 
-    itemContext.dataContext.subscribe<Object>(DataPath(path));
+    itemContext.dataContext.subscribe<Object>(path);
 
     final isMutuallyExclusive = data.variant == 'mutuallyExclusive';
     final isChips = data.displayStyle == 'chips';
@@ -139,7 +138,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
   void initState() {
     super.initState();
     _selectionsNotifier = widget.itemContext.dataContext.subscribe<Object>(
-      DataPath(widget.path),
+      widget.path,
     );
   }
 
@@ -262,7 +261,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
                         onChanged: (newValue) {
                           if (newValue == null) return;
                           widget.itemContext.dataContext.update(
-                            DataPath(widget.path),
+                            widget.path,
                             [newValue],
                           );
                         },
@@ -308,7 +307,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
   ) {
     if (widget.isMutuallyExclusive) {
       if (selected) {
-        widget.itemContext.dataContext.update(DataPath(widget.path), [
+        widget.itemContext.dataContext.update(widget.path, [
           optionValue,
         ]);
       }
@@ -322,7 +321,7 @@ class _ChoicePickerState extends State<_ChoicePicker> {
         newSelections.remove(optionValue);
       }
       widget.itemContext.dataContext.update(
-        DataPath(widget.path),
+        widget.path,
         newSelections,
       );
     }

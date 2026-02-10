@@ -8,7 +8,6 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 import '../../functions/expression_parser.dart';
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
-import '../../model/data_model.dart';
 import '../../model/ui_models.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
@@ -251,11 +250,11 @@ final textField = CatalogItem(
                 if (textFieldData.variant == 'number') {
                   final num? numberValue = num.tryParse(newValue);
                   if (numberValue != null) {
-                    itemContext.dataContext.update(DataPath(path), numberValue);
+                    itemContext.dataContext.update(path, numberValue);
                     return;
                   }
                 }
-                itemContext.dataContext.update(DataPath(path), newValue);
+                itemContext.dataContext.update(path, newValue);
               },
               onSubmitted: (newValue) {
                 final JsonMap? actionData = textFieldData.onSubmittedAction;

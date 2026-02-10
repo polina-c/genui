@@ -73,16 +73,27 @@ final list = CatalogItem(
         );
       },
       templateListWidgetBuilder:
-          (context, Map<String, Object?> data, componentId, dataBinding) {
-            final List<Object?> values = data.values.toList();
-            final List<String> keys = data.keys.toList();
+          (context, Object? data, componentId, dataBinding) {
+            final List<Object?> values;
+            final List<String> keys;
+
+            if (data is List) {
+              values = data;
+              keys = List.generate(data.length, (index) => index.toString());
+            } else if (data is Map) {
+              values = data.values.toList();
+              keys = data.keys.map((k) => k.toString()).toList();
+            } else {
+              return const SizedBox.shrink();
+            }
+
             return ListView.builder(
               shrinkWrap: true,
               scrollDirection: direction,
               itemCount: values.length,
               itemBuilder: (context, index) {
                 final DataContext itemDataContext = itemContext.dataContext
-                    .nested(DataPath('$dataBinding/${keys[index]}'));
+                    .nested('$dataBinding/${keys[index]}');
                 final Widget child = itemContext.buildChild(
                   componentId,
                   itemDataContext,
