@@ -6,8 +6,8 @@ An integration package for [`genui`](https://pub.dev/packages/genui) and the [A2
 
 -   **A2A Server Connection:** Establishes and manages a WebSocket connection to any server implementing the A2A protocol.
 -   **A2UI Message Processing:** Receives and parses A2UI messages (like `UpdateComponents`, `UpdateDataModel`, `CreateSurface`) from the A2A stream.
--   **Dynamic UI Rendering:** Integrates seamlessly with `genui`'s `GenUiSurface` to render UIs based on the received A2UI messages.
--   **Content Generator Integration:** Works with `genui`'s `GenUiController` by piping messages from the connector to the controller.
+-   **Dynamic UI Rendering:** Integrates seamlessly with `genui`'s `Surface` to render UIs based on the received A2UI messages.
+-   **Content Generator Integration:** Works with `genui`'s `SurfaceController` by piping messages from the connector to the controller.
 -   **Event Handling:** Captures UI events from `genui` and sends them back to the A2A server as A2A messages.
 -   **Stateful Conversation:** Maintains the conversation context (`taskId`, `contextId`) with the A2A server.
 
@@ -29,12 +29,13 @@ flutter pub add genui genui_a2ui
 
 ### Basic Usage
 
-1.  **Initialize `GenUiController`:** Set up `GenUiController` with your widget `Catalog`.
-2.  **Create `A2uiAgentConnector`:** Instantiate `A2uiAgentConnector`, providing the A2A server `Uri`.
-3.  **Create `GenUiConversation`:** Pass the `GenUiController` to the `GenUiConversation`.
-4.  **Connect Streams:** Pipe the output of `A2uiAgentConnector` into `GenUiController`.
-4.  **Render with `GenUiSurface`:** Use `GenUiSurface` widgets in your UI to display the agent-generated content.
-5.  **Send Messages:** Use `GenUiConversation.sendRequest` to send user input to the agent.
+1.  **Initialize `SurfaceController`:** Set up `SurfaceController` with your widget `Catalog`.
+2.  **Create `A2uiTransportAdapter`:** dedicated adapter to handle message transport.
+3.  **Create `A2uiAgentConnector`:** Instantiate `A2uiAgentConnector`, providing the A2A server `Uri`.
+4.  **Create `Conversation`:** Pass the `SurfaceController` and `A2uiTransportAdapter` to the `Conversation`.
+5.  **Connect Streams:** Pipe the output of `A2uiAgentConnector` into `A2uiTransportAdapter`.
+6.  **Render with `Surface`:** Use `Surface` widgets in your UI to display the agent-generated content.
+7.  **Send Messages:** Use `Conversation.sendRequest` to send user input to the agent.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -83,8 +84,9 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   late final A2uiAgentConnector _connector;
-  late final GenUiController _controller;
-  late final GenUiConversation _conversation;
+  late final SurfaceController _controller;
+  late final A2uiTransportAdapter _transport;
+  late final Conversation _conversation;
   late final StreamSubscription _subscription;
   late final StreamSubscription _textSubscription;
   final List<ChatMessage> _messages = [];
@@ -93,7 +95,12 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     // Initialize the controller with the catalog
-    _controller = GenUiController(catalogs: [CoreCatalogItems.asCatalog()]);
+    _controller = SurfaceController(catalogs: [CoreCatalogItems.asCatalog()]);
+
+    // Create the transport adapter
+    _transport = A2uiTransportAdapter(
+       onSend: _sendMessageToAgent,
+    );
 
     // Create the connector
     _connector = A2uiAgentConnector(
@@ -101,28 +108,32 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     // Create the conversation facade
-    _conversation = GenUiConversation(
+    _conversation = Conversation(
       controller: _controller,
-      onSend: _sendMessageToAgent,
-      onTextResponse: (text) {
-        setState(() {
-          _messages.insert(0, ChatMessage.model(text));
-        });
-      },
+      transport: _transport,
     );
 
-    // Pipe connector output to controller
-    _subscription = _connector.stream.listen((message) {
-      _controller.addMessage(message);
+    // Listen for text responses from the conversation
+    _conversation.events.listen((event) {
+      if (event is ConversationContentReceived) {
+         setState(() {
+            if (_messages.isEmpty || _messages.first.role != Role.model) {
+              _messages.insert(0, ChatMessage.model(event.text));
+            } else {
+              // Append to existing message (simplification)
+               final lastMsg = _messages.first;
+               // Recreate message with appended text...
+            }
+         });
+      }
     });
 
-    // Pipe text responses (if any separate text events come in)
-    _textSubscription = _connector.textStream.listen((text) {
-        _controller.addChunk(text);
-    });
+    // Pipe connector output to transport
+    _subscription = _connector.stream.listen(_transport.addMessage);
+    _textSubscription = _connector.textStream.listen(_transport.addChunk);
   }
 
-  Future<void> _sendMessageToAgent(ChatMessage message, Iterable<ChatMessage> history) async {
+  Future<void> _sendMessageToAgent(ChatMessage message) async {
       await _connector.connectAndSend(message);
   }
 
@@ -130,7 +141,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _textController.dispose();
     _conversation.dispose();
-    _connector.dispose(); // Dispose connector
+    _transport.dispose();
+    _controller.dispose();
+    _connector.dispose();
     _subscription.cancel();
     _textSubscription.cancel();
     super.dispose();
@@ -139,7 +152,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _handleSubmitted(String text) {
     if (text.isEmpty) return;
     _textController.clear();
-    final message = UserMessage.text(text);
+    final message = ChatMessage.user(text);
     setState(() {
       _messages.insert(0, message);
     });
@@ -171,7 +184,7 @@ class _ChatScreenState extends State<ChatScreen> {
           // Surface for the main AI-generated UI
           SizedBox(
               height: 300,
-              child: GenUiSurface(
+              child: Surface(
                 surfaceId: 'main_surface',
                 // Use controller as host
                 host: _controller,

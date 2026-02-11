@@ -19,31 +19,30 @@ This package provides the core functionality for GenUI.
 ## Core Concepts
 
 The package is built around the following main components:
-
-1.  **`Conversation`**: The primary facade and entry point for the package. It encapsulates the `SurfaceController` and `ContentGenerator`, manages the conversation history, and orchestrates the entire generative UI process.
+1.  **`Conversation`**: The primary facade and entry point for the package. It encapsulates the `SurfaceController` and `Transport`, manages the conversation events, and orchestrates the entire generative UI process.
 
 2.  **`Catalog`**: A collection of `CatalogItem`s that defines the set of widgets the AI is allowed to use. Each `CatalogItem` specifies a widget's name (for the AI to reference), a data schema for its properties, and a builder function to render the Flutter widget.
 
 3.  **`DataModel`**: A centralized, observable store for all dynamic UI state. Widgets are "bound" to data in this model. When data changes, only the widgets that depend on that specific piece of data are rebuilt.
 
-4.  **`SurfaceController`**: The robust controller that manages the pipeline from raw text input to parsed `SurfaceUpdate` events. It wraps the `A2uiParserTransformer` and `SurfaceController`.
+4.  **`SurfaceController`**: The runtime engine that manages the lifecycle of UI surfaces, handles data model updates, and orchestrates the application of A2UI messages.
 
-5.  **`A2uiParserTransformer`**: A stream transformer that parses raw text chunks (e.g. from an LLM stream) into structured `GenerationEvent`s (text or A2UI messages).
+5.  **`A2uiTransportAdapter`**: An implementation of `Transport` that wraps `A2uiParserTransformer` to parse raw text chunks (e.g. from an LLM stream) into structured `GenerationEvent`s.
 
 6.  **`A2uiMessage`**: A message sent from the AI to the UI, instructing it to perform actions like `createSurface`, `updateComponents`, `updateDataModel`, or `deleteSurface`.
 
 ## How It Works
 
-The `Conversation` and `SurfaceController` manage the interaction cycle:
+The `Conversation`, `SurfaceController`, and `A2uiTransportAdapter` manage the interaction cycle:
 
 1. **User Input**: The user provides a prompt. The app calls `genUiConversation.sendRequest()`.
-2. **AI Invocation**: The `Conversation` triggers the user-provided `onSend` callback.
-3. **Stream Handling**: The app's `onSend` implementation calls the LLM and pipes the response chunks to `SurfaceController.addChunk()`.
-4. **Parsing**: The `SurfaceController` uses `A2uiParserTransformer` to parse chunks into `TextEvent`s or `A2uiMessageEvent`s.
-5. **UI State Update**: `SurfaceController` (managed by `SurfaceController`) handles the messages and updates the `DataModel`.
+2. **AI Invocation**: The `Conversation` triggers `A2uiTransportAdapter.onSend`.
+3. **Stream Handling**: The app's `onSend` implementation calls the LLM and pipes the response chunks to `A2uiTransportAdapter.addChunk()`.
+4. **Parsing**: The `A2uiTransportAdapter` uses `A2uiParserTransformer` to parse chunks into `TextEvent`s or `A2uiMessageEvent`s.
+5. **UI State Update**: `SurfaceController` handles the messages and updates the `DataModel`.
 6. **UI Rendering**: `Surface` widgets listening to `SurfaceController` rebuild automatically.
-7. **User Interaction**: User actions (buttons, etc.) trigger events. `SurfaceController` captures them and emits `ChatMessage` events on `onClientEvent`.
-8. **Loop**: `Conversation` listens to `onClientEvent` and automatically triggers a new request to the AI, continuing the conversation.
+7. **User Interaction**: User actions (buttons, etc.) trigger events. `SurfaceController` captures them and emits `ChatMessage` events on `onSubmit`.
+8. **Loop**: `Conversation` listens to `onSubmit` and automatically triggers a new request to the AI, continuing the conversation.
 
 ```mermaid
 graph TD
@@ -54,22 +53,22 @@ graph TD
 
     subgraph "GenUI Framework"
         Conversation("Conversation")
+        Transport("A2uiTransportAdapter")
         SurfaceController("SurfaceController")
-        MessageProcessor("SurfaceController")
         Transformer("A2uiParserTransformer")
         Surface("Surface")
     end
 
     UserInput -- "calls sendRequest()" --> Conversation;
     Conversation -- "calls onSend" --> ExternalLLM[External LLM];
-    ExternalLLM -- "returns chunks" --> SurfaceController;
-    SurfaceController -- "pipes to" --> Transformer;
-    Transformer -- "parses events" --> MessageProcessor;
-    MessageProcessor -- "updates state" --> Surface;
+    ExternalLLM -- "returns chunks" --> Transport;
+    Transport -- "pipes to" --> Transformer;
+    Transformer -- "parses events" --> Transport;
+    Transport -- "streams messages" --> SurfaceController;
+    SurfaceController -- "updates state" --> Surface;
     Surface -- "renders UI" --> UserInteraction;
-    UserInteraction -- "creates event" --> MessageProcessor;
-    MessageProcessor -- "emits client event" --> SurfaceController;
-    SurfaceController -- "forwards event" --> Conversation;
+    UserInteraction -- "creates event" --> SurfaceController;
+    SurfaceController -- "emits submit" --> Conversation;
     Conversation -- "loops back" --> ExternalLLM;
 ```
 
@@ -88,44 +87,11 @@ running `flutter create`.
 
 ### 2. Configure your agent provider
 
-`genui` can connect to a variety of agent providers. Choose the section
-below for your preferred provider.
+`genui` is backend-agnostic and can connect to any agent provider. You simply need to implement the `onSend` callback in `A2uiTransportAdapter` to bridge your AI service to the framework.
 
-#### Configure Firebase AI Logic
-
-To use the built-in `FirebaseAiContentGenerator` to connect to Gemini via Firebase AI
-Logic, follow these instructions:
-
-1. [Create a new Firebase project](https://support.google.com/appsheet/answer/10104995)
-   using the Firebase Console.
-2. [Enable the Gemini API](https://firebase.google.com/docs/gemini-in-firebase/set-up-gemini)
-   for that project.
-3. Follow the first three steps in
-   [Firebase's Flutter Setup guide](https://firebase.google.com/docs/flutter/setup)
-   to add Firebase to your app.
-4. Use `flutter pub add` to add the `genui` and `genui_firebase_ai` packages as
-   dependencies in your `pubspec.yaml` file:
-
-   ```bash
-   flutter pub add genui genui_firebase_ai
-   ```
-
-5. In your app's `main` method, ensure that the widget bindings are initialized,
-   and then initialize Firebase.
-
-   ```dart
-   void main() async {
-     WidgetsFlutterBinding.ensureInitialized();
-     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-     runApp(const MyApp());
-   }
-   ```
-
-#### Configure another agent provider
-
-provider's instructions to configure your app, and then use the `SurfaceController`
-to parse the streaming output from that provider. The `genui_a2ui` package provides
-an example of how to pipe data from an A2A server into the controller.
+1.  **Implement `onSend`**: This callback takes a `ChatMessage` and returns a `Future<void>`.
+2.  **Call your AI Service**: Use your preferred AI client (e.g., `google_generative_ai`, `firebase_vertexai`, or a custom HTTP client) to send the message.
+3.  **Pipe Results**: As chunks of text arrive from the AI stream, feed them into `A2uiTransportAdapter.addChunk()`.
 
 ### 3. Create the connection to an agent
 
@@ -144,14 +110,16 @@ requests:
 Next, use the following instructions to connect your app to your chosen agent
 provider.
 
-2. Create a `SurfaceController`, and provide it with the catalog of widgets you want to make available to the agent.
-3. Create a `Conversation` using the `SurfaceController`. Implement the `onSend` callback to connect to your AI provider.
+2. Create a `SurfaceController`.
+3. Create an `A2uiTransportAdapter` to handle communication.
+4. Create a `Conversation` using the `SurfaceController` and `A2uiTransportAdapter`.
 
    For example:
 
    ```dart
    class _MyHomePageState extends State<MyHomePage> {
      late final SurfaceController _controller;
+     late final A2uiTransportAdapter _transport;
      late final Conversation _genUiConversation;
 
      @override
@@ -159,24 +127,36 @@ provider.
        super.initState();
 
        // Create a SurfaceController with a widget catalog.
-       // The CoreCatalogItems contain basic widgets for text, markdown, and images.
        _controller = SurfaceController(catalogs: [CoreCatalogItems.asCatalog()]);
+
+       // Create transport adapter
+       _transport = A2uiTransportAdapter(onSend: _onSendToLLM);
 
        // Create the Conversation to orchestrate everything.
        _genUiConversation = Conversation(
          controller: _controller,
-         onSend: _onSendToLLM,
-         onSurfaceAdded: _onSurfaceAdded, // Added in the next step.
-         onSurfaceDeleted: _onSurfaceDeleted, // Added in the next step.
+         transport: _transport,
        );
+
+       // Listen to conversation events
+       _genUiConversation.events.listen((event) {
+            if (event is ConversationSurfaceAdded) {
+                _onSurfaceAdded(event);
+            } else if (event is ConversationSurfaceRemoved) {
+                _onSurfaceDeleted(event);
+            }
+       });
      }
 
-     Future<void> _onSendToLLM(ChatMessage message, Iterable<ChatMessage> history) async {
+     Future<void> _onSendToLLM(ChatMessage message) async {
         // Implement your LLM integration here.
         // For example, if using an HTTP client:
-        final responseStream = myLlmClient.streamGenerateContent(message, history);
+        // Note: history is now managed by the LLM client or passed if needed,
+        // but typical adapters might just send the new message or the whole history.
+        // A2uiTransportAdapter.onSend signature is Future<void> Function(ChatMessage message).
+        final responseStream = myLlmClient.streamGenerateContent(message);
         await for (final chunk in responseStream) {
-            _controller.addChunk(chunk);
+            _transport.addChunk(chunk);
         }
      }
 
@@ -184,7 +164,8 @@ provider.
      void dispose() {
        _textController.dispose();
        _genUiConversation.dispose();
-
+       _transport.dispose();
+       _controller.dispose();
        super.dispose();
      }
    }
