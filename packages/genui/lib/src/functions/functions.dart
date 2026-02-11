@@ -36,8 +36,8 @@ class FunctionRegistry {
     }
     try {
       return func(args);
-    } catch (e, stack) {
-      throw FunctionInvocationException(name, e, stack);
+    } catch (exception, stackTrace) {
+      throw FunctionInvocationException(name, exception, stackTrace);
     }
   }
 
@@ -112,8 +112,12 @@ class FunctionRegistry {
     if (value is! String || pattern is! String) return false;
     try {
       return RegExp(pattern).hasMatch(value);
-    } catch (e) {
-      throw FormatException('Invalid regex pattern: $pattern', e);
+    } on FormatException catch (exception, stackTrace) {
+      throw FunctionInvocationException(
+        'regex',
+        'Invalid regex pattern: $pattern. $exception',
+        stackTrace,
+      );
     }
   }
 

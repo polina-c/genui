@@ -131,10 +131,14 @@ class _SurfaceState extends State<Surface> {
           surfaceId: widget.genUiContext.surfaceId,
         ),
       );
-    } catch (e, stack) {
-      genUiLogger.severe('Error building widget $widgetId', e, stack);
-      widget.genUiContext.reportError(e, stack);
-      return FallbackWidget(error: e, stackTrace: stack);
+    } catch (exception, stackTrace) {
+      genUiLogger.severe(
+        'Error building widget $widgetId',
+        exception,
+        stackTrace,
+      );
+      widget.genUiContext.reportError(exception, stackTrace);
+      return FallbackWidget(error: exception, stackTrace: stackTrace);
     }
   }
 

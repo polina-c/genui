@@ -73,11 +73,11 @@ sealed class A2uiMessage {
       }
     } on A2uiValidationException {
       rethrow;
-    } catch (e, st) {
+    } catch (exception, stackTrace) {
       genUiLogger.severe(
         'Failed to parse A2UI message from JSON: $json',
-        e,
-        st,
+        exception,
+        stackTrace,
       );
       rethrow;
     }

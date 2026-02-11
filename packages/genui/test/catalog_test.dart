@@ -85,7 +85,7 @@ void main() {
                       surfaceId: 'surfaceId',
                     ),
                   ),
-                  throwsStateError,
+                  throwsA(isA<CatalogItemNotFoundException>()),
                 );
                 return const SizedBox();
               },

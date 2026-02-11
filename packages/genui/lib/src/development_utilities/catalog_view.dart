@@ -14,6 +14,7 @@ import '../model/catalog.dart';
 import '../model/catalog_item.dart';
 import '../model/chat_message.dart';
 import '../model/ui_models.dart';
+import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
 import '../widgets/surface.dart';
 
@@ -80,7 +81,7 @@ class _DebugCatalogViewState extends State<DebugCatalogView> {
           rootComponent = components.firstWhereOrNull((c) => c.id == 'root');
 
           if (rootComponent == null) {
-            debugPrint(
+            genUiLogger.info(
               'Skipping example for ${item.name} because it is missing a root '
               'component.',
             );
@@ -94,8 +95,11 @@ class _DebugCatalogViewState extends State<DebugCatalogView> {
             CreateSurface(surfaceId: surfaceId, catalogId: catalog.catalogId!),
           );
           surfaceIds.add(surfaceId);
-        } catch (e, s) {
-          debugPrint('Failed to load example for "${item.name}":\n$e\n$s');
+        } catch (exception, stackTrace) {
+          genUiLogger.severe(
+            'Failed to load example for "${item.name}":\n'
+            '$exception\n$stackTrace',
+          );
           throw Exception(
             'Failed to load example for "${item.name}". Check logs for '
             'details.',

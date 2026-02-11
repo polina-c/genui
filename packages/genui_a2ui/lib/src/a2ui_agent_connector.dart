@@ -251,8 +251,12 @@ class A2uiAgentConnector {
           }
         }
       }
-    } on FormatException catch (e, s) {
-      _log.severe('Error parsing A2A response: $e', e, s);
+    } on FormatException catch (exception, stackTrace) {
+      _log.severe(
+        'Error parsing A2A response: $exception',
+        exception,
+        stackTrace,
+      );
     }
     return responseText;
   }

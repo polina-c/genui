@@ -162,8 +162,8 @@ ${PromptFragments.basicChat}''';
       await subscription.cancel();
 
       _chatHistory.add(dartantic.ChatMessage.model(fullResponseText));
-    } catch (e, st) {
-      genUiLogger.severe('Error generating content', e, st);
+    } catch (exception, stackTrace) {
+      genUiLogger.severe('Error generating content', exception, stackTrace);
       // We might want to expose errors via a listener or separate stream
       // For now, let's just log it. In a real app, we'd handle error states.
     } finally {

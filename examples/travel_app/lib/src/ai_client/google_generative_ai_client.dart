@@ -161,9 +161,9 @@ class GoogleGenerativeAiClient implements AiClient {
       );
     } on CancellationException {
       genUiLogger.info('Request cancelled');
-    } catch (e, st) {
-      genUiLogger.severe('Error generating content', e, st);
-      _errorController.add(e);
+    } catch (exception, stackTrace) {
+      genUiLogger.severe('Error generating content', exception, stackTrace);
+      _errorController.add(exception);
     } finally {
       _isProcessing.value = false;
     }
@@ -363,11 +363,11 @@ class GoogleGenerativeAiClient implements AiClient {
           genUiLogger.fine(
             'Captured final output from tool "$outputToolName".',
           );
-        } catch (exception, stack) {
+        } catch (exception, stackTrace) {
           genUiLogger.severe(
             'Unable to read output: $call [${call.args}]',
             exception,
-            stack,
+            stackTrace,
           );
         }
         genUiLogger.info(
@@ -394,11 +394,11 @@ class GoogleGenerativeAiClient implements AiClient {
           'Invoked tool ${aiTool.name} with args $argsMap. '
           'Result: $toolResult',
         );
-      } catch (exception, stack) {
+      } catch (exception, stackTrace) {
         genUiLogger.severe(
           'Error invoking tool ${aiTool.name} with args ${call.args}: ',
           exception,
-          stack,
+          stackTrace,
         );
         toolResult = {
           'error': 'Tool ${aiTool.name} failed to execute: $exception',
@@ -544,9 +544,13 @@ With functions:
           genUiLogger.finest(
             'Raw model response: ${_responseToString(response)}',
           );
-        } catch (e, st) {
-          genUiLogger.severe('Error from service.generateContent', e, st);
-          _errorController.add(e);
+        } catch (exception, stackTrace) {
+          genUiLogger.severe(
+            'Error from service.generateContent',
+            exception,
+            stackTrace,
+          );
+          _errorController.add(exception);
           rethrow;
         }
         final Duration elapsed = DateTime.now().difference(inferenceStartTime);

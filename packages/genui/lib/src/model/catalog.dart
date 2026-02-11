@@ -68,7 +68,7 @@ class Catalog {
       (item) => item.name == widgetType,
     );
     if (item == null) {
-      throw StateError('Item $widgetType was not found in catalog');
+      throw CatalogItemNotFoundException(widgetType, catalogId: catalogId);
     }
 
     genUiLogger.info('Building widget ${item.name} with id ${itemContext.id}');
@@ -134,5 +134,30 @@ class Catalog {
       },
       required: ['components', 'styles', 'functions'],
     );
+  }
+}
+
+/// An exception thrown when a requested item is not found in the [Catalog].
+class CatalogItemNotFoundException implements Exception {
+  /// Creates a new [CatalogItemNotFoundException].
+  const CatalogItemNotFoundException(this.widgetType, {this.catalogId});
+
+  /// The type of the widget that was not found.
+  final String widgetType;
+
+  /// The ID of the catalog that was searched.
+  final String? catalogId;
+
+  @override
+  String toString() {
+    final buffer = StringBuffer();
+    buffer.write(
+      'CatalogItemNotFoundException: Item "$widgetType" '
+      'was not found in catalog',
+    );
+    if (catalogId != null) {
+      buffer.write(' "$catalogId"');
+    }
+    return buffer.toString();
   }
 }

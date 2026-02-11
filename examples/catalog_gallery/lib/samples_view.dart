@@ -114,7 +114,7 @@ class _SamplesViewState extends State<SamplesView> {
     _setupSurfaceListener();
 
     try {
-      debugPrint('Displaying sample in ${file.basename}');
+      genUiLogger.info('Displaying sample in ${file.basename}');
       final Sample sample = await SampleParser.parseFile(file);
       setState(() {
         _selectedFile = file;
@@ -124,19 +124,23 @@ class _SamplesViewState extends State<SamplesView> {
       _messageSubscription = sample.messages.listen(
         _genUiController.handleMessage,
         onError: (Object e) {
-          debugPrint('Error processing message: $e');
+          genUiLogger.severe('Error processing message: $e');
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error processing sample: $e')),
           );
         },
       );
-    } catch (e, stackTrace) {
-      debugPrint('Error parsing sample in file ${file.path}: $e\n$stackTrace');
+    } catch (exception, stackTrace) {
+      genUiLogger.severe(
+        'Error parsing sample in file ${file.path}: $exception\n$stackTrace',
+      );
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error parsing sample: $e')));
+      ).showSnackBar(
+        SnackBar(content: Text('Error parsing sample: $exception')),
+      );
     }
   }
 

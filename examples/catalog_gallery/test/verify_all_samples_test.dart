@@ -32,8 +32,8 @@ void main() {
       for (final file in files) {
         try {
           await SampleParser.parseFile(file);
-        } catch (e, s) {
-          fail('Failed to parse ${file.path}: $e\n$s');
+        } catch (exception, stackTrace) {
+          fail('Failed to parse ${file.path}: $exception\n$stackTrace');
         }
       }
     },

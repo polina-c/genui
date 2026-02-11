@@ -133,11 +133,15 @@ class _IntegrationTesterState extends State<_IntegrationTester> {
                 'UI received for surfaceId=${parsedToolCall.surfaceId}',
               );
               setState(() => _isLoading = false);
-            } catch (e, callStack) {
-              _log.severe('Error connecting to backend: $e', e, callStack);
+            } catch (exception, stackTrace) {
+              _log.severe(
+                'Error connecting to backend: $exception',
+                exception,
+                stackTrace,
+              );
               setState(() {
                 _isLoading = false;
-                _errorMessage = e.toString();
+                _errorMessage = exception.toString();
               });
             }
           },

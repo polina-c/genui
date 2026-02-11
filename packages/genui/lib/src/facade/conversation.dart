@@ -185,8 +185,8 @@ class Conversation {
     _updateState((s) => s.copyWith(isWaiting: true));
     try {
       await transport.sendRequest(message);
-    } catch (e, st) {
-      _eventController.add(ConversationError(e, st));
+    } catch (exception, stackTrace) {
+      _eventController.add(ConversationError(exception, stackTrace));
     } finally {
       _updateState((s) => s.copyWith(isWaiting: false));
     }
