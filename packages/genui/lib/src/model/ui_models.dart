@@ -18,7 +18,7 @@ typedef DispatchEventCallback = void Function(UiEvent event);
 
 /// A data object that represents a user interaction event in the UI.
 ///
-/// This is used to send information from the app to the AI about user
+/// Used to send information from the app to the AI about user
 /// actions, such as tapping a button or entering text.
 extension type UiEvent.fromMap(JsonMap _json) {
   /// The ID of the surface that this event originated from.
@@ -30,8 +30,9 @@ extension type UiEvent.fromMap(JsonMap _json) {
   /// The type of event that was triggered (e.g., 'onChanged', 'onTap').
   String get eventType => _json['eventType'] as String;
 
-  /// The value associated with the event, if any (e.g., the text in a
-  /// `TextField`, or the value of a `Checkbox`).
+  /// The value associated with the event, if any.
+  ///
+  /// For example, the text in a `TextField`, or the value of a `Checkbox`.
   Object? get value => _json['value'];
 
   /// The timestamp of when the event occurred.
@@ -43,8 +44,7 @@ extension type UiEvent.fromMap(JsonMap _json) {
 
 /// A UI event that represents a user action.
 ///
-/// This is used for events that should trigger a submission to the AI, such as
-/// tapping a button.
+/// Triggers a submission to the AI, such as tapping a button.
 extension type UserActionEvent.fromMap(JsonMap _json) implements UiEvent {
   /// Creates a [UserActionEvent] from a set of properties.
   UserActionEvent({
@@ -61,8 +61,13 @@ extension type UserActionEvent.fromMap(JsonMap _json) implements UiEvent {
          'context': context ?? {},
        };
 
+  /// The name of the action.
   String get name => _json['name'] as String;
+
+  /// The ID of the component that triggered the action.
   String get sourceComponentId => _json['sourceComponentId'] as String;
+
+  /// Context associated with the action.
   JsonMap get context => _json['context'] as JsonMap;
 }
 
@@ -74,7 +79,7 @@ final class _Json {
 
 /// A data object that represents the entire UI definition.
 ///
-/// This is the root object that defines a complete UI to be rendered.
+/// The root object that defines a complete UI to be rendered.
 class UiDefinition {
   /// The ID of the surface that this UI belongs to.
   final String surfaceId;
@@ -144,6 +149,7 @@ class UiDefinition {
   }
 
   /// Validates the UI definition against a schema.
+  ///
   /// Throws [A2uiValidationException] if validation fails.
   void validate(Schema schema) {
     final String jsonOutput = schema.toJson();
@@ -361,6 +367,15 @@ final class Component {
 
 /// Exception thrown when validation fails.
 class A2uiValidationException implements Exception {
+  /// Creates a [A2uiValidationException].
+  A2uiValidationException(
+    this.message, {
+    this.surfaceId,
+    this.path,
+    this.json,
+    this.cause,
+  });
+
   /// The error message.
   final String message;
 
@@ -376,15 +391,6 @@ class A2uiValidationException implements Exception {
   /// The underlying cause of the error.
   final Object? cause;
 
-  /// Creates a [A2uiValidationException].
-  A2uiValidationException(
-    this.message, {
-    this.surfaceId,
-    this.path,
-    this.json,
-    this.cause,
-  });
-
   @override
   String toString() {
     final buffer = StringBuffer('A2uiValidationException: $message');
@@ -398,8 +404,7 @@ class A2uiValidationException implements Exception {
 
 /// A sealed class representing an update to the UI managed by the system.
 ///
-/// This class has three subclasses: [SurfaceAdded], [ComponentsUpdated], and
-/// [SurfaceRemoved].
+/// Subclasses: [SurfaceAdded], [ComponentsUpdated], and [SurfaceRemoved].
 sealed class SurfaceUpdate {
   /// Creates a [SurfaceUpdate] for the given [surfaceId].
   const SurfaceUpdate(this.surfaceId);

@@ -15,6 +15,7 @@ import '../primitives/simple_items.dart';
 /// Represents a path in the data model, either absolute or relative.
 @immutable
 class DataPath {
+  /// Creates a [DataPath] from a string representation.
   factory DataPath(String path) {
     if (path == _separator) return root;
     final List<String> segments = path
@@ -26,17 +27,25 @@ class DataPath {
 
   const DataPath._(this.segments, this.isAbsolute);
 
+  /// The segments of the path.
   final List<String> segments;
+
+  /// Whether the path is absolute (starts with a separator).
   final bool isAbsolute;
 
   static const String _separator = '/';
+
+  /// The root path.
   static const DataPath root = DataPath._([], true);
 
+  /// The last segment of the path.
   String get basename => segments.last;
 
+  /// The path without the last segment.
   DataPath get dirname =>
       DataPath._(segments.sublist(0, segments.length - 1), isAbsolute);
 
+  /// Joins this path with another path.
   DataPath join(DataPath other) {
     if (other.isAbsolute) {
       return other;
@@ -44,6 +53,7 @@ class DataPath {
     return DataPath._([...segments, ...other.segments], isAbsolute);
   }
 
+  /// Returns whether this path starts with the other path.
   bool startsWith(DataPath other) {
     if (other.segments.length > segments.length) {
       return false;
@@ -78,11 +88,14 @@ class DataPath {
 /// A contextual view of the main DataModel, used by widgets to resolve
 /// relative and absolute paths.
 class DataContext {
+  /// Creates a [DataContext] for the given [path].
   DataContext(this._dataModel, String path) : path = DataPath(path);
 
   DataContext._(this._dataModel, this.path);
 
   final DataModel _dataModel;
+
+  /// The path associated with this context.
   final DataPath path;
 
   /// The underlying data model for this context.
@@ -90,6 +103,9 @@ class DataContext {
 
   /// Subscribes to a path or expression, resolving it against the current
   /// context.
+  ///
+  /// If [pathOrExpression] contains `${`, it is treated as an expression.
+  /// Otherwise, it is treated as a path.
   ValueNotifier<T?> subscribe<T>(Object? pathOrExpression) {
     if (pathOrExpression is String && pathOrExpression.contains(r'${')) {
       // Expressions require reactivity based on their dependencies.
@@ -104,8 +120,6 @@ class DataContext {
       final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
       return _dataModel.subscribe<T>(absolutePath);
     }
-    // Fallback for direct values (e.g. constant subscription?)
-    // Or return a constant notifier?
     return ValueNotifier<T?>(pathOrExpression as T?);
   }
 
@@ -131,12 +145,14 @@ class DataContext {
   }
 
   /// Creates a new, nested DataContext for a child widget.
-  /// Used by list/template widgets for their children.
+  ///
+  /// Used by list/template widgets to create a context for their children.
   DataContext nested(String relativePath) {
     final DataPath newPath = resolvePath(DataPath(relativePath));
     return DataContext._(_dataModel, newPath);
   }
 
+  /// Resolves a path against the current context's path.
   DataPath resolvePath(DataPath pathToResolve) {
     if (pathToResolve.isAbsolute) {
       return pathToResolve;
@@ -204,8 +220,8 @@ class _ComputedValueNotifier<T> extends ValueNotifier<T?> {
   }
 }
 
-/// Manages the application's Object? data model and provides
-/// a subscription-based mechanism for reactive UI updates.
+/// Manages the application's data model and provides a subscription-based
+/// mechanism for reactive UI updates.
 class DataModel {
   JsonMap _data = {};
   final Map<DataPath, ValueNotifier<Object?>> _subscriptions = {};

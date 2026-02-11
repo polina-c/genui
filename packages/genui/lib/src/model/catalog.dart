@@ -16,10 +16,11 @@ import 'data_model.dart';
 /// to construct a user interface.
 ///
 /// A [Catalog] serves three primary purposes:
-/// 1. It holds a list of [CatalogItem]s, which define the available widgets.
-/// 2. It provides a mechanism to build a Flutter widget from a JSON-like data
+///
+/// 1. Holds a list of [CatalogItem]s, which define the available widgets.
+/// 2. Provides a mechanism to build a Flutter widget from a JSON-like data
 ///    structure ([JsonMap]).
-/// 3. It dynamically generates a [Schema] that describes the structure of all
+/// 3. Dynamically generates a [Schema] that describes the structure of all
 ///    supported widgets, which can be provided to the AI model.
 @immutable
 class Catalog {
@@ -29,8 +30,10 @@ class Catalog {
   /// The list of [CatalogItem]s available in this catalog.
   final Iterable<CatalogItem> items;
 
-  /// A string that uniquely identifies this catalog. It is recommended to use
-  /// a reverse-domain name notation, e.g. 'com.example.my_catalog'.
+  /// A string that uniquely identifies this catalog.
+  ///
+  /// The recommended format for this string is reverse-domain name notation,
+  /// e.g. 'com.example.my_catalog'.
   final String? catalogId;
 
   /// Returns a new [Catalog] containing the items from both this catalog and

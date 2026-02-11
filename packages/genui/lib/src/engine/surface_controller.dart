@@ -21,6 +21,9 @@ import 'data_model_store.dart';
 import 'surface_registry.dart' as surface_reg;
 
 /// The runtime controller for the GenUI system.
+///
+/// Orchestrates the lifecycle of UI surfaces, manages communication with the
+/// AI service, and handles data model updates.
 class SurfaceController implements SurfaceHost, A2uiMessageSink {
   /// Creates a [SurfaceController].
   ///
@@ -96,8 +99,8 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
 
   /// Process an [message] from the AI service.
   ///
-  /// This method decodes the message and updates the state of the relevant
-  /// surface, provided the message passes validation.
+  /// Decodes the message and updates the state of the relevant surface,
+  /// provided the message passes validation.
   ///
   /// If validation fails, a [A2uiValidationException] is caught and logged,
   /// and an error message is sent back via [onSubmit].
@@ -237,7 +240,7 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
 
   /// Handles a UI event from a surface.
   ///
-  /// This converts the event into a [ChatMessage] and adds it to the [onSubmit]
+  /// Converts the event into a [ChatMessage] and adds it to the [onSubmit]
   /// stream.
   void handleUiEvent(UiEvent event) {
     if (event is! UserActionEvent) return;
@@ -255,7 +258,7 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
 
   /// Disposes of the controller and releases all resources.
   ///
-  /// This closes the [onSubmit] stream and cancels any pending timers.
+  /// Closes the [onSubmit] stream and cancels any pending timers.
   void dispose() {
     _registry.dispose();
     _store.dispose();

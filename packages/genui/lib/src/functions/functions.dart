@@ -169,16 +169,14 @@ class FunctionRegistry {
     return args['value']?.toString() ?? '';
   }
 
-  Object? _openUrl(Map<String, Object?> args) {
+  Object? _openUrl(Map<String, Object?> args) async {
     final Object? urlStr = args['url'];
     if (urlStr is! String) return false;
     final Uri? uri = Uri.tryParse(urlStr);
     if (uri != null) {
-      launchUrl(uri).catchError((Object? e) {
-        genUiLogger.warning('Failed to launch URL: $urlStr', e);
-        return false;
-      });
-      return true;
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri);
+      }
     }
     return false;
   }

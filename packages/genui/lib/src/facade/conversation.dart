@@ -12,7 +12,7 @@ import '../interfaces/transport.dart';
 import '../model/chat_message.dart';
 import '../model/ui_models.dart';
 
-/// Events emitted by [Conversation].
+/// Events emitted by [Conversation] to notify listeners of changes.
 sealed class ConversationEvent {}
 
 /// Fired when a new surface is added.
@@ -60,8 +60,7 @@ class ConversationContentReceived extends ConversationEvent {
 /// Fired when the conversation is waiting for a response.
 class ConversationWaiting extends ConversationEvent {}
 
-/// Fired when an error occurs.
-/// Fired when an error occurs.
+/// Fired when an error occurs during the conversation.
 class ConversationError extends ConversationEvent {
   /// Creates a [ConversationError] event.
   ConversationError(this.error, [this.stackTrace]);
@@ -91,6 +90,7 @@ class ConversationState {
   /// Whether we are waiting for a response.
   final bool isWaiting;
 
+  /// Creates a copy of this state with the given fields replaced.
   ConversationState copyWith({
     List<String>? surfaces,
     String? latestText,
@@ -106,11 +106,9 @@ class ConversationState {
 
 /// Facade for managing a GenUI conversation.
 ///
-/// This class orchestrates the communication between the [SurfaceController]
-/// and
-/// the [Transport]. It manages the state of the conversation,
-/// including the list of active surfaces, the latest text response, and whether
-/// the system is waiting for a response.
+/// Orchestrates compmunication between the [SurfaceController] and the
+/// [Transport]. Manages the conversation state, including active surfaces, the
+/// latest text response, and waiting status.
 class Conversation {
   /// Creates a [Conversation].
   ///
