@@ -136,9 +136,7 @@ class _SamplesViewState extends State<SamplesView> {
         'Error parsing sample in file ${file.path}: $exception\n$stackTrace',
       );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error parsing sample: $exception')),
       );
     }

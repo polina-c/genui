@@ -19,6 +19,9 @@ class FakeAiClient implements AiClient {
   // Queue of responses to send for each request.
   final List<String> _responses = [];
 
+  final List<String> _receivedPrompts = [];
+  List<String> get receivedPrompts => List.unmodifiable(_receivedPrompts);
+
   Stream<A2uiMessage> get a2uiMessageStream => _a2uiMessageController.stream;
 
   Stream<String> get textResponseStream => _textResponseController.stream;
@@ -33,6 +36,7 @@ class FakeAiClient implements AiClient {
     String prompt, {
     required List<dartantic.ChatMessage> history,
   }) async* {
+    _receivedPrompts.add(prompt);
     if (_responses.isEmpty) {
       yield 'I have no response for that.';
       return;

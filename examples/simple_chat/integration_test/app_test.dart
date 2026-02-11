@@ -29,7 +29,7 @@ void main() {
         await _runTestForSample(
           tester,
           'integration_test/samples/sample_1_hello.json',
-          (tester) async {
+          (tester, client) async {
             expect(find.textContaining('Hello, World!'), findsOneWidget);
           },
         );
@@ -41,11 +41,21 @@ void main() {
         await _runTestForSample(
           tester,
           'integration_test/samples/sample_2_button.json',
-          (tester) async {
+          (tester, client) async {
             // Button might be ElevatedButton, TextButton, or FilledButton.
             // Just finding text is safer for integration test unless we care
             // about specific styling.
             expect(find.text('Click Me'), findsOneWidget);
+
+            // Interaction Verification
+            await tester.tap(find.text('Click Me'));
+            await tester.pump();
+            // Button action does not trigger a response if the fake client is
+            // empty, but it should send the prompt.
+            expect(
+              client.receivedPrompts,
+              contains(contains('Button Clicked')),
+            );
           },
         );
       });
@@ -56,7 +66,7 @@ void main() {
         await _runTestForSample(
           tester,
           'integration_test/samples/sample_3_image.json',
-          (tester) async {
+          (tester, client) async {
             // Image widget should exist even if mocked.
             expect(find.byType(Image), findsOneWidget);
           },
@@ -69,7 +79,7 @@ void main() {
         await _runTestForSample(
           tester,
           'integration_test/samples/sample_4_form.json',
-          (tester) async {
+          (tester, client) async {
             // Debug dump if fails
             expect(find.text('Type'), findsOneWidget);
             expect(find.text('Size'), findsOneWidget);
@@ -84,7 +94,7 @@ void main() {
         await _runTestForSample(
           tester,
           'integration_test/samples/sample_5_mixed.json',
-          (tester) async {
+          (tester, client) async {
             expect(find.text('Do you want to proceed?'), findsOneWidget);
             expect(find.text('Yes, proceed'), findsOneWidget);
           },
@@ -97,7 +107,7 @@ void main() {
 Future<void> _runTestForSample(
   WidgetTester tester,
   String samplePath,
-  Future<void> Function(WidgetTester) verify,
+  Future<void> Function(WidgetTester, FakeAiClient) verify,
 ) async {
   // Read sample file
   final file = File(samplePath);
@@ -133,5 +143,5 @@ Future<void> _runTestForSample(
   await tester.pumpAndSettle();
 
   // Run verification
-  await verify(tester);
+  await verify(tester, fakeAiClient);
 }
