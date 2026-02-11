@@ -53,29 +53,34 @@ void main() {
     WidgetTester tester,
   ) async {
     debugNetworkImageHttpClientProvider = TestHttpClient.new;
+    // addTearDown(() => debugNetworkImageHttpClientProvider = null);
 
-    final file = File('samples/nestedLayoutRecursive.sample');
-    final String content = file.readAsStringSync();
-    final Sample sample = SampleParser.parseString(content);
+    try {
+      final file = File('samples/nestedLayoutRecursive.sample');
+      final String content = file.readAsStringSync();
+      final Sample sample = SampleParser.parseString(content);
 
-    final controller = SurfaceController(
-      catalogs: [CoreCatalogItems.asCatalog()],
-    );
+      final controller = SurfaceController(
+        catalogs: [CoreCatalogItems.asCatalog()],
+      );
 
-    await for (final A2uiMessage message in sample.messages) {
-      controller.handleMessage(message);
-    }
+      await for (final A2uiMessage message in sample.messages) {
+        controller.handleMessage(message);
+      }
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Surface(genUiContext: controller.contextFor('main')),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Surface(genUiContext: controller.contextFor('main')),
+          ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Deep content'), findsOneWidget);
+      expect(find.text('Deep content'), findsOneWidget);
+    } finally {
+      debugNetworkImageHttpClientProvider = null;
+    }
   });
 }

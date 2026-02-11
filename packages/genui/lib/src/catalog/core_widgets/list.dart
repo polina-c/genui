@@ -113,8 +113,7 @@ final list = CatalogItem(
                   componentId,
                   itemDataContext,
                 );
-                return KeyedSubtree(key: ValueKey(keys[index]),
-                  child: child);
+                return KeyedSubtree(key: ValueKey(keys[index]), child: child);
               }),
             );
           },
