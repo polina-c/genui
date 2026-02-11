@@ -61,8 +61,9 @@ void main() {
           isFalse,
         );
         expect(
-          registry.invoke('regex', {'value': 'any', 'pattern': 'invalid['}),
-          isFalse,
+          () =>
+              registry.invoke('regex', {'value': 'any', 'pattern': 'invalid['}),
+          throwsA(isA<FunctionInvocationException>()),
         ); // Invalid regex pattern
       });
 

@@ -81,7 +81,10 @@ sealed class A2uiMessage {
       );
       rethrow;
     }
-    throw ArgumentError('Unknown A2UI message type: ${json.keys}');
+    throw A2uiValidationException(
+      'Unknown A2UI message type: ${json.keys}',
+      json: json,
+    );
   }
 
   /// Returns the JSON schema for an A2UI message.

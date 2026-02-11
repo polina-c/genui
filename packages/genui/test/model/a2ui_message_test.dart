@@ -110,7 +110,7 @@ void main() {
       expect(
         () => A2uiMessage.fromJson(json),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<A2uiValidationException>().having(
             (e) => e.message,
             'message',
             contains('Unknown A2UI message type'),

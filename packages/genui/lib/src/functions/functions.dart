@@ -37,8 +37,7 @@ class FunctionRegistry {
     try {
       return func(args);
     } catch (e, stack) {
-      genUiLogger.severe('Error invoking function $name', e, stack);
-      return null;
+      throw FunctionInvocationException(name, e, stack);
     }
   }
 
@@ -114,8 +113,7 @@ class FunctionRegistry {
     try {
       return RegExp(pattern).hasMatch(value);
     } catch (e) {
-      genUiLogger.warning('Invalid regex pattern: $pattern');
-      return false;
+      throw FormatException('Invalid regex pattern: $pattern', e);
     }
   }
 
@@ -246,4 +244,22 @@ class FunctionRegistry {
     if (count == 1 && args.containsKey('one')) return args['one'];
     return args['other'] ?? '';
   }
+}
+
+/// Exception thrown when a function invocation fails.
+class FunctionInvocationException implements Exception {
+  /// Creates a [FunctionInvocationException].
+  FunctionInvocationException(this.functionName, this.cause, [this.stack]);
+
+  /// The name of the function that failed.
+  final String functionName;
+
+  /// The underlying cause of the failure.
+  final Object cause;
+
+  /// The stack trace.
+  final StackTrace? stack;
+
+  @override
+  String toString() => 'Error invoking function "$functionName": $cause';
 }

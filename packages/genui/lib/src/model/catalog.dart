@@ -68,8 +68,7 @@ class Catalog {
       (item) => item.name == widgetType,
     );
     if (item == null) {
-      genUiLogger.severe('Item $widgetType was not found in catalog');
-      return Container();
+      throw StateError('Item $widgetType was not found in catalog');
     }
 
     genUiLogger.info('Building widget ${item.name} with id ${itemContext.id}');
