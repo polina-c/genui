@@ -162,34 +162,34 @@ LANDSCAPE_UI_EXAMPLES = """
 
       {{ "id": "options-row", "component": "Column", "children": ["option-card-1", "option-card-2"] }},
 
-      {{ "id": "option-card-1", "weight": 1, "component": "Card", "child": "option-layout-1" }},
+      {{ "id": "option-card-1", "component": "Card", "child": "option-layout-1" }},
       {{ "id": "option-layout-1", "component": "Column", "align": "center",  "justify": "center", "children": ["option-image-1", "option-details-1"] }},
-      {{ "id": "option-image-1", "component": "Image", "url": {{ "path": "/items/option1/imageUrl" }}, "fit": "cover" }},
+      {{ "id": "option-image-1", "component": "Image", "url": {{ "path": "/options/items/option1/imageUrl" }}, "fit": "cover" }},
       {{ "id": "option-details-1", "component": "Column", "align": "stretch","justify": "center", "children": ["option-name-1", "option-price-1", "option-time-1", "option-detail-1", "option-tradeoffs-1", "select-button-1"] }},
-      {{ "id": "option-name-1", "component": "Text", "variant": "h4", "text": {{ "path": "/items/option1/name" }} }},
-      {{ "id": "option-price-1", "component": "Text", "variant": "h5", "text": {{ "path": "/items/option1/price" }} }},
-      {{ "id": "option-time-1", "component": "Text", "variant": "h5", "text": {{ "path": "/items/option1/time" }} }},
-      {{ "id": "option-detail-1", "component": "Text", "text": {{ "path": "/items/option1/detail" }} }},
-      {{ "id": "option-tradeoffs-1", "component": "Text", "text": {{ "path": "/items/option1/tradeoffs" }} }},
-      {{ "id": "select-button-1", "component": "Button", "variant": "primary", "child": "select-text-1", "action": {{ "event": {{ "name": "select_option", "context": {{ "optionName": {{ "path": "/items/option1/name" }}, "optionPrice": {{ "path": "/items/option1/price" }} }} }} }} }},
+      {{ "id": "option-name-1", "component": "Text", "variant": "h4", "text": {{ "path": "/options/items/option1/name" }} }},
+      {{ "id": "option-price-1", "component": "Text", "variant": "h5", "text": {{ "path": "/options/items/option1/price" }} }},
+      {{ "id": "option-time-1", "component": "Text", "variant": "h5", "text": {{ "path": "/options/items/option1/time" }} }},
+      {{ "id": "option-detail-1", "component": "Text", "text": {{ "path": "/options/items/option1/detail" }} }},
+      {{ "id": "option-tradeoffs-1", "component": "Text", "text": {{ "path": "/options/items/option1/tradeoffs" }} }},
+      {{ "id": "select-button-1", "component": "Button", "variant": "primary", "child": "select-text-1", "action": {{ "event": {{ "name": "select_option", "context": {{ "optionName": {{ "path": "/options/items/option1/name" }}, "optionPrice": {{ "path": "/options/items/option1/price" }} }} }} }} }},
       {{ "id": "select-text-1", "component": "Text", "text": "Select This Option" }},
 
-      {{ "id": "option-card-2", "weight": 1, "component": "Card", "child": "option-layout-2" }},
+      {{ "id": "option-card-2", "component": "Card", "child": "option-layout-2" }},
       {{ "id": "option-layout-2", "component": "Column", "align": "center", "justify": "center", "children": ["option-image-2", "option-details-2"] }},
-      {{ "id": "option-image-2", "component": "Image", "url": {{ "path": "/items/option2/imageUrl" }}, "fit": "cover" }},
+      {{ "id": "option-image-2", "component": "Image", "url": {{ "path": "/options/items/option2/imageUrl" }}, "fit": "cover" }},
       {{ "id": "option-details-2", "component": "Column", "align": "stretch","justify": "center", "children": ["option-name-2", "option-price-2", "option-time-2", "option-detail-2", "option-tradeoffs-2", "select-button-2"] }},
-      {{ "id": "option-name-2", "component": "Text", "variant": "h4", "text": {{ "path": "/items/option2/name" }} }},
-      {{ "id": "option-price-2", "component": "Text", "variant": "h5", "text": {{ "path": "/items/option2/price" }} }},
-      {{ "id": "option-time-2", "component": "Text", "variant": "h5", "text": {{ "path": "/items/option2/time" }} }},
-      {{ "id": "option-detail-2", "component": "Text", "text": {{ "path": "/items/option2/detail" }} }},
-      {{ "id": "option-tradeoffs-2", "component": "Text", "text": {{ "path": "/items/option2/tradeoffs" }} }},
-      {{ "id": "select-button-2", "component": "Button", "variant": "primary", "child": "select-text-2", "action": {{ "event": {{ "name": "select_option", "context": {{ "optionName": {{ "path": "/items/option2/name" }}, "optionPrice": {{ "path": "/items/option2/price" }} }} }} }} }},
+      {{ "id": "option-name-2", "component": "Text", "variant": "h4", "text": {{ "path": "/options/items/option2/name" }} }},
+      {{ "id": "option-price-2", "component": "Text", "variant": "h5", "text": {{ "path": "/options/items/option2/price" }} }},
+      {{ "id": "option-time-2", "component": "Text", "variant": "h5", "text": {{ "path": "/options/items/option2/time" }} }},
+      {{ "id": "option-detail-2", "component": "Text", "text": {{ "path": "/options/items/option2/detail" }} }},
+      {{ "id": "option-tradeoffs-2", "component": "Text", "text": {{ "path": "/options/items/option2/tradeoffs" }} }},
+      {{ "id": "select-button-2", "component": "Button", "variant": "primary", "child": "select-text-2", "action": {{ "event": {{ "name": "select_option", "context": {{ "optionName": {{ "path": "/options/items/option2/name" }}, "optionPrice": {{ "path": "/options/items/option2/price" }} }} }} }} }},
       {{ "id": "select-text-2", "component": "Text", "text": "Select This Option" }}
     ]
   }} }},
   {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "options",
-    "path": "/",
+    "path": "/options",
     "value": {{
       "items": {{
         "option1": {{
@@ -222,19 +222,19 @@ LANDSCAPE_UI_EXAMPLES = """
     "components": [
       {{ "id": "root", "weight": 1, "component": "Card", "child": "cart-column" }},
       {{ "id": "cart-column", "component": "Column", "align": "stretch", "children": ["cart-subtitle", "item-list", "total-price", "checkout-button"] }},
-      {{ "id": "cart-subtitle", "component": "Text", "variant": "h4", "text": {{ "path": "optionName" }} }},
-      {{ "id": "item-list", "component": "List", "direction": "vertical", "children": {{ "componentId": "item-template", "path": "/cartItems" }} }},
+      {{ "id": "cart-subtitle", "component": "Text", "variant": "h4", "text": {{ "path": "/cart/optionName" }} }},
+      {{ "id": "item-list", "component": "List", "direction": "vertical", "children": {{ "componentId": "item-template", "path": "/cart/cartItems" }} }},
       {{ "id": "item-template", "component": "Row", "justify": "spaceBetween", "children": ["template-item-name", "template-item-price"] }},
       {{ "id": "template-item-name", "component": "Text", "text": {{ "path": "name" }} }},
       {{ "id": "template-item-price", "component": "Text", "text": {{ "path": "price" }} }},
-      {{ "id": "total-price", "component": "Text", "variant": "h4", "text": {{ "path": "totalPrice" }} }},
-      {{ "id": "checkout-button", "component": "Button", "child": "checkout-text", "variant": "primary", "action": {{ "event": {{ "name": "checkout", "context": {{ "optionName": {{ "path": "optionName" }}, "totalPrice": {{ "path": "totalPrice" }} }} }} }} }},
+      {{ "id": "total-price", "component": "Text", "variant": "h4", "text": {{ "path": "/cart/totalPrice" }} }},
+      {{ "id": "checkout-button", "component": "Button", "child": "checkout-text", "variant": "primary", "action": {{ "event": {{ "name": "checkout", "context": {{ "optionName": {{ "path": "/cart/optionName" }}, "totalPrice": {{ "path": "/cart/totalPrice" }} }} }} }} }},
       {{ "id": "checkout-text", "component": "Text", "text": "Purchase" }}
     ]
   }} }},
   {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "cart",
-    "path": "/",
+    "path": "/cart",
     "value": {{
       "optionName": "Modern Zen Garden",
       "totalPrice": "Total: $7,500.00",
@@ -262,19 +262,19 @@ LANDSCAPE_UI_EXAMPLES = """
       {{ "id": "details-column", "component": "Column", "align": "stretch", "children": ["design-name-row", "price-row", "order-number-row"] }},
       {{ "id": "design-name-row", "component": "Row", "children": ["design-name-label", "design-name-value"] }},
       {{ "id": "design-name-label", "component": "Text", "variant": "h5", "text": "Design: " }},
-      {{ "id": "design-name-value", "component": "Text", "variant": "h5", "text": {{ "path": "designName" }} }},
+      {{ "id": "design-name-value", "component": "Text", "variant": "h5", "text": {{ "path": "/confirmation/designName" }} }},
       {{ "id": "price-row", "component": "Row", "children": ["price-label", "price-value"] }},
       {{ "id": "price-label", "component": "Text", "variant": "h5", "text": "Price: " }},
-      {{ "id": "price-value", "component": "Text", "variant": "h5", "text": {{ "path": "price" }} }},
+      {{ "id": "price-value", "component": "Text", "variant": "h5", "text": {{ "path": "/confirmation/price" }} }},
       {{ "id": "order-number-row", "component": "Row", "children": ["order-number-label", "order-number-value"] }},
       {{ "id": "order-number-label", "component": "Text", "variant": "h5", "text": "Order #: " }},
-      {{ "id": "order-number-value", "component": "Text", "variant": "h5", "text": {{ "path": "orderNumber" }} }},
+      {{ "id": "order-number-value", "component": "Text", "variant": "h5", "text": {{ "path": "/confirmation/orderNumber" }} }},
       {{ "id": "confirm-next-steps", "component": "Text", "text": "Our design team will contact you within 48 hours to schedule an on-site consultation." }}
     ]
   }} }},
   {{ "version": "v0.9", "updateDataModel": {{
     "surfaceId": "confirmation",
-    "path": "/",
+    "path": "/confirmation",
     "value": {{
       "designName": "Modern Zen Garden",
       "price": "$7,500.00",

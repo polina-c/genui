@@ -28,8 +28,11 @@ class SseParser {
 
     try {
       await for (final line in lines) {
+        final String lineData = line.length < 300
+            ? line
+            : line.substring(0, 300);
         log?.finer(
-          'Received SSE line: ${line.length} ${line.substring(0, line.length < 300 ? line.length : 300)}...',
+          'Received SSE line: ${line.length} $lineData...',
         );
         if (line.startsWith('data:')) {
           data.add(line.substring(5).trim());
