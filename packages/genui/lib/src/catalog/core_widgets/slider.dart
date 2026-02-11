@@ -9,6 +9,7 @@ import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
+import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
@@ -19,19 +20,31 @@ final _schema = S.object(
     'label': A2uiSchemas.stringReference(
       description: 'The label for the slider.',
     ),
+    'checks': A2uiSchemas.checkable(),
   },
   required: ['component', 'value'],
 );
 
 extension type _SliderData.fromMap(JsonMap _json) {
-  factory _SliderData({required JsonMap value, double? min, double? max}) =>
-      _SliderData.fromMap({'value': value, 'min': min, 'max': max});
+  factory _SliderData({
+    required JsonMap value,
+    double? min,
+    double? max,
+    List<JsonMap>? checks,
+  }) => _SliderData.fromMap({
+    'value': value,
+    'min': min,
+    'max': max,
+    'checks': checks,
+  });
 
   Object get value => _json['value'] as Object;
   double get min =>
       ((_json['min'] ?? _json['minValue']) as num?)?.toDouble() ?? 0.0;
   double get max =>
       ((_json['max'] ?? _json['maxValue']) as num?)?.toDouble() ?? 1.0;
+  List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
+
   String? get label {
     final Object? val = _json['label'];
     if (val is String) return val;
@@ -106,19 +119,47 @@ final slider = CatalogItem(
           ),
         );
 
-        return ValueListenableBuilder<String?>(
-          valueListenable: labelNotifier,
-          builder: (context, label, child) {
-            if (label == null || label.isEmpty) {
-              return sliderWidget;
-            }
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall),
-                sliderWidget,
-              ],
+        return ValueListenableBuilder<Object?>(
+          valueListenable: itemContext.dataContext.createComputedNotifier(
+            checksToExpression(sliderData.checks),
+          ),
+          builder: (context, isValid, _) {
+            final isError = isValid == false;
+
+            return ValueListenableBuilder<String?>(
+              valueListenable: labelNotifier,
+              builder: (context, label, child) {
+                final List<Widget> children = [];
+                if (label != null && label.isNotEmpty) {
+                  children.add(
+                    Text(label, style: Theme.of(context).textTheme.bodySmall),
+                  );
+                }
+                children.add(sliderWidget);
+                if (isError) {
+                  children.add(
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0, top: 4.0),
+                      child: Text(
+                        'Invalid value',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                if (children.length == 1) {
+                  return children.first;
+                }
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: children,
+                );
+              },
             );
           },
         );

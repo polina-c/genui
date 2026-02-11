@@ -96,10 +96,10 @@ class DataContext {
       // Since `ExpressionParser` doesn't currently return dependencies, we use
       // a `_ComputedValueNotifier` that attempts to extract paths from the
       // expression.
-      return _createComputedNotifier<T>(pathOrExpression);
+      return createComputedNotifier<T>(pathOrExpression);
     } else if (pathOrExpression is Map) {
       // Map expressions (e.g. function calls)
-      return _createComputedNotifier<T>(pathOrExpression);
+      return createComputedNotifier<T>(pathOrExpression);
     } else if (pathOrExpression is String) {
       final DataPath absolutePath = resolvePath(DataPath(pathOrExpression));
       return _dataModel.subscribe<T>(absolutePath);
@@ -155,7 +155,7 @@ class DataContext {
     return value;
   }
 
-  ValueNotifier<T?> _createComputedNotifier<T>(Object? expression) {
+  ValueNotifier<T?> createComputedNotifier<T>(Object? expression) {
     // Create a notifier that re-evaluates the expression when its dependencies
     // change.
     return _ComputedValueNotifier<T>(this, expression);

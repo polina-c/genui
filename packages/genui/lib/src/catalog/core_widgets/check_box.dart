@@ -9,22 +9,29 @@ import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
+import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
     'component': S.string(enumValues: ['CheckBox']),
     'label': A2uiSchemas.stringReference(),
     'value': A2uiSchemas.booleanReference(),
+    'checks': A2uiSchemas.checkable(),
   },
   required: ['component', 'label', 'value'],
 );
 
 extension type _CheckBoxData.fromMap(JsonMap _json) {
-  factory _CheckBoxData({required JsonMap label, required JsonMap value}) =>
-      _CheckBoxData.fromMap({'label': label, 'value': value});
+  factory _CheckBoxData({
+    required JsonMap label,
+    required JsonMap value,
+    List<JsonMap>? checks,
+  }) =>
+      _CheckBoxData.fromMap({'label': label, 'value': value, 'checks': checks});
 
   Object get label => _json['label'] as Object;
   Object get value => _json['value'] as Object;
+  List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
 }
 
 /// A catalog item representing a Material Design checkbox with a label.
@@ -62,17 +69,37 @@ final checkBox = CatalogItem(
             final bool effectiveValue =
                 value ?? (valueRef is bool ? valueRef : false);
 
-            return CheckboxListTile(
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(
-                label ?? '',
-                style: Theme.of(context).textTheme.bodyMedium,
+            // Wrap the checkbox in validation
+            return ValueListenableBuilder<Object?>(
+              valueListenable: itemContext.dataContext.createComputedNotifier(
+                checksToExpression(checkBoxData.checks),
               ),
-              value: effectiveValue,
-              onChanged: (newValue) {
-                if (newValue != null) {
-                  itemContext.dataContext.update(path, newValue);
-                }
+              builder: (context, isValid, _) {
+                final isError = isValid == false;
+
+                final Widget checkboxWidget = ListTileTheme.merge(
+                  child: CheckboxListTile(
+                    title: Text(label ?? ''),
+                    value: effectiveValue,
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        itemContext.dataContext.update(path, newValue);
+                      }
+                    },
+                    subtitle: isError
+                        ? Text(
+                            'Invalid value',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
+                          )
+                        : null,
+                    isError: isError,
+                  ),
+                );
+
+                return checkboxWidget;
               },
             );
           },

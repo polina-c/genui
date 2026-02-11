@@ -9,6 +9,7 @@ import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
+import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
@@ -16,12 +17,7 @@ final _schema = S.object(
     'label': A2uiSchemas.stringReference(
       description: 'The label for the group of options.',
     ),
-    'variant': S.string(
-      description:
-          'A hint for how the choice picker should be displayed and behave.',
-      enumValues: ['multipleSelection', 'mutuallyExclusive'],
-    ),
-    'options': S.list(
+    'options': A2uiSchemas.listOrReference(
       description: 'The list of available options to choose from.',
       items: S.object(
         properties: {
@@ -35,16 +31,28 @@ final _schema = S.object(
         required: ['label', 'value'],
       ),
     ),
-    'value': A2uiSchemas.stringArrayReference(
-      description: 'The list of currently selected values.',
+    'value': S.combined(
+      oneOf: [
+        S.string(),
+        S.list(items: S.string()),
+        A2uiSchemas.dataBindingSchema(),
+        A2uiSchemas.functionCall(),
+      ],
+      description: 'The list of currently selected values (or single value).',
     ),
     'displayStyle': S.string(
-      description: 'How the options should be displayed.',
+      description: 'The display style of the component.',
       enumValues: ['checkbox', 'chips'],
+    ),
+    'variant': S.string(
+      description:
+          'A hint for how the choice picker should be displayed and behave.',
+      enumValues: ['multipleSelection', 'mutuallyExclusive'],
     ),
     'filterable': S.boolean(
       description: 'Whether the options can be filtered by the user.',
     ),
+    'checks': A2uiSchemas.checkable(),
   },
   required: ['component', 'options', 'value'],
 );
@@ -54,9 +62,9 @@ extension type _ChoicePickerData.fromMap(JsonMap _json) {
   String? get variant => _json['variant'] as String?;
   Object? get options => _json['options'];
   Object get value => _json['value'] as Object;
-  String? get displayStyle =>
-      _json['displayStyle'] as String? ?? _json['type'] as String?;
+  String? get displayStyle => _json['displayStyle'] as String?;
   bool get filterable => _json['filterable'] as bool? ?? false;
+  List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
 }
 
 /// A component that allows selecting one or more options from a list.
@@ -86,15 +94,47 @@ final choicePicker = CatalogItem(
       optionsNotifier = ValueNotifier(optionsRef as List<Object?>?);
     }
 
-    return _ChoicePicker(
-      label: data.label,
-      optionsNotifier: optionsNotifier,
-      valueRef: valueRef,
-      path: path,
-      itemContext: itemContext,
-      isMutuallyExclusive: isMutuallyExclusive,
-      isChips: isChips,
-      filterable: data.filterable,
+    // Wrap the picker in validation
+    return ValueListenableBuilder<Object?>(
+      valueListenable: itemContext.dataContext.createComputedNotifier(
+        checksToExpression(data.checks),
+      ),
+      builder: (context, isValid, _) {
+        final isError = isValid == false;
+
+        final Widget pickerWidget = _ChoicePicker(
+          label: data.label,
+          optionsNotifier: optionsNotifier,
+          valueRef: valueRef,
+          path: path,
+          itemContext: itemContext,
+          isMutuallyExclusive: isMutuallyExclusive,
+          isChips: isChips,
+          filterable: data.filterable,
+        );
+
+        if (!isError) {
+          return pickerWidget;
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            pickerWidget,
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0, top: 4.0),
+              child: Text(
+                'Invalid selection',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   },
   exampleData: [

@@ -26,7 +26,7 @@ final _schema = S.object(
     'variant': S.string(
       enumValues: ['shortText', 'longText', 'number', 'obscured'],
     ),
-    'checks': S.list(items: A2uiSchemas.validationCheck()),
+    'checks': A2uiSchemas.checkable(),
     'validationRegexp': S.string(),
     'onSubmittedAction': A2uiSchemas.action(),
   },

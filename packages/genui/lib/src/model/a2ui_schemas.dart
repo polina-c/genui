@@ -327,11 +327,25 @@ abstract final class A2uiSchemas {
   /// Schema for a property that holds a list of child components,
   /// either as an explicit list of IDs or a data-bound template.
   static Schema componentArrayReference({String? description}) {
-    // We can add template support if needed, matching common_types.json.
-    // We'll stick to List<String> for now as per `common_types.json` "simple"
-    // list.
     final idList = S.list(items: S.string(description: 'Component ID'));
-    return idList;
+    final template = S.object(
+      properties: {
+        'componentId': componentReference(),
+        'path': S.string(
+          description: 'A relative or absolute path in the data model.',
+        ),
+      },
+      required: ['componentId', 'path'],
+    );
+    return S.combined(oneOf: [idList, template], description: description);
+  }
+
+  /// Schema for a list of validation checks.
+  static Schema checkable({String? description}) {
+    return S.list(
+      description: description ?? 'Validation rules for this component.',
+      items: validationCheck(),
+    );
   }
 
   /// Schema for a user-initiated action.
@@ -471,4 +485,27 @@ abstract final class A2uiSchemas {
   static Schema dataModelUpdateSchema() => updateDataModelSchema();
   static Schema surfaceUpdateSchema(Catalog catalog) =>
       updateComponentsSchema(catalog);
+
+  /// Schema for a value that can be either a literal list or a reference.
+  static Schema listOrReference({required Schema items, String? description}) {
+    final literal = S.list(items: items);
+    final Schema binding = dataBindingSchema(description: 'A path to a list.');
+    final Schema function = functionCall();
+    return S.combined(
+      oneOf: [literal, binding, function],
+      description: description,
+    );
+  }
+
+  /// Schema for a generic property value (literal, binding, or function).
+  static Schema propertyReference({String? description}) {
+    final Schema binding = dataBindingSchema(description: 'A path to a value.');
+    final Schema function = functionCall();
+    // We allow any type for the literal value since we don't know it here.
+    // Ideally usage would be more specific if possible.
+    return S.combined(
+      oneOf: [S.any(), binding, function],
+      description: description,
+    );
+  }
 }

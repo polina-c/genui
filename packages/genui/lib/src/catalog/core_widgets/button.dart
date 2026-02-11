@@ -12,6 +12,7 @@ import '../../model/ui_models.dart';
 import '../../primitives/logging.dart';
 import '../../primitives/simple_items.dart';
 import '../../widgets/widget_utilities.dart';
+import 'widget_helpers.dart';
 
 final _schema = S.object(
   properties: {
@@ -26,6 +27,7 @@ final _schema = S.object(
       description: 'A hint for the button style.',
       enumValues: ['primary', 'borderless'],
     ),
+    'checks': A2uiSchemas.checkable(),
   },
   required: ['component', 'child', 'action'],
 );
@@ -35,10 +37,12 @@ extension type _ButtonData.fromMap(JsonMap _json) {
     required String child,
     required JsonMap action,
     String? variant,
+    List<JsonMap>? checks,
   }) => _ButtonData.fromMap({
     'child': child,
     'action': action,
     'variant': variant,
+    'checks': checks,
   });
 
   String get child {
@@ -49,6 +53,7 @@ extension type _ButtonData.fromMap(JsonMap _json) {
 
   JsonMap get action => _json['action'] as JsonMap;
   String? get variant => _json['variant'] as String?;
+  List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
 }
 
 /// A catalog item representing a Material Design elevated button.
@@ -97,18 +102,34 @@ final button = CatalogItem(
       ),
     };
 
-    final Widget buttonWidget = borderless
-        ? TextButton(
-            onPressed: () => _handlePress(itemContext, buttonData),
-            child: child,
-          )
-        : ElevatedButton(
-            style: style.copyWith(textStyle: WidgetStatePropertyAll(textStyle)),
-            onPressed: () => _handlePress(itemContext, buttonData),
-            child: child,
-          );
+    // Validate checks to determine if button is enabled
+    return ValueListenableBuilder<Object?>(
+      valueListenable: itemContext.dataContext.createComputedNotifier(
+        checksToExpression(buttonData.checks),
+      ),
+      builder: (context, isValid, _) {
+        final enabled = isValid != false; // Default to true if null (no checks)
 
-    return buttonWidget;
+        final Widget buttonWidget = borderless
+            ? TextButton(
+                onPressed: enabled
+                    ? () => _handlePress(itemContext, buttonData)
+                    : null,
+                child: child,
+              )
+            : ElevatedButton(
+                style: style.copyWith(
+                  textStyle: WidgetStatePropertyAll(textStyle),
+                ),
+                onPressed: enabled
+                    ? () => _handlePress(itemContext, buttonData)
+                    : null,
+                child: child,
+              );
+
+        return buttonWidget;
+      },
+    );
   },
   exampleData: [
     () => '''
