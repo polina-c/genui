@@ -141,20 +141,6 @@ void main() {
 }
 
 final Map<String, Set<String>> _ignoredIds = {
-  'productGallery.sample': {
-    'productCardTemplate',
-    'productCardColumn',
-    'productImage',
-    'productNameText',
-    'addToCartButton',
-    'addToCartButtonText',
-  },
-  'productGalleryData.sample': {
-    'productCardTemplate',
-    'product1',
-    'product2',
-    'product3',
-  },
   'settingsPage.sample': {
     'deleteConfirmationContent',
     'confirmationText',

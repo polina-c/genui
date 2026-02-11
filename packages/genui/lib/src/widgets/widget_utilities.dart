@@ -49,7 +49,11 @@ extension DataContextExtensions on DataContext {
   /// underlying value is not a String, it will be converted using [toString].
   ValueNotifier<String?> subscribeToString(Object? value) {
     if (value is Map && value.containsKey('path')) {
-      final ValueNotifier<Object?> raw = subscribe<Object?>(value);
+
+      final ValueNotifier<Object?> raw = subscribe<Object?>(
+        value['path'] as String,
+      );
+
       return _ToStringNotifier(raw);
     }
     if (value is String && !value.contains(r'${')) {
@@ -62,7 +66,9 @@ extension DataContextExtensions on DataContext {
   /// path.
   ValueNotifier<bool?> subscribeToBool(Object? value) {
     if (value is Map && value.containsKey('path')) {
-      final ValueNotifier<Object?> raw = subscribe<Object?>(value);
+      final ValueNotifier<Object?> raw = subscribe<Object?>(
+        value['path'] as String,
+      );
       return _ToBoolNotifier(raw);
     }
     return subscribe<bool>(value);
@@ -78,7 +84,9 @@ extension DataContextExtensions on DataContext {
   /// path.
   ValueNotifier<num?> subscribeToNumber(Object? value) {
     if (value is Map && value.containsKey('path')) {
-      final ValueNotifier<Object?> raw = subscribe<Object?>(value);
+      final ValueNotifier<Object?> raw = subscribe<Object?>(
+        value['path'] as String,
+      );
       return _ToNumberNotifier(raw);
     }
     return subscribe<num>(value);

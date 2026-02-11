@@ -24,13 +24,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.blue);
     return MaterialApp(
       title: 'Simple Chat Controller',
-      theme: ThemeData.light().copyWith(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      theme: ThemeData(colorScheme: colorScheme),
+      darkTheme: ThemeData(
+        colorScheme: colorScheme.copyWith(brightness: Brightness.dark),
       ),
       home: const ChatScreen(),
     );

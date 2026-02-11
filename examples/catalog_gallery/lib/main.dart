@@ -70,7 +70,6 @@ class _CatalogGalleryAppState extends State<CatalogGalleryApp> {
         ),
         splashFactory: widget.splashFactory,
       ),
-      themeMode: ThemeMode.light,
       home: Builder(
         builder: (context) {
           return DefaultTabController(

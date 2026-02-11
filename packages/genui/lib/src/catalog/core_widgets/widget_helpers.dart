@@ -105,10 +105,6 @@ class ComponentChildrenBuilder extends StatelessWidget {
         return ValueListenableBuilder<Object?>(
           valueListenable: dataNotifier,
           builder: (context, data, child) {
-            genUiLogger.info(
-              'ComponentChildrenBuilder: data type: ${data.runtimeType}, '
-              'value: $data',
-            );
             if (data != null) {
               return templateListWidgetBuilder(
                 context,

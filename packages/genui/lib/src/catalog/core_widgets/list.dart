@@ -92,6 +92,7 @@ final list = CatalogItem(
       },
       templateListWidgetBuilder:
           (context, Object? data, componentId, dataBinding) {
+
             final List<Object?> values;
             final List<String> keys;
 
@@ -102,13 +103,20 @@ final list = CatalogItem(
               values = data.values.toList();
               keys = data.keys.map((k) => k.toString()).toList();
             } else {
+              print(
+                'List: invalid data type for template list: ${data.runtimeType}',
+              );
               return const SizedBox.shrink();
             }
 
+
+
             return buildList(
               List.generate(values.length, (index) {
+                final nestedPath = '$dataBinding/${keys[index]}';
+
                 final DataContext itemDataContext = itemContext.dataContext
-                    .nested('$dataBinding/${keys[index]}');
+                    .nested(nestedPath);
                 final Widget child = itemContext.buildChild(
                   componentId,
                   itemDataContext,

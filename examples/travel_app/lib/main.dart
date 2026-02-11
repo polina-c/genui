@@ -50,14 +50,14 @@ class TravelApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.blue);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: _title,
-      theme: ThemeData.light().copyWith(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      theme: ThemeData(colorScheme: colorScheme),
+      darkTheme: ThemeData(
+        colorScheme: colorScheme.copyWith(brightness: Brightness.dark),
       ),
       home: _TravelAppBody(aiClient: aiClient),
     );
