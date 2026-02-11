@@ -36,7 +36,7 @@ ClientFunction catalogToFunctionDeclaration(
   return ClientFunction(
     description: toolDescription,
     name: toolName,
-    parameters: A2uiSchemas.surfaceUpdateSchema(catalog),
+    parameters: A2uiSchemas.updateComponentsSchema(catalog),
   );
 }
 
@@ -52,17 +52,17 @@ ParsedToolCall parseToolCall(
     'version': 'v0.9',
     'updateComponents': toolCall.args,
   };
-  final surfaceUpdateMessage = A2uiMessage.fromJson(messageJson);
+  final updateComponentsMessage = A2uiMessage.fromJson(messageJson);
 
   final surfaceId = (toolCall.args as JsonMap)[surfaceIdKey] as String;
 
-  final beginRenderingMessage = CreateSurface(
+  final createSurfaceMessage = CreateSurface(
     surfaceId: surfaceId,
     catalogId: catalogId,
   );
 
   return ParsedToolCall(
-    messages: [surfaceUpdateMessage, beginRenderingMessage],
+    messages: [createSurfaceMessage, updateComponentsMessage],
     surfaceId: surfaceId,
   );
 }
@@ -77,10 +77,13 @@ ToolCall catalogExampleToToolCall(
     'version': 'v0.9',
     'updateComponents': example,
   };
-  final surfaceUpdateMessage = A2uiMessage.fromJson(messageJson);
+  final updateComponentsMessage = A2uiMessage.fromJson(messageJson);
 
   return ToolCall(
     name: toolName,
-    args: {surfaceIdKey: surfaceId, 'updateComponents': surfaceUpdateMessage},
+    args: {
+      surfaceIdKey: surfaceId,
+      'updateComponents': updateComponentsMessage,
+    },
   );
 }

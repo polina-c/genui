@@ -466,26 +466,6 @@ abstract final class A2uiSchemas {
     );
   }
 
-  // Backward compatibility aliases.
-  static Schema beginRenderingSchema() => createSurfaceSchema();
-  static Schema beginRenderingSchemaNoCatalogId() => S.object(
-    properties: {
-      surfaceIdKey: S.string(description: 'The unique ID for the surface.'),
-      'theme': S.object(
-        description: 'Theme parameters for the surface.',
-        additionalProperties: true,
-      ),
-      'sendDataModel': S.boolean(
-        description: 'Whether to send the data model to every client request.',
-      ),
-    },
-    required: [surfaceIdKey],
-  );
-  static Schema surfaceDeletionSchema() => deleteSurfaceSchema();
-  static Schema dataModelUpdateSchema() => updateDataModelSchema();
-  static Schema surfaceUpdateSchema(Catalog catalog) =>
-      updateComponentsSchema(catalog);
-
   /// Schema for a value that can be either a literal list or a reference.
   static Schema listOrReference({required Schema items, String? description}) {
     final literal = S.list(items: items);
