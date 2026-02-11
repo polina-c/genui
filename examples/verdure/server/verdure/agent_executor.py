@@ -88,9 +88,9 @@ class LandscapeAgentExecutor(AgentExecutor):
             )
             for i, part in enumerate(context.message.parts):
                 if isinstance(part.root, DataPart):
-                    if "userAction" in part.root.data:
+                    if "action" in part.root.data:
                         logger.info(f"  Part {i}: Found a2ui UI ClientEvent payload.")
-                        ui_event_part = part.root.data["userAction"]
+                        ui_event_part = part.root.data["action"]
                     else:
                         logger.info(f"  Part {i}: DataPart (data: {part.root.data})")
                 elif isinstance(part.root, TextPart):
@@ -108,9 +108,9 @@ class LandscapeAgentExecutor(AgentExecutor):
                                 json_bytes = base64.b64decode(file_data.bytes)
                                 json_str = json_bytes.decode("utf-8")
                                 json_data = json.loads(json_str)
-                                if "userAction" in json_data:
+                                if "action" in json_data:
                                     logger.info(f"  Part {i}: Found a2ui UI ClientEvent payload in FilePart.")
-                                    ui_event_part = json_data["userAction"]
+                                    ui_event_part = json_data["action"]
                                 else:
                                     logger.info(f"  Part {i}: JSON FilePart (data: {json_data})")
                             except Exception as e:

@@ -11,6 +11,7 @@ import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
 
 import 'a2a/a2a.dart';
+import 'logging_utils.dart';
 
 export 'a2a/a2a.dart' show AgentCard;
 
@@ -156,10 +157,14 @@ class A2uiAgentConnector {
     _log.info('--- OUTGOING REQUEST ---');
     _log.info('URL: $url');
     _log.info('Method: message/stream');
-    _log.info(
-      'Payload: '
-      '${const JsonEncoder.withIndent('  ').convert(messageToSend.toJson())}',
-    );
+    try {
+      final String payload = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(sanitizeLogData(messageToSend.toJson()));
+      _log.info('Payload: $payload');
+    } catch (e) {
+      _log.warning('Error logging payload: $e');
+    }
     _log.info('----------------------');
 
     final Stream<Event> events = client.messageStream(messageToSend);
@@ -309,19 +314,21 @@ class A2uiAgentConnector {
   }
 
   void _processA2uiMessages(Map<String, Object?> data) {
-    _log.finest(
-      'Processing a2ui messages from data part:\n'
-      '${const JsonEncoder.withIndent('  ').convert(data)}',
-    );
+    var prettyJson = '(Error sanitizing log data)';
+    try {
+      prettyJson = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(sanitizeLogData(data));
+      _log.finest('Processing a2ui messages from data part:\n$prettyJson');
+    } catch (e) {
+      _log.warning('Error logging a2ui messages: $e');
+    }
     if (data.containsKey('updateComponents') ||
         data.containsKey('updateDataModel') ||
         data.containsKey('createSurface') ||
         data.containsKey('deleteSurface')) {
       if (!_controller.isClosed) {
-        _log.finest(
-          'Adding message to stream: '
-          '${const JsonEncoder.withIndent('  ').convert(data)}',
-        );
+        _log.finest('Adding message to stream: $prettyJson');
         _controller.add(genui.A2uiMessage.fromJson(data));
       }
     } else {

@@ -118,7 +118,7 @@ class UploadPhotoScreen extends ConsumerWidget {
               DataPart(
                 utf8.encode(
                   jsonEncode({
-                    'userAction': {
+                    'action': {
                       'name': 'submit_details',
                       'sourceComponentId': 'upload_button',
                       'context': <String, Object?>{},
