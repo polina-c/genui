@@ -119,9 +119,12 @@ void main() {
         ),
       );
 
-      // Should build an empty container instead of the widget tree.
-      expect(find.byType(Container), findsOneWidget);
-      expect(find.byType(Text), findsNothing);
+      // Should build an FallbackWidget instead of the widget tree.
+      expect(find.byType(FallbackWidget), findsOneWidget);
+      expect(
+        find.textContaining('Catalog with id "non_existent_catalog" not found'),
+        findsOneWidget,
+      );
 
       // Should log a severe error.
       expect(

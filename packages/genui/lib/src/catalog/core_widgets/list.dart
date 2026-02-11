@@ -8,6 +8,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 import '../../model/a2ui_schemas.dart';
 import '../../model/catalog_item.dart';
 import '../../model/data_model.dart';
+import '../../primitives/logging.dart';
 import '../../primitives/simple_items.dart';
 import 'widget_helpers.dart';
 
@@ -92,7 +93,6 @@ final list = CatalogItem(
       },
       templateListWidgetBuilder:
           (context, Object? data, componentId, dataBinding) {
-
             final List<Object?> values;
             final List<String> keys;
 
@@ -103,13 +103,12 @@ final list = CatalogItem(
               values = data.values.toList();
               keys = data.keys.map((k) => k.toString()).toList();
             } else {
-              print(
-                'List: invalid data type for template list: ${data.runtimeType}',
+              genUiLogger.warning(
+                'List: invalid data type for template list: '
+                '${data.runtimeType}',
               );
               return const SizedBox.shrink();
             }
-
-
 
             return buildList(
               List.generate(values.length, (index) {

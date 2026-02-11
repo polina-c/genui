@@ -49,7 +49,6 @@ extension DataContextExtensions on DataContext {
   /// underlying value is not a String, it will be converted using [toString].
   ValueNotifier<String?> subscribeToString(Object? value) {
     if (value is Map && value.containsKey('path')) {
-
       final ValueNotifier<Object?> raw = subscribe<Object?>(
         value['path'] as String,
       );

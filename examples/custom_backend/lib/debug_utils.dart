@@ -5,6 +5,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:convert/convert.dart';
+import 'package:logging/logging.dart';
 
 int _i = 100;
 
@@ -17,7 +18,8 @@ void debugSaveToFile(String name, String content, {String extension = 'txt'}) {
   }
   final file = File('$dirName/${_i++}-$name.log.$extension');
   file.writeAsStringSync(content);
-  print('Debug: ${Directory.current.path}/${file.path}');
+  final log = Logger('DebugUtils');
+  log.fine('Debug contents saved to: ${Directory.current.path}/${file.path}');
 }
 
 void debugSaveToFileObject(String name, Object? content) {

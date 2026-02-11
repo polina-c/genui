@@ -172,6 +172,10 @@ class UiDefinition {
         } else {
           allowedSchemas = [items];
         }
+      } else if (componentsProp.containsKey('properties')) {
+        allowedSchemas = (componentsProp['properties'] as Map).values
+            .cast<Map<String, dynamic>>()
+            .toList();
       }
     }
 

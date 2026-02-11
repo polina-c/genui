@@ -26,4 +26,7 @@ abstract interface class SurfaceContext {
 
   /// Handles a UI event from this surface.
   void handleUiEvent(UiEvent event);
+
+  /// Reports an error capable of being sent back to the AI.
+  void reportError(Object error, StackTrace? stack);
 }

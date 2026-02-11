@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 import '../interfaces/a2ui_message_sink.dart';
@@ -15,6 +16,7 @@ import '../model/catalog.dart';
 import '../model/chat_message.dart';
 import '../model/data_model.dart';
 import '../model/ui_models.dart';
+import '../primitives/constants.dart';
 import '../primitives/logging.dart';
 import 'cleanup_strategy.dart';
 import 'data_model_store.dart';
@@ -114,24 +116,42 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
       _handleMessageInternal(message);
     } on A2uiValidationException catch (e) {
       genUiLogger.warning('Validation failed for surface ${e.surfaceId}: $e');
-      final Map<String, Object> errorMsg = {
-        'version': 'v0.9',
-        'error': {
-          'code': 'VALIDATION_FAILED',
-          'surfaceId': e.surfaceId,
-          'path': e.path,
-          'message': e.message,
-        },
-      };
-      _onSubmit.add(
-        ChatMessage.user(
-          '',
-          parts: [UiInteractionPart.create(jsonEncode(errorMsg))],
-        ),
-      );
+      reportError(e, StackTrace.current);
     } catch (e, stack) {
       genUiLogger.severe('Error handling message: $message', e, stack);
+      reportError(e, stack);
     }
+  }
+
+  /// Reports an error to the AI service.
+  void reportError(Object error, StackTrace? stack) {
+    var errorCode = 'RUNTIME_ERROR';
+    var message = error.toString();
+    String? surfaceId;
+    String? path;
+
+    if (error is A2uiValidationException) {
+      errorCode = 'VALIDATION_FAILED';
+      message = error.message;
+      surfaceId = error.surfaceId;
+      path = error.path;
+    }
+
+    final Map<String, Object> errorMsg = {
+      'version': 'v0.9',
+      'error': {
+        'code': errorCode,
+        'surfaceId': ?surfaceId,
+        'path': ?path,
+        'message': message,
+      },
+    };
+    _onSubmit.add(
+      ChatMessage.user(
+        '',
+        parts: [UiInteractionPart.create(jsonEncode(errorMsg))],
+      ),
+    );
   }
 
   void _handleMessageInternal(A2uiMessage message) {
@@ -169,6 +189,12 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
           newDefinition,
           isNew: existing == null,
         );
+
+        final Catalog? catalog = _findCatalogForDefinition(newDefinition);
+        if (catalog != null) {
+          newDefinition.validate(catalog.definition);
+        }
+
         _enforceCleanupPolicy();
 
         if (pending != null) {
@@ -194,6 +220,12 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
           surfaceId,
           current.copyWith(components: newComponents),
         );
+
+        final UiDefinition updatedDefinition = _registry.getSurface(surfaceId)!;
+        final Catalog? catalog = _findCatalogForDefinition(updatedDefinition);
+        if (catalog != null) {
+          updatedDefinition.validate(catalog.definition);
+        }
 
       case UpdateDataModel():
         final String surfaceId = message.surfaceId;
@@ -256,6 +288,15 @@ class SurfaceController implements SurfaceHost, A2uiMessageSink {
     );
   }
 
+  Catalog? _findCatalogForDefinition(UiDefinition definition) {
+    final String catalogId = definition.catalogId ?? standardCatalogId;
+    genUiLogger.fine(
+      'Finding catalog for $catalogId in '
+      '${catalogs.map((c) => c.catalogId).toList()}',
+    );
+    return catalogs.firstWhereOrNull((c) => c.catalogId == catalogId);
+  }
+
   /// Disposes of the controller and releases all resources.
   ///
   /// Closes the [onSubmit] stream and cancels any pending timers.
@@ -289,5 +330,10 @@ class _ControllerContext implements SurfaceContext {
   @override
   void handleUiEvent(UiEvent event) {
     _controller.handleUiEvent(event);
+  }
+
+  @override
+  void reportError(Object error, StackTrace? stack) {
+    _controller.reportError(error, stack);
   }
 }

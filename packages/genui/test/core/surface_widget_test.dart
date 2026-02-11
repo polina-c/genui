@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
 import 'package:genui/src/catalog/core_widgets/text.dart';
+import 'package:json_schema_builder/json_schema_builder.dart';
 
 class FakeSurfaceContext implements SurfaceContext {
   FakeSurfaceContext({
@@ -14,6 +15,7 @@ class FakeSurfaceContext implements SurfaceContext {
     required this.catalogs,
     required this.definition,
     required this.handleUiEventCallback,
+    this.reportErrorCallback,
   });
 
   @override
@@ -33,6 +35,15 @@ class FakeSurfaceContext implements SurfaceContext {
   @override
   void handleUiEvent(UiEvent event) {
     handleUiEventCallback(event);
+  }
+
+  final void Function(Object error, StackTrace? stack)? reportErrorCallback;
+
+  @override
+  void reportError(Object error, StackTrace? stack) {
+    if (reportErrorCallback != null) {
+      reportErrorCallback!(error, stack);
+    }
   }
 }
 
@@ -143,6 +154,50 @@ void main() {
       await tester.pump();
 
       expect(find.text('Updated Content'), findsOneWidget);
+    });
+
+    testWidgets('reports error and shows fallback when builder throws', (
+      tester,
+    ) async {
+      Object? reportedError;
+      dataModel = DataModel();
+      surfaceContext = FakeSurfaceContext(
+        surfaceId: 'test_surface',
+        dataModel: dataModel,
+        catalogs: [
+          Catalog([
+            CatalogItem(
+              name: 'BrokenWidget',
+              dataSchema: Schema.object(properties: {}),
+              widgetBuilder: (context) => throw Exception('Build failed'),
+            ),
+          ], catalogId: 'test_catalog'),
+        ],
+        definition: ValueNotifier<UiDefinition?>(
+          UiDefinition(
+            surfaceId: 'test_surface',
+            catalogId: 'test_catalog',
+            components: {
+              'root': const Component(
+                id: 'root',
+                type: 'BrokenWidget',
+                properties: {},
+              ),
+            },
+          ),
+        ),
+        handleUiEventCallback: (event) {},
+        reportErrorCallback: (error, stack) {
+          reportedError = error;
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: Surface(genUiContext: surfaceContext)),
+      );
+
+      expect(reportedError, isNotNull);
+      expect(find.byType(FallbackWidget), findsOneWidget);
     });
   });
 }

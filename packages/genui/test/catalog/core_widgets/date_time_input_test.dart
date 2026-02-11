@@ -287,7 +287,7 @@ class DateTimeInputRobot {
     expect(finder, findsOneWidget);
     final String actualText = tester.widget<Text>(finder).data!;
     if (actualText != text) {
-      print('EXPECTATION FAILED: Expected "$text", found "$actualText"');
+      // Expectation will fail below and show the diff.
     }
     expect(actualText, text);
   }

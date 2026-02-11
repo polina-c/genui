@@ -4,10 +4,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:genui/genui.dart';
+import 'package:logging/logging.dart';
 
 import 'backend.dart';
 
 void main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
+  });
   runApp(const MyApp());
 }
 
@@ -63,6 +68,8 @@ class _IntegrationTester extends StatefulWidget {
   State<_IntegrationTester> createState() => _IntegrationTesterState();
 }
 
+final _log = Logger('IntegrationTester');
+
 final Catalog _catalog = CoreCatalogItems.asCatalog();
 const _toolName = 'uiGenerationTool';
 final uiSchema = UiSchemaDefinition(
@@ -103,9 +110,8 @@ class _IntegrationTesterState extends State<_IntegrationTester> {
               _errorMessage = null;
             });
             try {
-              print(
-                'Sending request for _selectedResponse = '
-                '$_selectedResponse ...',
+              _log.info(
+                'Sending request for _selectedResponse = $_selectedResponse',
               );
               final ParsedToolCall? parsedToolCall = await _protocol
                   .sendRequest(
@@ -113,7 +119,7 @@ class _IntegrationTesterState extends State<_IntegrationTester> {
                     savedResponse: _selectedResponse,
                   );
               if (parsedToolCall == null) {
-                print('No UI received.');
+                _log.info('No UI received.');
                 setState(() {
                   _isLoading = false;
                 });
@@ -123,10 +129,12 @@ class _IntegrationTesterState extends State<_IntegrationTester> {
               for (final A2uiMessage message in parsedToolCall.messages) {
                 _genUiController.handleMessage(message);
               }
-              print('UI received for surfaceId=${parsedToolCall.surfaceId}');
+              _log.info(
+                'UI received for surfaceId=${parsedToolCall.surfaceId}',
+              );
               setState(() => _isLoading = false);
             } catch (e, callStack) {
-              print('Error connecting to backend: $e\n$callStack');
+              _log.severe('Error connecting to backend: $e', e, callStack);
               setState(() {
                 _isLoading = false;
                 _errorMessage = e.toString();

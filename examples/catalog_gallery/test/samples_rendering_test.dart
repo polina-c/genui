@@ -68,7 +68,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      print('Starting test for $fileName');
+      debugPrint('Starting test for $fileName');
 
       // Use synchronous read to avoid async IO issues
       final String content = file.readAsStringSync();
@@ -127,14 +127,14 @@ void main() {
         await tester.pumpWidget(const SizedBox());
         await tester.pump(); // Allow disposal to complete
       } finally {
-        print('Disposing controller for $fileName');
+        debugPrint('Disposing controller for $fileName');
         controller.dispose();
 
         // Clear image cache to prevent pending loads/streams from hanging the test
         imageCache.clear();
         imageCache.clearLiveImages();
 
-        print('Test finished for $fileName');
+        debugPrint('Test finished for $fileName');
       }
     });
   }

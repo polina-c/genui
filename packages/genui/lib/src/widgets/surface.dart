@@ -13,6 +13,7 @@ import '../model/ui_models.dart';
 import '../primitives/constants.dart';
 import '../primitives/logging.dart';
 import '../primitives/simple_items.dart';
+import 'fallback_widget.dart';
 
 /// A callback for when a user interacts with a widget.
 typedef UiEventCallback = void Function(UiEvent event);
@@ -70,7 +71,11 @@ class _SurfaceState extends State<Surface> {
 
         final Catalog? catalog = _findCatalogForDefinition(definition);
         if (catalog == null) {
-          return Container();
+          final error = Exception(
+            'Catalog with id "${definition.catalogId}" not found.',
+          );
+          widget.genUiContext.reportError(error, StackTrace.current);
+          return FallbackWidget(error: error);
         }
 
         return _buildWidget(
@@ -93,36 +98,44 @@ class _SurfaceState extends State<Surface> {
     String widgetId,
     DataContext dataContext,
   ) {
-    Component? data = definition.components[widgetId];
-    if (data == null) {
-      genUiLogger.severe('Widget with id: $widgetId not found.');
-      return Placeholder(child: Text('Widget with id: $widgetId not found.'));
-    }
+    try {
+      Component? data = definition.components[widgetId];
+      if (data == null) {
+        final error = Exception('Widget with id: $widgetId not found.');
+        genUiLogger.severe(error.toString());
+        widget.genUiContext.reportError(error, StackTrace.current);
+        return FallbackWidget(error: error);
+      }
 
-    final JsonMap widgetData = data.properties;
-    genUiLogger.finest('Building widget $widgetId');
-    return catalog.buildWidget(
-      CatalogItemContext(
-        id: widgetId,
-        data: widgetData,
-        type: data.type,
-        buildChild: (String childId, [DataContext? childDataContext]) =>
-            _buildWidget(
-              definition,
-              catalog,
-              childId,
-              childDataContext ?? dataContext,
-            ),
-        dispatchEvent: _dispatchEvent,
-        buildContext: context,
-        dataContext: dataContext,
-        getComponent: (String componentId) =>
-            definition.components[componentId],
-        getCatalogItem: (String type) =>
-            catalog.items.firstWhereOrNull((item) => item.name == type),
-        surfaceId: widget.genUiContext.surfaceId,
-      ),
-    );
+      final JsonMap widgetData = data.properties;
+      genUiLogger.finest('Building widget $widgetId');
+      return catalog.buildWidget(
+        CatalogItemContext(
+          id: widgetId,
+          data: widgetData,
+          type: data.type,
+          buildChild: (String childId, [DataContext? childDataContext]) =>
+              _buildWidget(
+                definition,
+                catalog,
+                childId,
+                childDataContext ?? dataContext,
+              ),
+          dispatchEvent: _dispatchEvent,
+          buildContext: context,
+          dataContext: dataContext,
+          getComponent: (String componentId) =>
+              definition.components[componentId],
+          getCatalogItem: (String type) =>
+              catalog.items.firstWhereOrNull((item) => item.name == type),
+          surfaceId: widget.genUiContext.surfaceId,
+        ),
+      );
+    } catch (e, stack) {
+      genUiLogger.severe('Error building widget $widgetId', e, stack);
+      widget.genUiContext.reportError(e, stack);
+      return FallbackWidget(error: e, stackTrace: stack);
+    }
   }
 
   void _dispatchEvent(UiEvent event) {

@@ -5,8 +5,10 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
+import 'package:json_schema_builder/json_schema_builder.dart';
 
 void main() {
   group('$SurfaceController', () {
@@ -280,5 +282,61 @@ void main() {
       // Updates NOT applied, so components should be empty (or default)
       expect(surface!.components, isEmpty);
     });
+
+    test(
+      'handleMessage reports schema validation error for invalid component',
+      () async {
+        // Create a controller with a known catalog (CoreCatalogItems).
+        // CoreCatalogItems.asCatalog() has id 'https://a2ui.org/specification/v0_9/standard_catalog.json' by default?
+        // Actually standardCatalogId is 'https://a2ui.org/specification/v0_9/standard_catalog.json'.
+        // let's verify if CoreCatalogItems uses that.
+        // If not, we can wrap it or just use a custom catalog.
+        final catalog = Catalog([
+          CatalogItem(
+            name: 'StrictWidget',
+            dataSchema: Schema.object(
+              properties: {
+                'component': Schema.string(enumValues: ['StrictWidget']),
+                'requiredProp': Schema.string(),
+              },
+              required: ['component', 'requiredProp'],
+            ),
+            widgetBuilder: _dummyBuilder,
+          ),
+        ], catalogId: 'strict_catalog');
+        final strictController = SurfaceController(catalogs: [catalog]);
+        addTearDown(strictController.dispose);
+
+        const surfaceId = 'strictSurface';
+        strictController.handleMessage(
+          const CreateSurface(
+            surfaceId: surfaceId,
+            catalogId: 'strict_catalog',
+          ),
+        );
+
+        final Future<ChatMessage> future = strictController.onSubmit.first;
+
+        // Send invalid component (missing requiredProp)
+        strictController.handleMessage(
+          const UpdateComponents(
+            surfaceId: surfaceId,
+            components: [
+              Component(id: 'bad', type: 'StrictWidget', properties: {}),
+            ],
+          ),
+        );
+
+        final ChatMessage message = await future;
+        final UiInteractionPart part = message.parts.uiInteractionParts.first;
+        final errorJson = jsonDecode(part.interaction) as Map<String, dynamic>;
+
+        final errorObj = errorJson['error'] as Map<String, dynamic>;
+        expect(errorObj['code'], 'VALIDATION_FAILED');
+        expect(errorObj['message'], contains('Missing required property'));
+      },
+    );
   });
 }
+
+Widget _dummyBuilder(CatalogItemContext context) => const SizedBox();
