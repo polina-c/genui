@@ -39,8 +39,7 @@ extension type _TabsData.fromMap(JsonMap _json) {
       _TabsData.fromMap({'tabs': tabs, 'activeTab': activeTab});
 
   List<JsonMap> get tabs {
-    return (_json['tabs'] as List? ?? _json['tabItems'] as List)
-        .cast<JsonMap>();
+    return (_json['tabs'] as List).cast<JsonMap>();
   }
 
   Object? get activeTab => _json['activeTab'];

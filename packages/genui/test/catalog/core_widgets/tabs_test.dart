@@ -25,9 +25,9 @@ void main() {
         type: 'Tabs',
         properties: {
           'component': 'Tabs',
-          'tabItems': [
-            {'title': 'Tab 1', 'child': 'text1'},
-            {'title': 'Tab 2', 'child': 'text2'},
+          'tabs': [
+            {'label': 'Tab 1', 'content': 'text1'},
+            {'label': 'Tab 2', 'content': 'text2'},
           ],
         },
       ),

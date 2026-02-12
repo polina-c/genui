@@ -39,10 +39,8 @@ extension type _SliderData.fromMap(JsonMap _json) {
   });
 
   Object get value => _json['value'] as Object;
-  double get min =>
-      ((_json['min'] ?? _json['minValue']) as num?)?.toDouble() ?? 0.0;
-  double get max =>
-      ((_json['max'] ?? _json['maxValue']) as num?)?.toDouble() ?? 1.0;
+  double get min => (_json['min'] as num?)?.toDouble() ?? 0.0;
+  double get max => (_json['max'] as num?)?.toDouble() ?? 1.0;
   List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
 
   String? get label {
@@ -172,8 +170,8 @@ final slider = CatalogItem(
         {
           "id": "root",
           "component": "Slider",
-          "minValue": 0,
-          "maxValue": 10,
+          "min": 0,
+          "max": 10,
           "value": {
             "path": "/myValue"
           }

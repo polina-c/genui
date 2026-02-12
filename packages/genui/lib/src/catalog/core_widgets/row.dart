@@ -44,10 +44,8 @@ extension type _RowData.fromMap(JsonMap _json) {
       });
 
   Object? get children => _json['children'];
-  String? get justify =>
-      _json['justify'] as String? ?? _json['distribution'] as String?;
-  String? get align =>
-      _json['align'] as String? ?? _json['alignment'] as String?;
+  String? get justify => _json['justify'] as String?;
+  String? get align => _json['align'] as String?;
 }
 
 MainAxisAlignment _parseMainAxisAlignment(String? alignment) {
@@ -93,9 +91,10 @@ CrossAxisAlignment _parseCrossAxisAlignment(String? alignment) {
 /// ## Parameters:
 ///
 /// - `children`: A list of child widget IDs to display in the row.
-/// - `distribution`: How the children should be placed along the main axis. Can
+/// - `justify`: How the children should be placed along the main axis. Can
 ///   be `start`, `center`, `end`, `spaceBetween`, `spaceAround`, or
 ///   `spaceEvenly`. Defaults to `start`.
+/// - `align`: How the children should be aligned on the cross axis. Can
 ///   be `start`, `center`, `end`, or `stretch`. Defaults to
 ///   `start`.
 final row = CatalogItem(

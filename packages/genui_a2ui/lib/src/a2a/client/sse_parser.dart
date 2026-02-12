@@ -31,9 +31,7 @@ class SseParser {
         final String lineData = line.length < 300
             ? line
             : line.substring(0, 300);
-        log?.finer(
-          'Received SSE line: ${line.length} $lineData...',
-        );
+        log?.finer('Received SSE line: ${line.length} $lineData...');
         if (line.startsWith('data:')) {
           data.add(line.substring(5).trim());
         } else if (line.startsWith(':')) {

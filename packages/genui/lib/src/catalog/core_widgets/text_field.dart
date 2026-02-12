@@ -16,9 +16,6 @@ final _schema = S.object(
   description: 'A text input field.',
   properties: {
     'component': S.string(enumValues: ['TextField']),
-    'text': A2uiSchemas.stringReference(
-      description: 'The initial value of the text field.',
-    ),
     'value': A2uiSchemas.stringReference(
       description: 'The value of the text field.',
     ),
@@ -49,11 +46,10 @@ extension type _TextFieldData.fromMap(JsonMap _json) {
     'onSubmittedAction': onSubmittedAction,
   });
 
-  Object? get value => _json['value'] ?? _json['text'];
+  Object? get value => _json['value'];
   Object? get label => _json['label'];
   List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
-  String? get variant =>
-      _json['variant'] as String? ?? _json['textFieldType'] as String?;
+  String? get variant => _json['variant'] as String?;
   String? get validationRegexp => _json['validationRegexp'] as String?;
   JsonMap? get onSubmittedAction => _json['onSubmittedAction'] as JsonMap?;
 }
@@ -199,7 +195,7 @@ final textField = CatalogItem(
         {
           "id": "root",
           "component": "TextField",
-          "text": "Hello World",
+          "value": "Hello World",
           "label": "Greeting"
         }
       ]
@@ -209,7 +205,7 @@ final textField = CatalogItem(
         {
           "id": "root",
           "component": "TextField",
-          "text": "password123",
+          "value": "password123",
           "label": "Password",
           "textFieldType": "obscured"
         }

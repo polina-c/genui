@@ -9,7 +9,7 @@ export 'package:genai_primitives/genai_primitives.dart';
 // Re-export UI helpers
 export 'parts/ui.dart';
 
-/// Extension to help with legacy `UserMessage` usages if needed,
+/// Extension to help with `UserMessage` usages if needed,
 /// or just helper factories.
 extension ChatMessageFactories on ChatMessage {
   /// Creates a text message from a user.

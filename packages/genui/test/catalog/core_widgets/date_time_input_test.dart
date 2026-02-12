@@ -161,8 +161,8 @@ void main() {
       final robot = DateTimeInputRobot(tester);
       final (SurfaceHost manager, String surfaceId) = setup('custom_range', {
         'value': {'path': '/myDate'},
-        'firstDate': '2020-01-01',
-        'lastDate': '2030-12-31',
+        'min': '2020-01-01',
+        'max': '2030-12-31',
       });
 
       await robot.pumpSurface(manager, surfaceId);

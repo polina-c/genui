@@ -12,7 +12,6 @@ environment:
 
 workspace:
   - examples/catalog_gallery
-  - examples/custom_backend
   - examples/simple_chat
 
   - examples/travel_app

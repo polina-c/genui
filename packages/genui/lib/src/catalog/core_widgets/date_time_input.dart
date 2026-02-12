@@ -79,12 +79,9 @@ extension type _DateTimeInputData.fromMap(JsonMap _json) {
   }
 
   DateTime get firstDate =>
-      DateTime.tryParse(
-        (_json['min'] ?? _json['firstDate']) as String? ?? '',
-      ) ??
-      DateTime(-9999);
+      DateTime.tryParse((_json['min'] as String?) ?? '') ?? DateTime(-9999);
   DateTime get lastDate =>
-      DateTime.tryParse((_json['max'] ?? _json['lastDate']) as String? ?? '') ??
+      DateTime.tryParse((_json['max'] as String?) ?? '') ??
       DateTime(9999, 12, 31);
 }
 

@@ -41,10 +41,8 @@ typedef ExplicitListWidgetBuilder =
 /// 1. An explicit list of child widget IDs.
 /// 2. A template with a data binding to a list of data.
 ///
-/// The `childrenData` can be a `List<String>` of child IDs, or a `JsonMap`
-/// with either an `explicitList` key (with a `List<String>` value) or a
-/// `template` key. The `template` is a `JsonMap` with `path` and
-/// `componentId` keys.
+/// The `childrenData` can be a `List<String>` of child IDs, or a [JsonMap]
+/// defining a template structure with `path` and `componentId` keys.
 class ComponentChildrenBuilder extends StatelessWidget {
   /// Creates a new [ComponentChildrenBuilder].
   const ComponentChildrenBuilder({

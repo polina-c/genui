@@ -43,7 +43,7 @@ class ChatSession extends ChangeNotifier {
     _genUiController = A2uiTransportAdapter();
 
     // Wire controller to processor
-    _genUiController.messageStream.listen(_messageProcessor.handleMessage);
+    _genUiController.incomingMessages.listen(_messageProcessor.handleMessage);
 
     // Listen to UI state updates from the processor
     _messageProcessor.surfaceUpdates.listen((SurfaceUpdate update) {
@@ -140,7 +140,7 @@ ${PromptFragments.basicChat}''';
 
       // Listen for text updates from the controller to update the UI
       final StreamSubscription<String> subscription = _genUiController
-          .textStream
+          .incomingText
           .listen((chunk) {
             aiMessageController.text = (aiMessageController.text ?? '') + chunk;
             notifyListeners();

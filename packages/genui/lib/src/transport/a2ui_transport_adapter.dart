@@ -67,15 +67,9 @@ class A2uiTransportAdapter implements Transport {
       .cast<TextEvent>()
       .map((e) => e.text);
 
-  // Legacy alias
-  Stream<String> get textStream => incomingText;
-
   /// A stream of A2UI messages parsed from the input.
   @override
   Stream<A2uiMessage> get incomingMessages => _messageStream.stream;
-
-  // Legacy alias
-  Stream<A2uiMessage> get messageStream => incomingMessages;
 
   @override
   Future<void> sendRequest(ChatMessage message) async {

@@ -121,7 +121,7 @@ void main() {
           id: 'root',
           type: 'TextField',
           properties: {
-            'text': {'path': '/myValue'},
+            'value': {'path': '/myValue'},
             'label': 'My Label',
             'onSubmittedAction': {
               'event': {'name': 'submit'},
