@@ -15,7 +15,7 @@ In addition to protocol changes, the `genui` package architecture has been decou
 
 ## 1. Dependency Changes
 
-The provider-specific packages that previously implemented `ContentGenerator` (e.g., `genui_dartantic`, `genui_google_generative_ai`, `genui_firebase_ai`) no longer provide these high-level wrappers.
+The provider-specific packages that previously implemented `ContentGenerator` (e.g., `genui_dartantic`, `genui_google_generative_ai`, `genui_firebase_ai`) have been **removed**.
 
 **Action**:
 -   Remove dependencies on `genui_dartantic`, `genui_google_generative_ai`, etc., and replace them with direct usage of the underlying SDKs (e.g. `dartantic_ai`, `firebase_ai`, `google_generative_ai`, etc.).
@@ -119,9 +119,50 @@ If you are manually constructing generic UI JSON or have hardcoded implementatio
 | **Many** | `usageHint` | `variant` |
 | **Client Actions** | `userAction` | `action` |
 
-## 5. Connecting to Remote Agents
+## 5. Renames & Refactoring
 
-If you are using `genui_a2ui` to connect to a remote A2A/A2UI agent:
+To improve clarity and reduce verbosity, many classes have been renamed to remove the `GenUi` prefix or align with standard Flutter/Dart conventions.
+
+| Old Name | New Name | Notes |
+| :--- | :--- | :--- |
+| `GenUiConversation` | `Conversation` | Collection of `ChatMessage`s. |
+| `GenUiController` | `SurfaceController` | The core engine. |
+| `GenUiSurface` | `Surface` | The widget that renders UI. |
+| `GenUiHost` | `SurfaceHost` | Interface for the host environment. |
+| `GenUiContext` | `SurfaceContext` | Context passed to components. |
+| `GenUiTransport` | `Transport` | Interface for AI communication. |
+| `ChatMessageWidget` | `ChatMessageView` | Widget for displaying messages. |
+| `InternalMessageWidget` | `InternalMessageView` | Widget for internal system messages. |
+| `GenUiFallback` | `FallbackWidget` | Error/Loading fallback. |
+| `GenUiFunctionDeclaration` | `ClientFunction` | Tool declaration. |
+| `GenUiPromptFragments` | `PromptFragments` | |
+| `configureGenUiLogging` | `configureLogging` | |
+
+## 6. Using `genai_primitives`
+
+`genui` now builds upon the `genai_primitives` package for its core data structures. This unifies message types across the ecosystem.
+
+-   **ChatMessage & Parts**: `ChatMessage`, `TextPart`, `DataPart`, etc., are now directly exported from `genai_primitives`.
+-   **UI Parts as Extensions**: `UiPart` and `UiInteractionPart` are no longer direct subclasses of `Part`. Instead, they are helper views over `DataPart` with specific MIME types.
+
+**Old Way:**
+```dart
+if (part is UiPart) {
+  // ...
+}
+```
+
+**New Way:**
+```dart
+if (part.isUiPart) {
+  final uiPart = part.asUiPart!; // Returns a helper view
+  // access uiPart.definition
+}
+```
+
+## 7. Connecting to Remote Agents
+
+If you are using `genui_a2ui` (A2A/A2UI adapter) to connect to a remote A2A/A2UI agent:
 
 **Old Way:**
 ```dart
@@ -146,7 +187,7 @@ connector.stream.listen((A2uiMessage message) {
 });
 ```
 
-## 6. Example: Simple Chat Integration
+## 8. Example: Simple Chat Integration
 
 See `examples/simple_chat/lib/chat_session.dart` for a complete reference implementation of the new pattern. This example uses `dartantic_ai` as the LLM provider.
 
