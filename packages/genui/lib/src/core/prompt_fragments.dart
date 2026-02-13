@@ -9,7 +9,7 @@ class PromptFragments {
 
 # Outputting UI information
 
-Use the provided tools to respond to the user using rich UI elements.
+Use the provided A2UI schema to respond to the user using rich UI elements.
 
 Important considerations:
 - When you are asking for information from the user, you should always include
