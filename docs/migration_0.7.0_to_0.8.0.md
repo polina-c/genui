@@ -34,7 +34,7 @@ You are now encouraged to implement a simple AI client that wraps your specific 
 **Old Way (v0.7.0):**
 ```dart
 final generator = DartanticContentGenerator(apiKey: '...');
-final controller = GenUiController(generator: generator);
+final controller = SurfaceController(generator: generator);
 ```
 
 **New Way (v0.8.0):**
@@ -43,7 +43,7 @@ final controller = GenUiController(generator: generator);
 
 ```dart
 // 1. Initialize the Engine (holds the state of the UI)
-final catalog = CoreCatalogItems.asCatalog();
+final catalog = BasicCatalogItems.asCatalog();
 final surfaceController = SurfaceController(catalogs: [catalog]);
 
 // 2. Initialize the Adapter (handles A2UI parsing)

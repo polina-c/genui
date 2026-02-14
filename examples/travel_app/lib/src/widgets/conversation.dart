@@ -49,19 +49,14 @@ class Conversation extends StatelessWidget {
         final ChatMessage message = renderedMessages[index];
         switch (message.role) {
           case ChatMessageRole.user:
-            // Check if it's an interaction (DataPart with specific mimeType? or
-            // just not text?) Assuming UserUiInteractionMessage had no
-            // TextPart? If it has TextPart, treat as UserMessage. If it has
-            // ONLY DataPart (interaction), treat as UserUiInteractionMessage.
-            // Simplified logic: If text is empty, maybe interaction?
+            final bool hasUiInteraction = message.parts.any(
+              (p) => p.isUiInteractionPart,
+            );
             final String text = message.parts
                 .whereType<TextPart>()
                 .map((part) => part.text)
                 .join('\n');
 
-            // Check for UiInteractionPart (DataPart)
-            // We need to import UiInteractionPart or check mimeType
-            // But we can just check if text is empty?
             if (text.isNotEmpty) {
               return userPromptBuilder != null
                   ? userPromptBuilder!(context, message)
@@ -71,22 +66,19 @@ class Conversation extends StatelessWidget {
                       alignment: MainAxisAlignment.end,
                     );
             }
-            // If text empty, maybe interaction or tool result (if not hidden)
-            // Tool results are usually hidden by filter above if
-            // showInteralMessages=false. If showInternalMessages=true, we might
-            // show them? Existing code: InternalMessageView for
-            // ToolResponseMessage
             if (message.parts.any((p) => p is ToolPart)) {
               return InternalMessageView(content: message.parts.toString());
             }
 
-            // Assume Interaction if not text and not tool?
-            return userUiInteractionBuilder != null
-                ? userUiInteractionBuilder!(context, message)
-                : const SizedBox.shrink();
+            if (hasUiInteraction) {
+              return userUiInteractionBuilder != null
+                  ? userUiInteractionBuilder!(context, message)
+                  : const SizedBox.shrink();
+            }
+
+            return const SizedBox.shrink();
 
           case ChatMessageRole.model:
-            // Check for UiPart
             final Iterable<DataPart> uiParts = message.parts
                 .whereType<DataPart>()
                 .where((p) => p.isUiPart);

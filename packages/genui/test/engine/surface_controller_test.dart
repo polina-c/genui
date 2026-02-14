@@ -286,11 +286,6 @@ void main() {
     test(
       'handleMessage reports schema validation error for invalid component',
       () async {
-        // Create a controller with a known catalog (CoreCatalogItems).
-        // CoreCatalogItems.asCatalog() has id 'https://a2ui.org/specification/v0_9/standard_catalog.json' by default?
-        // Actually basicCatalogId is 'https://a2ui.org/specification/v0_9/standard_catalog.json'.
-        // let's verify if CoreCatalogItems uses that.
-        // If not, we can wrap it or just use a custom catalog.
         final catalog = Catalog([
           CatalogItem(
             name: 'StrictWidget',
