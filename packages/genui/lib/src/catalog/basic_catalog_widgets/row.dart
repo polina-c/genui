@@ -27,7 +27,7 @@ final _schema = S.object(
         'spaceBetween',
         'spaceAround',
         'spaceEvenly',
-        'stretch', // Added stretch
+        'stretch',
       ],
     ),
     'align': S.string(enumValues: ['start', 'center', 'end', 'stretch']),

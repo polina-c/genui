@@ -33,12 +33,12 @@ class _AppNavigatorState extends ConsumerState<AppNavigator> {
     final AsyncValue<AiClientState> aiState = ref.read(aiProvider);
     if (aiState case AsyncData(:final value)) {
       _subscription = value.surfaceUpdateController.stream.listen(
-        _onUpdateComponents,
+        _handleSurfaceNavigation,
       );
     }
   }
 
-  void _onUpdateComponents(String surfaceId) {
+  void _handleSurfaceNavigation(String surfaceId) {
     switch (surfaceId) {
       case 'details':
         widget.router.push('/upload_photo');
@@ -67,7 +67,7 @@ class _AppNavigatorState extends ConsumerState<AppNavigator> {
       if (next case AsyncData(:final value?)) {
         _subscription?.cancel();
         _subscription = value.surfaceUpdateController.stream.listen(
-          _onUpdateComponents,
+          _handleSurfaceNavigation,
         );
       }
     });

@@ -142,7 +142,6 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
           ),
         );
         _messages.value = updatedMessages;
-        _messages.value = updatedMessages;
         // Reset streaming text so that any subsequent text is treated as a new
         // message chunk after the UI component, rather than being appended to
         // the previous text block (which would be confusing if the UI is in the
