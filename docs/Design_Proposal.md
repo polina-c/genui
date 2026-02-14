@@ -58,7 +58,7 @@ This layer handles the pipeline from raw text input (from an LLM) to parsed UI e
 
 This is the central nervous system of the package, orchestrating the state of all generated UI surfaces.
 
-- **`SurfaceController`**: The core state manager for the dynamic UI (formerly `SurfaceController`). It maintains a map of all active UI "surfaces", where each surface is represented by a `UiDefinition`. It takes a `SurfaceConfiguration` object that can restrict AI actions. The AI interacts with the manager by sending structured A2UI messages, which the controller handles via `handleMessage()`. It exposes a stream of `SurfaceUpdate` events (`SurfaceAdded`, `ComponentsUpdated`, `SurfaceRemoved`) so that the application can react to changes. It also owns the `DataModel` to manage the state of individual widgets and implements `SurfaceHost` to provide `SurfaceContext`s for `Surface` widgets.
+- **`SurfaceController`**: The core state manager for the dynamic UI (formerly `GenUiController`). It maintains a map of all active UI "surfaces", where each surface is represented by a `UiDefinition`. It takes a `SurfaceConfiguration` object that can restrict AI actions. The AI interacts with the manager by sending structured A2UI messages, which the controller handles via `handleMessage()`. It exposes a stream of `SurfaceUpdate` events (`SurfaceAdded`, `ComponentsUpdated`, `SurfaceRemoved`) so that the application can react to changes. It also owns the `DataModel` to manage the state of individual widgets and implements `SurfaceHost` to provide `SurfaceContext`s for `Surface` widgets.
 
 ### 3. UI Model Layer (`lib/src/model/`)
 
