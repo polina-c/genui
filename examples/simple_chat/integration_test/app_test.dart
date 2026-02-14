@@ -120,15 +120,11 @@ Future<void> _runTestForSample(
   final fakeAiClient = FakeAiClient();
 
   // Queue the response
-  // GenUiController expects A2UI messages to be wrapped in markdown code blocks
-  // or detectable as structured content. Standard LLM behavior using GenUi
-  // is to return ```json ... ``` blocks.
+  // SurfaceController expects A2UI messages to be wrapped in markdown code
+  // blocks or detectable as structured content. Standard LLM behavior using
+  // GenUi is to return ```json ... ``` blocks.
   fakeAiClient.addResponse('Here is the UI:\n```json\n$jsonString\n```');
 
-  // Pump the app
-  // Using MaterialApp as wrapper to provide Theme, etc, if MyApp doesn't
-  // allow injection.
-  // But MyApp just creates ChatScreen, which we can instantiate directly.
   await tester.pumpWidget(
     MaterialApp(home: ChatScreen(aiClient: fakeAiClient)),
   );

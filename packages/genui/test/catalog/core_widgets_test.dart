@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
 
 void main() {
-  group('Core Widgets', () {
+  group('Basic Widgets', () {
     final Catalog testCatalog = BasicCatalogItems.asCatalog();
 
     ChatMessage? message;

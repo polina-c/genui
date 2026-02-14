@@ -7,7 +7,7 @@ import 'package:genui/genui.dart';
 import 'package:genui/test.dart';
 
 void main() {
-  group('Core Catalog Validation', () {
+  group('Basic Catalog Validation', () {
     final Catalog mergedCatalog = BasicCatalogItems.asCatalog();
 
     for (final CatalogItem item in mergedCatalog.items) {

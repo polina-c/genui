@@ -124,5 +124,26 @@ void main() {
       expect(find.text('Custom User Prompt'), findsOneWidget);
       expect(find.text('Hello'), findsNothing);
     });
+
+    testWidgets('renders user interaction correctly', (
+      WidgetTester tester,
+    ) async {
+      final messages = [
+        ChatMessage.user('', parts: [UiInteractionPart.create('{}')]),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Conversation(
+              messages: messages,
+              manager: manager,
+              userUiInteractionBuilder: (context, message) =>
+                  const Text('User Interaction'),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('User Interaction'), findsOneWidget);
+    });
   });
 }
