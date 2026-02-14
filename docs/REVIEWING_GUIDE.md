@@ -51,18 +51,22 @@ Start here to understand the data structures driving the system.
     *   **What to look for**: `SurfaceDefinition`, `Component` (renamed from `UiComponent`?), and `UiEvent`. These are now `final` classes. `SurfaceUpdate` is `sealed`.
 3.  **`lib/src/interfaces/transport.dart`**
     *   **What to look for**: The clean `Transport` interface definition.
+4.  **`lib/src/model/generation_events.dart`** (New)
+    *   **What to look for**: The `GenerationEvent` sealed class hierarchy (`TextEvent`, `ToolStartEvent`, etc.) used by `Transport`.
 
 ### Phase 2: The Facade (The "How User Uses It")
 This shows how the changes affect the public API.
 
-4.  **`lib/src/facade/conversation.dart`**
+5.  **`lib/src/facade/conversation.dart`**
     *   **What to look for**:
         *   Replaces `GenUiConversation`.
         *   Constructor takes `SurfaceController` and `Transport`.
         *   Manages `ConversationState` (reactive state for the UI).
         *   Now an `interface class` to support mocking.
-5.  **`lib/src/facade/prompt_builder.dart`** (New)
+6.  **`lib/src/facade/prompt_builder.dart`** (New)
     *   **What to look for**: Helper for constructing usage prompts (system instructions) separate from the conversation logic.
+7.  **`lib/src/model/basic_catalog_embed.dart`** (New)
+    *   **What to look for**: Static container for basic catalog rules, used by `PromptBuilder` to inject catalog instructions without file I/O.
 
 ### Phase 3: The Engine (The "Brain")
 This is where the logic lives.
@@ -77,6 +81,8 @@ This is where the logic lives.
     *   **What to look for**: How surfaces are tracked and looked up.
 8.  **`lib/src/engine/data_model_store.dart`**
     *   **What to look for**: Centralized management of data models for multiple surfaces.
+9.  **`lib/src/engine/cleanup_strategy.dart`** (New)
+    *   **What to look for**: Policy for cleaning up old surfaces (e.g., `MaxSurfacesCleanupStrategy`).
 
 ### Phase 4: Use & Rendering (The "Visuals")
 9.  **`lib/src/widgets/surface.dart`**
@@ -119,10 +125,10 @@ These files have been removed internal to `genui`. Verify that their functionali
 
 *   **`genui.dart`** (Modified):
     *   **Change**: Complete overhaul of exports. Removed `GenUiConversation`, `GenUiController` exports. Added `Conversation`, `SurfaceController`, `Transport`, `PromptBuilder`.
-    *   **Context**: Public API surface has changed entirely to support the new architecture.
+    *   **Context**: Public API surface has changed entirely to support the new architecture. `A2uiParserTransformer` and `A2uiTransportAdapter` are also exported here for convenience.
 *   **`parsing.dart`** (New):
-    *   **Change**: Added new library for parsing utilities.
-    *   **Context**: Can expose `A2uiParserTransformer` for users.
+    *   **Change**: Added new library for parsing utilities. Exports `JsonBlockParser`.
+    *   **Context**: Focused on low-level parsing strategies.
 
 ### `lib/src/catalog` (Renamed & Refactored)
 
@@ -200,6 +206,11 @@ These files have been removed internal to `genui`. Verify that their functionali
     *   **Details**: The `component` property (which contained the properties map) is gone. Now, properties are top-level keys relative to the component object (minus `id` and `type`).
     *   **Validation**: Extensive schema validation added to `SurfaceDefinition`.
     *   **Event Bus**: added `SurfaceUpdate` sealed classes (`SurfaceAdded`, `ComponentsUpdated`, `SurfaceRemoved`) for internal event handling.
+*   **`generation_events.dart`** (New):
+    *   **Change**: Defines the event hierarchy (`ThinkingEvent`, `ToolStartEvent`, `A2uiMessageEvent`) emitted by the `Transport`.
+*   **`basic_catalog_embed.dart`** (New):
+    *   **Change**: Embeds the basic catalog rules as a const string.
+    *   **Context**: Simplifies `PromptBuilder` usage.
 *   **`parts/ui.dart`** (Modified):
     *   **Change**: `UiPart` and `UiInteractionPart` no longer extend `Part`.
     *   **Details**: They are now wrapper classes (views) around `DataPart` that use specific MIME types (`application/vnd.genui.ui+json`). This aligns with the `genai_primitives` standard.
@@ -230,3 +241,181 @@ These files have been removed internal to `genui`. Verify that their functionali
 *   **`widget_utilities.dart`** (New):
     *   **Change**: Introduced `OptionalValueBuilder` and `DataContext` extension methods (`subscribeToString`, etc.) that handle type coercion resiliently.
     *   **Context**: Moved/Refactored from `src/core/`.
+
+### `packages/genui_a2ui` (Adapter Package)
+This package has been updated to use the new `genui` core.
+
+*   **`lib/src/a2ui_agent_connector.dart`** (Modified):
+    *   **Change**: deeply updated to use `genui` v0.9 models (`A2uiMessage`, `ChatMessage` parts).
+    *   **Context**: Connects to an existing A2UI Agent (using `a2a` client) and streams responses.
+*   **`lib/src/a2ui_content_generator.dart`** (Deleted):
+    *   **Change**: Removed.
+    *   **Context**: The concept of `ContentGenerator` is replaced by `Transport`, but `A2uiAgentConnector` serves as the primary entry point for this package now.
+*   **`lib/src/logging_utils.dart`** (New):
+    *   **Change**: Added log sanitization helpers.
+
+
+## New Layout
+
+```
+<package root>
+├── docs
+│   └── assets
+├── examples
+│   ├── catalog_gallery
+│   │   ├── build
+│   │   │   ├── native_assets
+│   │   │   │   └── flutter-tester
+│   │   │   ├── test_cache
+│   │   │   │   └── build
+│   │   │   └── unit_test_assets
+│   │   │       ├── fonts
+│   │   │       └── shaders
+│   │   ├── integration_test
+│   │   ├── lib
+│   │   ├── samples
+│   │   └── test
+│   │       └── src
+│   ├── simple_chat
+│   │   ├── build
+│   │   │   ├── native_assets
+│   │   │   │   └── flutter-tester
+│   │   │   ├── test_cache
+│   │   │   │   └── build
+│   │   │   └── unit_test_assets
+│   │   │       ├── fonts
+│   │   │       └── shaders
+│   │   ├── integration_test
+│   │   │   └── samples
+│   │   ├── lib
+│   │   │   └── api_key
+│   │   └── test
+│   ├── travel_app
+│   │   ├── assets
+│   │   │   ├── booking_service
+│   │   │   ├── prompt_images
+│   │   │   └── travel_images
+│   │   ├── build
+│   │   │   ├── native_assets
+│   │   │   │   └── flutter-tester
+│   │   │   ├── test_cache
+│   │   │   │   └── build
+│   │   │   └── unit_test_assets
+│   │   │       ├── assets
+│   │   │       │   ├── booking_service
+│   │   │       │   └── travel_images
+│   │   │       ├── fonts
+│   │   │       ├── packages
+│   │   │       │   ├── flutter_math_fork
+│   │   │       │   │   └── lib
+│   │   │       │   │       └── katex_fonts
+│   │   │       │   │           └── fonts
+│   │   │       │   └── gpt_markdown
+│   │   │       │       └── lib
+│   │   │       │           └── fonts
+│   │   │       └── shaders
+│   │   ├── integration_test
+│   │   ├── lib
+│   │   │   └── src
+│   │   │       ├── ai_client
+│   │   │       ├── catalog
+│   │   │       ├── config
+│   │   │       ├── tools
+│   │   │       │   └── booking
+│   │   │       └── widgets
+│   │   └── test
+│   │       ├── ai_client
+│   │       ├── goldens
+│   │       ├── tools
+│   │       │   └── hotels
+│   │       └── widgets
+│   └── verdure
+│       ├── client
+│       │   ├── assets
+│       │   │   ├── fonts
+│       │   │   └── images
+│       │   └── lib
+│       │       ├── core
+│       │       │   └── theme
+│       │       └── features
+│       │           ├── ai
+│       │           ├── screens
+│       │           ├── state
+│       │           └── widgets
+│       └── server
+│           ├── a2ui_extension
+│           │   └── src
+│           │       └── a2ui_ext
+│           └── verdure
+│               └── images
+├── packages
+│   ├── genai_primitives
+│   │   ├── example
+│   │   ├── lib
+│   │   │   └── src
+│   │   │       └── parts
+│   │   └── test
+│   ├── genui
+│   │   ├── build
+│   │   │   ├── native_assets
+│   │   │   │   └── flutter-tester
+│   │   │   ├── test_cache
+│   │   │   │   └── build
+│   │   │   └── unit_test_assets
+│   │   │       └── shaders
+│   │   ├── example
+│   │   ├── lib
+│   │   │   ├── src
+│   │   │   │   ├── catalog
+│   │   │   │   │   └── basic_catalog_widgets
+│   │   │   │   ├── development_utilities
+│   │   │   │   ├── engine
+│   │   │   │   ├── facade
+│   │   │   │   │   └── widgets
+│   │   │   │   ├── functions
+│   │   │   │   ├── interfaces
+│   │   │   │   ├── model
+│   │   │   │   │   └── parts
+│   │   │   │   ├── primitives
+│   │   │   │   ├── transport
+│   │   │   │   ├── utils
+│   │   │   │   └── widgets
+│   │   │   └── test
+│   │   └── test
+│   │       ├── catalog
+│   │       │   └── core_widgets
+│   │       ├── core
+│   │       ├── development_utilities
+│   │       ├── engine
+│   │       ├── facade
+│   │       ├── functions
+│   │       ├── model
+│   │       ├── transport
+│   │       └── utils
+│   ├── genui_a2ui
+│   │   ├── build
+│   │   │   ├── native_assets
+│   │   │   │   └── flutter-tester
+│   │   │   ├── test_cache
+│   │   │   │   └── build
+│   │   │   └── unit_test_assets
+│   │   │       ├── fonts
+│   │   │       └── shaders
+│   │   ├── lib
+│   │   │   └── src
+│   │   │       └── a2a
+│   │   │           ├── client
+│   │   │           └── core
+│   │   └── test
+│   │       └── a2a
+│   │           ├── client
+│   │           └── core
+│   └── json_schema_builder
+│       ├── bin
+│       ├── example
+│       ├── lib
+│       │   └── src
+│       │       └── schema
+│       └── test
+└── specs
+```
