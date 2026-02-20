@@ -212,14 +212,18 @@ abstract interface class DataModel {
   /// Updates the data model at a specific absolute path and notifies all
   /// relevant subscribers.
   ///
-  /// If [absolutePath] is null or root, the entire data model is replaced
+  /// If [absolutePath] is root, the entire data model is replaced
   /// (if contents is a Map).
-  void update(DataPath? absolutePath, Object? contents);
+  void update(DataPath absolutePath, Object? contents);
 
   /// Subscribes to a specific absolute path in the data model.
   ValueNotifier<T?> subscribe<T>(DataPath absolutePath);
 
   /// Binds an external state [source] to a [path] in the DataModel.
+  ///
+  /// **Side Effect:** Calling this method immediately performs a synchronous
+  /// `update()` on the DataModel at the specified [path] using the current
+  /// value of the [source].
   ///
   /// If [twoWay] is true, changes in the DataModel at [path] will also
   /// update the [source] (assuming [source] is a [ValueNotifier]).
@@ -247,15 +251,13 @@ class InMemoryDataModel implements DataModel {
   final List<VoidCallback> _cleanupCallbacks = [];
 
   @override
-  void update(DataPath? absolutePath, Object? contents) {
+  void update(DataPath absolutePath, Object? contents) {
     genUiLogger.info(
       'DataModel.update: path=$absolutePath, contents='
       '${const JsonEncoder.withIndent('  ').convert(contents)}',
     );
 
-    if (absolutePath == null ||
-        absolutePath.segments.isEmpty ||
-        absolutePath == DataPath.root) {
+    if (absolutePath == DataPath.root) {
       if (contents is Map) {
         _data = Map<String, Object?>.from(contents);
       } else {
