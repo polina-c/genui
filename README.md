@@ -108,10 +108,10 @@ graph TD
   examples/catalog_gallery --> genui
   examples/simple_chat --> genui
   examples/travel_app --> genui
-  examples/verdure --> genui_a2ui
-  genui --> json_schema_builder
+  examples/verdure --> genui_a2ui 
   genui_a2ui --> genui
   genui --> genai_primitives
+  genai_primitives --> json_schema_builder
 ```
 
 ## A2UI Support
