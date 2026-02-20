@@ -111,6 +111,7 @@ graph TD
   examples/verdure --> genui_a2ui
   genui --> json_schema_builder
   genui_a2ui --> genui
+  genui --> genai_primitives
 ```
 
 ## A2UI Support
