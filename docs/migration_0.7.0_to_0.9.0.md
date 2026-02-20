@@ -71,22 +71,14 @@ A2UI v0.9 relies heavily on specific instructions being present in the system pr
 
 **Action**: Ensure your system prompt includes:
 1.  **The A2UI Schema**: Generated from your catalog.
-2.  **The Standard Rules**: `StandardCatalogEmbed.standardCatalogRules`.
+2.  **The Standard Rules**: `BasicCatalogEmbed.basicCatalogRules`.
 
 ```dart
-final String a2uiSchema = A2uiMessage.a2uiMessageSchema(catalog).toJson(indent: '  ');
-
-final systemInstruction = '''
-You are a helpful assistant.
-
-<a2ui_schema>
-$a2uiSchema
-</a2ui_schema>
-
-${StandardCatalogEmbed.standardCatalogRules}
-
-${PromptFragments.basicChat}
-''';
+final promptBuilder = PromptBuilder.chat(
+  catalog: catalog,
+  instructions: 'You are a helpful assistant.',
+);
+final systemInstruction = promptBuilder.systemPrompt;
 ```
 
 ## 4. Protocol & Schema Changes
@@ -135,7 +127,7 @@ To improve clarity and reduce verbosity, many classes have been renamed to remov
 | `InternalMessageWidget` | `InternalMessageView` | Widget for internal system messages. |
 | `GenUiFallback` | `FallbackWidget` | Error/Loading fallback. |
 | `GenUiFunctionDeclaration` | `ClientFunction` | Tool declaration. |
-| `GenUiPromptFragments` | `PromptFragments` | |
+| `GenUiPromptFragments` | (Removed) | Use `PromptBuilder` instead |
 | `configureGenUiLogging` | `configureLogging` | |
 
 ## 6. Using `genai_primitives`
@@ -199,7 +191,7 @@ class ChatSession {
   final A2uiTransportAdapter transportAdapter;
 
   ChatSession()
-      : surfaceController = SurfaceController(catalogs: [CoreCatalogItems.asCatalog()]),
+      : surfaceController = SurfaceController(catalogs: [BasicCatalogItems.asCatalog()]),
         transportAdapter = A2uiTransportAdapter() {
 
     // Connect Adapter -> Controller
