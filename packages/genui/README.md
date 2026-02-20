@@ -143,7 +143,7 @@ provider.
             if (event is ConversationSurfaceAdded) {
                 _onSurfaceAdded(event);
             } else if (event is ConversationSurfaceRemoved) {
-                _onSurfaceDeleted(event);
+                _onSurfaceRemoved(event);
             }
        });
      }
@@ -202,14 +202,14 @@ To receive and display generated UI:
      // A callback invoked by the [Conversation] when a new UI surface is generated.
      // Here, the ID is stored so the build method can create a Surface to
      // display it.
-     void _onSurfaceAdded(SurfaceAdded update) {
+     void _onSurfaceAdded(ConversationSurfaceAdded update) {
        setState(() {
          _surfaceIds.add(update.surfaceId);
        });
      }
 
      // A callback invoked by Conversation when a UI surface is removed.
-     void _onSurfaceRemoved(SurfaceRemoved update) {
+     void _onSurfaceRemoved(ConversationSurfaceRemoved update) {
        setState(() {
          _surfaceIds.remove(update.surfaceId);
        });
