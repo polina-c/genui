@@ -54,7 +54,7 @@ class _QuestionnaireScreenState extends ConsumerState<QuestionnaireScreen> {
           .when(
             data: (aiState) {
               return ValueListenableBuilder<SurfaceDefinition?>(
-                valueListenable: aiState.a2uiMessageProcessor
+                valueListenable: aiState.surfaceController
                     .contextFor('questionnaire')
                     .definition,
                 builder: (context, definition, child) {
@@ -64,7 +64,7 @@ class _QuestionnaireScreenState extends ConsumerState<QuestionnaireScreen> {
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: Surface(
-                      surfaceContext: aiState.a2uiMessageProcessor.contextFor(
+                      surfaceContext: aiState.surfaceController.contextFor(
                         'questionnaire',
                       ),
                     ),

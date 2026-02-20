@@ -43,7 +43,6 @@ class OptionalValueBuilder<T> extends StatelessWidget {
   }
 }
 
-/// Extension methods for [DataContext] to simplify data binding.
 /// A widget that binds to a value in the [DataContext] and rebuilds when it
 /// changes.
 ///

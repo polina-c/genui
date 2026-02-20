@@ -30,8 +30,12 @@ class FormatStringFunction implements cf.ClientFunction {
   }
 }
 
+/// Exception thrown when the maximum recursion depth is exceeded.
 class RecursionExpectedException implements Exception {
+  /// Creates a [RecursionExpectedException] with the given [message].
   RecursionExpectedException(this.message);
+
+  /// The detailed message explaining the recursion limit that was exceeded.
   final String message;
   @override
   String toString() => 'RecursionExpectedException: $message';
@@ -67,6 +71,10 @@ class ExpressionParser {
     ).map((event) => event?.toString() ?? '');
   }
 
+  /// Evaluates a function call defined by [callDefinition].
+  ///
+  /// If [dependencies] is provided, the function will not be executed, but
+  /// any data path dependencies within the arguments will be added to the set.
   Stream<Object?> evaluateFunctionCall(
     JsonMap callDefinition, {
     Set<DataPath>? dependencies,

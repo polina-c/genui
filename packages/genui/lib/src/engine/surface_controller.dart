@@ -32,8 +32,6 @@ interface class SurfaceController implements SurfaceHost, A2uiMessageSink {
   /// The [catalogs] parameter defines the set of component catalogs available
   /// for use by surfaces managed by this controller.
   ///
-
-  ///
   /// The [pendingUpdateTimeout] specifies how long to wait for a surface
   /// creation message before discarding buffered updates for that surface.
   SurfaceController({

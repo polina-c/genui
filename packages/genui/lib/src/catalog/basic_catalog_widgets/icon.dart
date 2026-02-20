@@ -90,7 +90,7 @@ enum AvailableIcons {
   }
 }
 
-/// A catalog item for an icon.
+/// A standard icon.
 ///
 /// ### Parameters:
 ///

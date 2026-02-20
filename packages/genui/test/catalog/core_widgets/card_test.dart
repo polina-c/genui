@@ -8,7 +8,7 @@ import 'package:genui/genui.dart';
 
 void main() {
   testWidgets('Card widget renders child', (WidgetTester tester) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.card,
@@ -25,17 +25,19 @@ void main() {
         properties: {'text': 'This is a card.'},
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );

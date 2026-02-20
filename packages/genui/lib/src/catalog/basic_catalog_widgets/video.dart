@@ -18,7 +18,7 @@ final _schema = S.object(
   required: ['component', 'url'],
 );
 
-/// A catalog item representing a video player.
+/// A video player.
 ///
 /// This widget currently displays a placeholder for a video player. It is
 /// intended to play video content from the given `url`.

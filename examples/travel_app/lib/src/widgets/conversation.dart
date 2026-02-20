@@ -16,7 +16,7 @@ class Conversation extends StatelessWidget {
   const Conversation({
     super.key,
     required this.messages,
-    required this.manager,
+    required this.surfaceController,
     this.userPromptBuilder,
     this.userUiInteractionBuilder,
     this.showInternalMessages = false,
@@ -24,7 +24,7 @@ class Conversation extends StatelessWidget {
   });
 
   final List<ChatMessage> messages;
-  final SurfaceHost manager;
+  final SurfaceHost surfaceController;
   final UserPromptBuilder? userPromptBuilder;
   final UserUiInteractionBuilder? userUiInteractionBuilder;
   final bool showInternalMessages;
@@ -88,7 +88,7 @@ class Conversation extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Surface(
                   key: ValueKey(uiPart.definition.surfaceId),
-                  surfaceContext: manager.contextFor(
+                  surfaceContext: surfaceController.contextFor(
                     uiPart.definition.surfaceId,
                   ),
                 ),

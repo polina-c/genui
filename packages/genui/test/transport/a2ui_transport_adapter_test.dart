@@ -11,22 +11,22 @@ import 'package:test/test.dart';
 
 void main() {
   group('A2uiTransportAdapter', () {
-    late A2uiTransportAdapter controller;
+    late A2uiTransportAdapter transportAdapter;
 
     setUp(() {
-      controller = A2uiTransportAdapter();
+      transportAdapter = A2uiTransportAdapter();
     });
 
     tearDown(() {
-      controller.dispose();
+      transportAdapter.dispose();
     });
 
     test('addChunk flows text to textStream', () async {
       final Future<dynamic> textFuture = expectLater(
-        controller.incomingText,
+        transportAdapter.incomingText,
         emitsInOrder(['Hello']),
       );
-      controller.addChunk('Hello');
+      transportAdapter.addChunk('Hello');
       await textFuture;
     });
 
@@ -37,13 +37,13 @@ void main() {
 ```''';
 
       final Future<dynamic> stateFuture = expectLater(
-        controller.incomingMessages,
+        transportAdapter.incomingMessages,
         emits(
           isA<CreateSurface>().having((e) => e.surfaceId, 'id', 'test_chunk'),
         ),
       );
 
-      controller.addChunk(json);
+      transportAdapter.addChunk(json);
       await stateFuture;
     });
 
@@ -54,13 +54,13 @@ void main() {
       );
 
       final Future<dynamic> stateFuture = expectLater(
-        controller.incomingMessages,
+        transportAdapter.incomingMessages,
         emits(
           isA<CreateSurface>().having((e) => e.surfaceId, 'id', 'direct_msg'),
         ),
       );
 
-      controller.addMessage(msg);
+      transportAdapter.addMessage(msg);
       await stateFuture;
     });
 

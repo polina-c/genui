@@ -28,7 +28,7 @@ extension type _CardData.fromMap(JsonMap _json) {
   }
 }
 
-/// A catalog item representing a Material Design card.
+/// A Material Design card.
 ///
 /// This widget displays a card, which is a container for a single `child`
 /// widget. Cards often have rounded corners and a shadow, and are used to group

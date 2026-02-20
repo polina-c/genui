@@ -55,9 +55,9 @@ class TravelPlannerPage extends StatefulWidget {
 
 class _TravelPlannerPageState extends State<TravelPlannerPage>
     with AutomaticKeepAliveClientMixin {
-  late final SurfaceController _processor;
+  late final SurfaceController _surfaceController;
   late final genui.Conversation _uiConversation;
-  late final A2uiTransportAdapter _controller;
+  late final A2uiTransportAdapter _transportAdapter;
 
   final ValueNotifier<List<ChatMessage>> _messages = ValueNotifier([]);
   final ValueNotifier<bool> _isProcessing = ValueNotifier(false);
@@ -74,7 +74,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
   void initState() {
     super.initState();
     // Wire up the controller's onSend to the appropriate client
-    _controller = A2uiTransportAdapter(
+    _transportAdapter = A2uiTransportAdapter(
       onSend: (message) async {
         // Reset streaming text for new turn
         _currentStreamingText = '';
@@ -83,7 +83,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
         await _sendRequest(_client!, message, _messages.value);
       },
     );
-    _processor = SurfaceController(catalogs: [travelAppCatalog]);
+    _surfaceController = SurfaceController(catalogs: [travelAppCatalog]);
 
     // Create the appropriate content generator based on configuration
     _client = widget.aiClient;
@@ -99,11 +99,11 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
       );
     }
 
-    _wireClient(_client!, _controller);
+    _wireClient(_client!, _transportAdapter);
 
     _uiConversation = genui.Conversation(
-      transport: _controller,
-      controller: _processor,
+      transport: _transportAdapter,
+      controller: _surfaceController,
     );
 
     _uiConversation.state.addListener(() {
@@ -171,7 +171,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
 
   @override
   void dispose() {
-    _processor.dispose();
+    _surfaceController.dispose();
     _uiConversation.dispose();
     if (_didCreateClient) {
       _client?.dispose();
@@ -221,7 +221,7 @@ class _TravelPlannerPageState extends State<TravelPlannerPage>
                   builder: (context, messages, child) {
                     return Conversation(
                       messages: messages,
-                      manager: _processor,
+                      surfaceController: _surfaceController,
                       scrollController: _scrollController,
                     );
                   },

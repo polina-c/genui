@@ -89,8 +89,7 @@ CrossAxisAlignment _parseCrossAxisAlignment(String? alignment) {
   }
 }
 
-/// A catalog item representing a layout widget that displays its children in a
-/// vertical array.
+/// A layout widget that arranges its children in a vertical sequence.
 ///
 /// This widget is analogous to Flutter's [Column] widget. It arranges a list of
 /// child components from top to bottom.

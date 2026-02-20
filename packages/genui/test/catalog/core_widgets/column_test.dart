@@ -8,7 +8,7 @@ import 'package:genui/genui.dart';
 
 void main() {
   testWidgets('Column widget renders children', (WidgetTester tester) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.column,
@@ -32,17 +32,19 @@ void main() {
         properties: {'text': 'Second'},
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -54,7 +56,7 @@ void main() {
   testWidgets('Column widget applies weight property to children', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.column,
@@ -83,17 +85,19 @@ void main() {
       ),
       const Component(id: 'text3', type: 'Text', properties: {'text': 'Third'}),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );

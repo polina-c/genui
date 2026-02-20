@@ -274,7 +274,7 @@ class _DateTimeInputState extends State<_DateTimeInput> {
   }
 }
 
-/// A catalog item representing a Material Design date and/or time input field.
+/// A widget for selecting a date and/or time.
 ///
 /// This widget displays a field that, when tapped, opens the native date and/or
 /// time pickers. The selected value is stored as a string in the data model

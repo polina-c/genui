@@ -54,8 +54,7 @@ extension type _ImageData.fromMap(JsonMap _json) {
   String? get variant => _json['variant'] as String?;
 }
 
-/// A catalog item representing a widget that displays an image.
-///
+/// A UI element for displaying image data from a URL or other source.
 /// The image source is specified by the `url` parameter, which can be a network
 /// URL (e.g., `https://...`) or a local asset path (e.g., `assets/...`).
 ///

@@ -10,10 +10,12 @@ import 'package:travel_app/src/widgets/conversation.dart';
 
 void main() {
   group('Conversation', () {
-    late SurfaceController manager;
+    late SurfaceController surfaceController;
 
     setUp(() {
-      manager = SurfaceController(catalogs: [BasicCatalogItems.asCatalog()]);
+      surfaceController = SurfaceController(
+        catalogs: [BasicCatalogItems.asCatalog()],
+      );
     });
 
     testWidgets('renders a list of messages', (WidgetTester tester) async {
@@ -37,17 +39,20 @@ void main() {
           properties: {'text': 'Hi there!'},
         ),
       ];
-      manager.handleMessage(
+      surfaceController.handleMessage(
         UpdateComponents(surfaceId: surfaceId, components: components),
       );
-      manager.handleMessage(
+      surfaceController.handleMessage(
         const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
       );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Conversation(messages: messages, manager: manager),
+            body: Conversation(
+              messages: messages,
+              surfaceController: surfaceController,
+            ),
           ),
         ),
       );
@@ -61,7 +66,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Conversation(messages: messages, manager: manager),
+            body: Conversation(
+              messages: messages,
+              surfaceController: surfaceController,
+            ),
           ),
         ),
       );
@@ -89,16 +97,19 @@ void main() {
           properties: {'text': 'UI Content'},
         ),
       ];
-      manager.handleMessage(
+      surfaceController.handleMessage(
         UpdateComponents(surfaceId: surfaceId, components: components),
       );
-      manager.handleMessage(
+      surfaceController.handleMessage(
         const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
       );
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Conversation(messages: messages, manager: manager),
+            body: Conversation(
+              messages: messages,
+              surfaceController: surfaceController,
+            ),
           ),
         ),
       );
@@ -114,7 +125,7 @@ void main() {
           home: Scaffold(
             body: Conversation(
               messages: messages,
-              manager: manager,
+              surfaceController: surfaceController,
               userPromptBuilder: (context, message) =>
                   const Text('Custom User Prompt'),
             ),
@@ -136,7 +147,7 @@ void main() {
           home: Scaffold(
             body: Conversation(
               messages: messages,
-              manager: manager,
+              surfaceController: surfaceController,
               userUiInteractionBuilder: (context, message) =>
                   const Text('User Interaction'),
             ),

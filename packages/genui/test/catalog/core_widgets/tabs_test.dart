@@ -10,7 +10,7 @@ void main() {
   testWidgets('Tabs widget renders and handles taps', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.tabs,
@@ -42,17 +42,19 @@ void main() {
         properties: {'component': 'Text', 'text': 'This is the second tab.'},
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -70,7 +72,7 @@ void main() {
   });
 
   testWidgets('Tabs activeTab binding works', (WidgetTester tester) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.tabs,
@@ -81,7 +83,7 @@ void main() {
     const surfaceId = 'testSurface';
 
     // Initialize data model with tab 1 (index 1) active
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateDataModel(
         surfaceId: surfaceId,
         path: DataPath('/'),
@@ -114,10 +116,10 @@ void main() {
       ),
     ];
 
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
@@ -125,7 +127,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -136,7 +140,7 @@ void main() {
     expect(find.text('Content 1'), findsNothing);
 
     // Update data model to switch to Tab 1 (index 0)
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateDataModel(
         surfaceId: 'testSurface',
         path: DataPath('/currentTab'),
@@ -154,7 +158,9 @@ void main() {
     expect(find.text('Content 2'), findsOneWidget);
 
     // Verify data model updated
-    final DataModel dataModel = manager.contextFor(surfaceId).dataModel;
+    final DataModel dataModel = surfaceController
+        .contextFor(surfaceId)
+        .dataModel;
     expect(dataModel.getValue<num>(DataPath('currentTab')), 1);
   });
 }

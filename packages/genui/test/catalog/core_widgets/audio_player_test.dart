@@ -10,7 +10,7 @@ void main() {
   testWidgets('AudioPlayer widget renders and has description in semantics', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([BasicCatalogItems.audioPlayer], catalogId: 'test_catalog'),
       ],
@@ -26,17 +26,19 @@ void main() {
         },
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );

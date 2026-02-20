@@ -26,7 +26,7 @@ void main() {
     debugNetworkImageHttpClientProvider = _FakeHttpClient.new;
     try {
       await HttpOverrides.runZoned(() async {
-        final manager = SurfaceController(
+        final surfaceController = SurfaceController(
           catalogs: [
             Catalog([BasicCatalogItems.image], catalogId: 'test_catalog'),
           ],
@@ -39,17 +39,19 @@ void main() {
             properties: {'url': 'https://example.com/nonexistent.png'},
           ),
         ];
-        manager.handleMessage(
+        surfaceController.handleMessage(
           UpdateComponents(surfaceId: surfaceId, components: components),
         );
-        manager.handleMessage(
+        surfaceController.handleMessage(
           const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
         );
 
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+              body: Surface(
+                surfaceContext: surfaceController.contextFor(surfaceId),
+              ),
             ),
           ),
         );
@@ -74,7 +76,7 @@ void main() {
     debugNetworkImageHttpClientProvider = _FakeSuccessHttpClient.new;
     try {
       await HttpOverrides.runZoned(() async {
-        final manager = SurfaceController(
+        final surfaceController = SurfaceController(
           catalogs: [
             Catalog([BasicCatalogItems.image], catalogId: 'test_catalog'),
           ],
@@ -87,17 +89,19 @@ void main() {
             properties: {'url': 'https://example.com/image.png'},
           ),
         ];
-        manager.handleMessage(
+        surfaceController.handleMessage(
           UpdateComponents(surfaceId: surfaceId, components: components),
         );
-        manager.handleMessage(
+        surfaceController.handleMessage(
           const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
         );
 
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+              body: Surface(
+                surfaceContext: surfaceController.contextFor(surfaceId),
+              ),
             ),
           ),
         );

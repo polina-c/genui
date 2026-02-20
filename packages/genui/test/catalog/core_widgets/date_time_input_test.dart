@@ -10,17 +10,20 @@ import 'package:genui/src/catalog/basic_functions.dart';
 void main() {
   testWidgets('renders and handles explicit updates', (tester) async {
     final robot = DateTimeInputRobot(tester);
-    final (SurfaceHost manager, String surfaceId) = setup('datetime', {
-      'value': {'path': '/myDateTime'},
-      'enableTime': false,
-    });
+    final (SurfaceHost surfaceController, String surfaceId) = setup(
+      'datetime',
+      {
+        'value': {'path': '/myDateTime'},
+        'enableTime': false,
+      },
+    );
 
-    manager
+    surfaceController
         .contextFor(surfaceId)
         .dataModel
         .update(DataPath('/myDateTime'), '2025-10-15');
 
-    await robot.pumpSurface(manager, surfaceId);
+    await robot.pumpSurface(surfaceController, surfaceId);
 
     robot.expectInputText('datetime', 'Wednesday, October 15, 2025');
   });
@@ -30,40 +33,46 @@ void main() {
   ) async {
     final robot = DateTimeInputRobot(tester);
 
-    var (SurfaceHost manager, String surfaceId) = setup('datetime_default', {
-      'value': {'path': '/myDateTimeDefault'},
-    });
-    await robot.pumpSurface(manager, surfaceId);
+    var (SurfaceHost surfaceController, String surfaceId) = setup(
+      'datetime_default',
+      {
+        'value': {'path': '/myDateTimeDefault'},
+      },
+    );
+    await robot.pumpSurface(surfaceController, surfaceId);
     robot.expectInputText('datetime_default', 'Select a date and time');
 
-    (manager, surfaceId) = setup('datetime_date_only', {
+    (surfaceController, surfaceId) = setup('datetime_date_only', {
       'value': {'path': '/myDateOnly'},
       'enableTime': false,
     });
-    await robot.pumpSurface(manager, surfaceId);
+    await robot.pumpSurface(surfaceController, surfaceId);
     robot.expectInputText('datetime_date_only', 'Select a date');
 
-    (manager, surfaceId) = setup('datetime_time_only', {
+    (surfaceController, surfaceId) = setup('datetime_time_only', {
       'value': {'path': '/myTimeOnly'},
       'enableDate': false,
     });
-    await robot.pumpSurface(manager, surfaceId);
+    await robot.pumpSurface(surfaceController, surfaceId);
     robot.expectInputText('datetime_time_only', 'Select a time');
   });
 
   group('combined mode', () {
     testWidgets('aborts update when time picker is cancelled', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup('combined_mode', {
-        'value': {'path': '/myDateTime'},
-      });
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
+        'combined_mode',
+        {
+          'value': {'path': '/myDateTime'},
+        },
+      );
 
-      manager
+      surfaceController
           .contextFor(surfaceId)
           .dataModel
           .update(DataPath('/myDateTime'), '2022-01-01T14:30:00');
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
 
       await robot.openPicker('combined_mode');
       await robot.selectDate('15');
@@ -71,7 +80,7 @@ void main() {
       robot.expectTimePickerVisible();
       await robot.cancelPicker();
 
-      final String? value = manager
+      final String? value = surfaceController
           .contextFor(surfaceId)
           .dataModel
           .getValue<String>(DataPath('/myDateTime'));
@@ -82,18 +91,21 @@ void main() {
   group('time only mode', () {
     testWidgets('aborts when time picker is cancelled', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup('time_only_mode', {
-        'value': {'path': '/myTime'},
-        'enableDate': false,
-      });
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
+        'time_only_mode',
+        {
+          'value': {'path': '/myTime'},
+          'enableDate': false,
+        },
+      );
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
 
       await robot.openPicker('time_only_mode');
       robot.expectTimePickerVisible();
       await robot.cancelPicker();
 
-      final String? value = manager
+      final String? value = surfaceController
           .contextFor(surfaceId)
           .dataModel
           .getValue<String>(DataPath('/myTime'));
@@ -102,7 +114,7 @@ void main() {
 
     testWidgets('parses initial value correctly', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup(
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
         'time_only_parsing',
         {
           'value': {'path': '/myTimeProp'},
@@ -110,12 +122,12 @@ void main() {
         },
       );
 
-      manager
+      surfaceController
           .contextFor(surfaceId)
           .dataModel
           .update(DataPath('/myTimeProp'), '14:32:00');
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
 
       await robot.openPicker('time_only_parsing');
 
@@ -129,22 +141,25 @@ void main() {
     testWidgets('updates immediately with date-only string after '
         'date selection', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup('date_only_mode', {
-        'value': {'path': '/myDate'},
-        'enableTime': false,
-      });
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
+        'date_only_mode',
+        {
+          'value': {'path': '/myDate'},
+          'enableTime': false,
+        },
+      );
 
-      manager
+      surfaceController
           .contextFor(surfaceId)
           .dataModel
           .update(DataPath('/myDate'), '2022-01-01');
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
 
       await robot.openPicker('date_only_mode');
       await robot.selectDate('20');
 
-      final String? value = manager
+      final String? value = surfaceController
           .contextFor(surfaceId)
           .dataModel
           .getValue<String>(DataPath('/myDate'));
@@ -160,13 +175,16 @@ void main() {
   group('date range configuration', () {
     testWidgets('respects custom firstDate and lastDate', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup('custom_range', {
-        'value': {'path': '/myDate'},
-        'min': '2020-01-01',
-        'max': '2030-12-31',
-      });
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
+        'custom_range',
+        {
+          'value': {'path': '/myDate'},
+          'min': '2020-01-01',
+          'max': '2030-12-31',
+        },
+      );
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
 
       await robot.openPicker('custom_range');
 
@@ -181,11 +199,14 @@ void main() {
 
     testWidgets('defaults to -9999 to 9999 when not specified', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup('default_range', {
-        'value': {'path': '/myDate'},
-      });
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
+        'default_range',
+        {
+          'value': {'path': '/myDate'},
+        },
+      );
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
       await robot.openPicker('default_range');
 
       final DatePickerDialog dialog = tester.widget(
@@ -201,29 +222,32 @@ void main() {
   group('validation', () {
     testWidgets('shows error when check fails', (tester) async {
       final robot = DateTimeInputRobot(tester);
-      final (SurfaceHost manager, String surfaceId) = setup('validation_test', {
-        'value': {'path': '/myDate'},
-        'checks': [
-          {
-            'condition': {
-              'call': 'required',
-              'args': {
-                'value': {'path': '/myDate'},
+      final (SurfaceHost surfaceController, String surfaceId) = setup(
+        'validation_test',
+        {
+          'value': {'path': '/myDate'},
+          'checks': [
+            {
+              'condition': {
+                'call': 'required',
+                'args': {
+                  'value': {'path': '/myDate'},
+                },
               },
+              'message': 'Date is required',
             },
-            'message': 'Date is required',
-          },
-        ],
-      });
+          ],
+        },
+      );
 
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
       robot.expectError('Date is required');
 
-      manager
+      surfaceController
           .contextFor(surfaceId)
           .dataModel
           .update(DataPath('/myDate'), '2022-01-01');
-      await robot.pumpSurface(manager, surfaceId);
+      await robot.pumpSurface(surfaceController, surfaceId);
       robot.expectNoError();
     });
   });
@@ -236,21 +260,21 @@ void main() {
     functions: BasicFunctions.all,
   );
 
-  final manager = SurfaceController(catalogs: [catalog]);
+  final surfaceController = SurfaceController(catalogs: [catalog]);
   const surfaceId = 'testSurface';
 
   final components = [
     Component(id: 'root', type: 'DateTimeInput', properties: props),
   ];
 
-  manager.handleMessage(
+  surfaceController.handleMessage(
     UpdateComponents(surfaceId: surfaceId, components: components),
   );
-  manager.handleMessage(
+  surfaceController.handleMessage(
     const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
   );
 
-  return (manager, surfaceId);
+  return (surfaceController, surfaceId);
 }
 
 class DateTimeInputRobot {
@@ -258,11 +282,16 @@ class DateTimeInputRobot {
 
   DateTimeInputRobot(this.tester);
 
-  Future<void> pumpSurface(SurfaceHost manager, String surfaceId) async {
+  Future<void> pumpSurface(
+    SurfaceHost surfaceController,
+    String surfaceId,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );

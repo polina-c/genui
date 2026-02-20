@@ -43,14 +43,14 @@ Future<A2uiAgentConnector> a2uiAgentConnector(Ref ref) async {
 class AiClientState {
   /// Creates an [AiClientState].
   AiClientState({
-    required this.a2uiMessageProcessor,
+    required this.surfaceController,
     required this.connector,
     required this.conversation,
     required this.surfaceUpdateController,
   });
 
   /// The A2UI message processor.
-  final SurfaceController a2uiMessageProcessor;
+  final SurfaceController surfaceController;
 
   /// The agent connector.
   final A2uiAgentConnector connector;
@@ -67,27 +67,27 @@ class AiClientState {
 class Ai extends _$Ai {
   @override
   Future<AiClientState> build() async {
-    final a2uiMessageProcessor = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [BasicCatalogItems.asCatalog()],
     );
     final A2uiAgentConnector connector = await ref.watch(
       a2uiAgentConnectorProvider.future,
     );
 
-    final controller = A2uiTransportAdapter(
+    final transportAdapter = A2uiTransportAdapter(
       onSend: (message) async {
         // Send request via connector
         await connector.connectAndSend(message);
       },
     );
 
-    // Wire up connector to controller
-    connector.stream.listen(controller.addMessage);
-    connector.textStream.listen(controller.addChunk);
+    // Wire up connector to transportAdapter
+    connector.stream.listen(transportAdapter.addMessage);
+    connector.textStream.listen(transportAdapter.addChunk);
 
     final conversation = Conversation(
-      transport: controller,
-      controller: a2uiMessageProcessor,
+      transport: transportAdapter,
+      controller: surfaceController,
     );
 
     final surfaceUpdateController = StreamController<String>.broadcast();
@@ -113,12 +113,12 @@ class Ai extends _$Ai {
       // Reset the loading state when the provider is disposed.
       LoadingState.instance.isProcessing.value = false;
       conversation.dispose();
-      controller.dispose();
+      transportAdapter.dispose();
       surfaceUpdateController.close();
     });
 
     return AiClientState(
-      a2uiMessageProcessor: a2uiMessageProcessor,
+      surfaceController: surfaceController,
       connector: connector,
       conversation: conversation,
       surfaceUpdateController: surfaceUpdateController,

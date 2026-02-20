@@ -8,7 +8,7 @@ import 'package:genui/genui.dart';
 
 void main() {
   testWidgets('Row widget renders children', (WidgetTester tester) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.row,
@@ -32,17 +32,19 @@ void main() {
         properties: {'text': 'Second'},
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -54,7 +56,7 @@ void main() {
   testWidgets('Row widget applies weight property to children', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.row,
@@ -83,17 +85,19 @@ void main() {
       ),
       const Component(id: 'text3', type: 'Text', properties: {'text': 'Third'}),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -121,7 +125,7 @@ void main() {
   testWidgets('Row widget renders dynamic children from template', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.row,
@@ -132,7 +136,7 @@ void main() {
     const surfaceId = 'testSurface';
 
     // Initial data with items
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const UpdateDataModel(
         surfaceId: surfaceId,
         value: {
@@ -158,17 +162,19 @@ void main() {
       ),
     ];
 
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );

@@ -15,7 +15,7 @@ void main() {
     WidgetTester tester,
   ) async {
     ChatMessage? message;
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog([
           BasicCatalogItems.button,
@@ -23,7 +23,7 @@ void main() {
         ], catalogId: 'test_catalog'),
       ],
     );
-    manager.onSubmit.listen((event) => message = event);
+    surfaceController.onSubmit.listen((event) => message = event);
     const surfaceId = 'testSurface';
     final components = [
       const Component(
@@ -42,17 +42,19 @@ void main() {
         properties: {'text': 'Click Me'},
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -81,7 +83,7 @@ void main() {
       onExecute: (args, context) => streamController.stream,
     );
 
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [
         Catalog(
           [BasicCatalogItems.button, BasicCatalogItems.text],
@@ -90,7 +92,7 @@ void main() {
         ),
       ],
     );
-    manager.onSubmit.listen((event) => message = event);
+    surfaceController.onSubmit.listen((event) => message = event);
 
     const surfaceId = 'testSurface';
     final components = [
@@ -108,17 +110,19 @@ void main() {
         properties: {'text': 'Click Me'},
       ),
     ];
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -146,7 +150,7 @@ void main() {
 
     // The test passes if no unhandled exception crashes the test.
     await streamController.close();
-    manager.dispose();
+    surfaceController.dispose();
   });
 }
 

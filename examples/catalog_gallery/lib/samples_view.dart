@@ -31,7 +31,7 @@ class _SamplesViewState extends State<SamplesView> {
   List<File> _sampleFiles = [];
   File? _selectedFile;
   Sample? _selectedSample;
-  late SurfaceController _genUiController;
+  late SurfaceController _surfaceController;
   final List<String> _surfaceIds = [];
   int _currentSurfaceIndex = 0;
   StreamSubscription<SurfaceUpdate>? _surfaceSubscription;
@@ -40,7 +40,7 @@ class _SamplesViewState extends State<SamplesView> {
   @override
   void initState() {
     super.initState();
-    _genUiController = SurfaceController(catalogs: [widget.catalog]);
+    _surfaceController = SurfaceController(catalogs: [widget.catalog]);
     _loadSamples();
     _setupSurfaceListener();
   }
@@ -49,12 +49,12 @@ class _SamplesViewState extends State<SamplesView> {
   void dispose() {
     _surfaceSubscription?.cancel();
     _messageSubscription?.cancel();
-    _genUiController.dispose();
+    _surfaceController.dispose();
     super.dispose();
   }
 
   void _setupSurfaceListener() {
-    _surfaceSubscription = _genUiController.surfaceUpdates.listen((update) {
+    _surfaceSubscription = _surfaceController.surfaceUpdates.listen((update) {
       if (update is SurfaceAdded) {
         if (!_surfaceIds.contains(update.surfaceId)) {
           setState(() {
@@ -109,8 +109,8 @@ class _SamplesViewState extends State<SamplesView> {
     });
     // Re-create SurfaceController to ensure a clean state for the new
     // sample.
-    _genUiController.dispose();
-    _genUiController = SurfaceController(catalogs: [widget.catalog]);
+    _surfaceController.dispose();
+    _surfaceController = SurfaceController(catalogs: [widget.catalog]);
     _setupSurfaceListener();
 
     try {
@@ -122,7 +122,7 @@ class _SamplesViewState extends State<SamplesView> {
       });
 
       _messageSubscription = sample.messages.listen(
-        _genUiController.handleMessage,
+        _surfaceController.handleMessage,
         onError: (Object e) {
           genUiLogger.severe('Error processing message: $e');
           if (!context.mounted) return;
@@ -233,7 +233,7 @@ class _SamplesViewState extends State<SamplesView> {
                                 key: ValueKey(
                                   _surfaceIds[_currentSurfaceIndex],
                                 ),
-                                surfaceContext: _genUiController.contextFor(
+                                surfaceContext: _surfaceController.contextFor(
                                   _surfaceIds[_currentSurfaceIndex],
                                 ),
                               ),

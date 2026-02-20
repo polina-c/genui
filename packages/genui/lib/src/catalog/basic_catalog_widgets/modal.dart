@@ -48,7 +48,7 @@ extension type _ModalData.fromMap(JsonMap _json) {
   }
 }
 
-/// A catalog item representing a modal bottom sheet.
+/// A modal overlay that slides up from the bottom of the screen.
 ///
 /// This component doesn't render the modal content directly. Instead, it
 /// renders the `trigger` widget. The `trigger` is expected to

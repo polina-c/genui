@@ -55,7 +55,7 @@ extension type _ButtonData.fromMap(JsonMap _json) {
   List<JsonMap>? get checks => (_json['checks'] as List?)?.cast<JsonMap>();
 }
 
-/// A catalog item representing a Material Design elevated button.
+/// A Material Design elevated button.
 ///
 /// This widget displays an interactive button. When pressed, it dispatches
 /// the specified `action` event. The button's appearance can be styled as

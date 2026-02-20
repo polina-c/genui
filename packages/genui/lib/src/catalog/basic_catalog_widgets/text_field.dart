@@ -167,7 +167,7 @@ class _TextFieldState extends State<_TextField> {
   }
 }
 
-/// A catalog item representing a Material Design text field.
+/// A Material Design text field.
 ///
 /// This widget allows the user to enter and edit text. The `text` parameter
 /// bidirectionally binds the field's content to the data model. This is

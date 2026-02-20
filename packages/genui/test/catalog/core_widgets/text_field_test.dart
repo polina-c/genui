@@ -9,10 +9,10 @@ import 'package:genui/genui.dart';
 void main() {
   testWidgets('TextField with no weight in Row defaults to weight: 1 '
       'and expands', (WidgetTester tester) async {
-    final a2uiProcessor = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [BasicCatalogItems.asCatalog()],
     );
-    addTearDown(a2uiProcessor.dispose);
+    addTearDown(surfaceController.dispose);
     const surfaceId = 'testSurface';
     final components = [
       const Component(
@@ -30,17 +30,19 @@ void main() {
       ),
     ];
 
-    a2uiProcessor.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    a2uiProcessor.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: a2uiProcessor.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -63,10 +65,10 @@ void main() {
   testWidgets('TextField in Row (with weight) expands', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [BasicCatalogItems.asCatalog()],
     );
-    addTearDown(manager.dispose);
+    addTearDown(surfaceController.dispose);
     const surfaceId = 'testSurface';
     final components = [
       const Component(
@@ -83,17 +85,19 @@ void main() {
       ),
     ];
 
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -114,13 +118,13 @@ void main() {
   });
 
   testWidgets('TextField validation checks work', (WidgetTester tester) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [BasicCatalogItems.asCatalog()],
     );
-    addTearDown(manager.dispose);
+    addTearDown(surfaceController.dispose);
     const surfaceId = 'validationTest';
     // Initialize with invalid value
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateDataModel(
         surfaceId: surfaceId,
         path: DataPath('/myValue'),
@@ -151,17 +155,19 @@ void main() {
       ),
     ];
 
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );
@@ -179,13 +185,13 @@ void main() {
   testWidgets('TextField validation using condition wrapper and call key', (
     WidgetTester tester,
   ) async {
-    final manager = SurfaceController(
+    final surfaceController = SurfaceController(
       catalogs: [BasicCatalogItems.asCatalog()],
     );
-    addTearDown(manager.dispose);
+    addTearDown(surfaceController.dispose);
     const surfaceId = 'validationWrapperTest';
     // Initialize with invalid value (empty string)
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateDataModel(surfaceId: surfaceId, path: DataPath('/name'), value: ''),
     );
 
@@ -213,17 +219,19 @@ void main() {
       ),
     ];
 
-    manager.handleMessage(
+    surfaceController.handleMessage(
       UpdateComponents(surfaceId: surfaceId, components: components),
     );
-    manager.handleMessage(
+    surfaceController.handleMessage(
       const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Surface(surfaceContext: manager.contextFor(surfaceId)),
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
         ),
       ),
     );

@@ -27,7 +27,7 @@ class OrderConfirmationScreen extends ConsumerWidget {
           .when(
             data: (aiState) {
               return ValueListenableBuilder<SurfaceDefinition?>(
-                valueListenable: aiState.a2uiMessageProcessor
+                valueListenable: aiState.surfaceController
                     .contextFor('confirmation')
                     .definition,
                 builder: (context, definition, child) {
@@ -35,7 +35,7 @@ class OrderConfirmationScreen extends ConsumerWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
                   return Surface(
-                    surfaceContext: aiState.a2uiMessageProcessor.contextFor(
+                    surfaceContext: aiState.surfaceController.contextFor(
                       'confirmation',
                     ),
                   );

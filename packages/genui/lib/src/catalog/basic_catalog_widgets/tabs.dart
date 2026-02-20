@@ -166,7 +166,7 @@ class _TabsWidgetState extends State<_TabsWidget>
   }
 }
 
-/// A catalog item representing a Material Design tab layout.
+/// A Material Design tab layout.
 ///
 /// This widget displays a [TabBar] and a view area to allow navigation
 /// between different child components. Each tab in `tabs` has a label and

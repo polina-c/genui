@@ -34,7 +34,7 @@ class ShoppingCartScreen extends ConsumerWidget {
           .when(
             data: (aiState) {
               return ValueListenableBuilder<SurfaceDefinition?>(
-                valueListenable: aiState.a2uiMessageProcessor
+                valueListenable: aiState.surfaceController
                     .contextFor('cart')
                     .definition,
                 builder: (context, definition, child) {
@@ -42,7 +42,7 @@ class ShoppingCartScreen extends ConsumerWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
                   return Surface(
-                    surfaceContext: aiState.a2uiMessageProcessor.contextFor(
+                    surfaceContext: aiState.surfaceController.contextFor(
                       'cart',
                     ),
                   );

@@ -54,7 +54,7 @@ extension type _SliderData.fromMap(JsonMap _json) {
   }
 }
 
-/// A catalog item representing a Material Design slider.
+/// A Material Design slider.
 ///
 /// This widget allows the user to select a value from a range by sliding a
 /// thumb along a track. The `value` is bidirectionally bound to the data model.

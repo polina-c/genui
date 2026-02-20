@@ -70,7 +70,7 @@ void main() {
         type: 'Text',
         properties: {'text': 'Hello'},
       );
-      final uiDef = SurfaceDefinition(
+      final surfaceDefinition = SurfaceDefinition(
         surfaceId: 's1',
         components: {'test': component},
       );
@@ -87,7 +87,7 @@ void main() {
       );
 
       expect(
-        () => uiDef.validate(schema),
+        () => surfaceDefinition.validate(schema),
         throwsA(isA<A2uiValidationException>()),
       );
     });
@@ -98,7 +98,7 @@ void main() {
         type: 'Text',
         properties: {'text': 'Hello'},
       );
-      final uiDef = SurfaceDefinition(
+      final surfaceDefinition = SurfaceDefinition(
         surfaceId: 's1',
         components: {'test': component},
       );
@@ -116,7 +116,7 @@ void main() {
         },
       );
 
-      uiDef.validate(schema); // Should not throw
+      surfaceDefinition.validate(schema); // Should not throw
     });
   });
 }

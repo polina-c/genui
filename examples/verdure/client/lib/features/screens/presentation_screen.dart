@@ -51,7 +51,7 @@ class _PresentationScreenState extends ConsumerState<PresentationScreen> {
           .when(
             data: (aiState) {
               return ValueListenableBuilder<SurfaceDefinition?>(
-                valueListenable: aiState.a2uiMessageProcessor
+                valueListenable: aiState.surfaceController
                     .contextFor('options')
                     .definition,
                 builder: (context, definition, child) {
@@ -61,7 +61,7 @@ class _PresentationScreenState extends ConsumerState<PresentationScreen> {
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: Surface(
-                      surfaceContext: aiState.a2uiMessageProcessor.contextFor(
+                      surfaceContext: aiState.surfaceController.contextFor(
                         'options',
                       ),
                     ),

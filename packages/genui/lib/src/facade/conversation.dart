@@ -106,7 +106,7 @@ class ConversationState {
 
 /// Facade for managing a GenUI conversation.
 ///
-/// Orchestrates compmunication between the [SurfaceController] and the
+/// Orchestrates communication between the [SurfaceController] and the
 /// [Transport]. Manages the conversation state, including active surfaces, the
 /// latest text response, and waiting status.
 interface class Conversation {
