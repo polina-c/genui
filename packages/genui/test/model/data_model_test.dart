@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/src/foundation/change_notifier.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/src/model/data_model.dart';
@@ -380,5 +382,65 @@ void main() {
         reason: 'Should create nested lists',
       );
     });
+  });
+
+  group('DataContext Stream Evaluation', () {
+    late DataModel dataModel;
+    late DataContext context;
+
+    setUp(() {
+      dataModel = InMemoryDataModel();
+      context = DataContext(dataModel, DataPath.root);
+    });
+
+    test('subscribeStream yields initial and subsequent values', () async {
+      dataModel.update(DataPath('/a'), 1);
+      final Stream<int?> stream = context.subscribeStream<int>(DataPath('/a'));
+
+      final values = <int?>[];
+      final StreamSubscription<int?> sub = stream.listen(values.add);
+
+      dataModel.update(DataPath('/a'), 2);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(values, [1, 2]);
+      await sub.cancel();
+    });
+
+    test('evaluateConditionStream evaluates booleans from path', () async {
+      dataModel.update(DataPath('/flag'), true);
+      // Pass a map that resolves to /flag
+      final condition = {'path': '/flag'};
+      final Stream<bool> stream = context.evaluateConditionStream(condition);
+
+      final values = <bool>[];
+      final StreamSubscription<bool> sub = stream.listen(values.add);
+
+      dataModel.update(DataPath('/flag'), false);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(values, [true, false]);
+      await sub.cancel();
+    });
+
+    test('evaluateConditionStream handles null condition as false', () async {
+      final Stream<bool> stream = context.evaluateConditionStream(null);
+      expect(await stream.first, isFalse);
+    });
+
+    test('evaluateConditionStream handles literal bool condition', () async {
+      final Stream<bool> stream = context.evaluateConditionStream(true);
+      expect(await stream.first, isTrue);
+    });
+
+    test(
+      'evaluateConditionStream treats non-null non-bool objects as true',
+      () async {
+        dataModel.update(DataPath('/str'), 'hello');
+        final condition = {'path': '/str'};
+        final Stream<bool> stream = context.evaluateConditionStream(condition);
+        expect(await stream.first, isTrue); // 'hello' != null
+      },
+    );
   });
 }

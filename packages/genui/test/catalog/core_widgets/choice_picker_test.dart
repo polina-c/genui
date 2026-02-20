@@ -300,4 +300,81 @@ void main() {
       expect(checkboxes.first.value, false);
     },
   );
+
+  testWidgets('ChoicePicker gracefully handles non-list data model values', (
+    WidgetTester tester,
+  ) async {
+    final catalog = Catalog([choicePicker], catalogId: 'std');
+    final controller = SurfaceController(catalogs: [catalog]);
+    const surfaceId = 'testSurface';
+
+    // Store a non-list string (should be treated as selected option if
+    // it matches).
+    controller.handleMessage(
+      UpdateDataModel(
+        surfaceId: surfaceId,
+        path: DataPath('/choice'),
+        value: 'option1',
+      ),
+    );
+
+    final components = [
+      const Component(
+        id: 'root',
+        type: 'ChoicePicker',
+        properties: {
+          'label': 'Test Choice',
+          'value': {'path': '/choice'},
+          'options': [
+            {'label': 'Option 1', 'value': 'option1'},
+            {'label': 'Option 2', 'value': 'option2'},
+          ],
+        },
+      ),
+    ];
+
+    controller.handleMessage(
+      UpdateComponents(surfaceId: surfaceId, components: components),
+    );
+    controller.handleMessage(
+      const CreateSurface(surfaceId: surfaceId, catalogId: 'std'),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Surface(surfaceContext: controller.contextFor(surfaceId)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify option1 is checked even though data model had "option1" string
+    // instead of ["option1"] list.
+    final Checkbox checkbox1 = tester.widget<Checkbox>(
+      find.descendant(
+        of: find.widgetWithText(CheckboxListTile, 'Option 1'),
+        matching: find.byType(Checkbox),
+      ),
+    );
+    expect(checkbox1.value, true);
+
+    // Also test number type
+    controller.handleMessage(
+      UpdateDataModel(
+        surfaceId: surfaceId,
+        path: DataPath('/choice'),
+        value: 123,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Checkbox checkboxNumber = tester.widget<Checkbox>(
+      find.descendant(
+        of: find.widgetWithText(CheckboxListTile, 'Option 1'),
+        matching: find.byType(Checkbox),
+      ),
+    );
+    expect(checkboxNumber.value, false); // 123 does not match option1
+  });
 }

@@ -119,4 +119,44 @@ void main() {
       surfaceDefinition.validate(schema); // Should not throw
     });
   });
+
+  group('SurfaceDefinition extended', () {
+    test('copyWith works', () {
+      final sd = SurfaceDefinition(
+        surfaceId: 's1',
+        catalogId: 'c1',
+        components: const {},
+      );
+      final SurfaceDefinition copied = sd.copyWith(catalogId: 'c2');
+      expect(copied.surfaceId, 's1');
+      expect(copied.catalogId, 'c2');
+    });
+
+    test('asContextDescriptionText works', () {
+      final sd = SurfaceDefinition(
+        surfaceId: 's1',
+        components: {
+          'root': const Component(
+            id: 'root',
+            type: 'Text',
+            properties: {'text': 'Hello'},
+          ),
+        },
+      );
+      final String text = sd.asContextDescriptionText();
+      expect(text, contains('Text'));
+      expect(text, contains('Hello'));
+    });
+  });
+
+  group('Component', () {
+    test('toJson', () {
+      final c = const Component(
+        id: 'c1',
+        type: 'Button',
+        properties: {'label': 'Click'},
+      );
+      expect(c.toJson(), {'id': 'c1', 'component': 'Button', 'label': 'Click'});
+    });
+  });
 }

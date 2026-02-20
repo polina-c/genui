@@ -60,5 +60,11 @@ Here is some JSON:
       final Object? result = JsonBlockParser.parseFirstJsonBlock(text);
       expect(result, equals(['foo', 'bar']));
     });
+
+    test('parses JSON block containing string with brackets and braces', () {
+      const text = 'Some text {"foo": "[{test}]"} more text';
+      final Object? result = JsonBlockParser.parseFirstJsonBlock(text);
+      expect(result, equals({'foo': '[{test}]'}));
+    });
   });
 }

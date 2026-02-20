@@ -246,4 +246,54 @@ void main() {
 
     expect(find.text('Name required'), findsNothing);
   });
+
+  testWidgets('TextField gracefully handles non-string data model values', (
+    WidgetTester tester,
+  ) async {
+    final surfaceController = SurfaceController(
+      catalogs: [BasicCatalogItems.asCatalog()],
+    );
+    addTearDown(surfaceController.dispose);
+    const surfaceId = 'validationTypeTest';
+    // Initialize with an integer value
+    surfaceController.handleMessage(
+      UpdateDataModel(
+        surfaceId: surfaceId,
+        path: DataPath('/name'),
+        value: 123,
+      ),
+    );
+
+    final components = [
+      const Component(
+        id: 'root',
+        type: 'TextField',
+        properties: {
+          'label': 'Name',
+          'value': {'path': '/name'},
+        },
+      ),
+    ];
+
+    surfaceController.handleMessage(
+      UpdateComponents(surfaceId: surfaceId, components: components),
+    );
+    surfaceController.handleMessage(
+      const CreateSurface(surfaceId: surfaceId, catalogId: basicCatalogId),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Surface(
+            surfaceContext: surfaceController.contextFor(surfaceId),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The text field should convert the integer 123 to "123"
+    expect(find.text('123'), findsOneWidget);
+  });
 }

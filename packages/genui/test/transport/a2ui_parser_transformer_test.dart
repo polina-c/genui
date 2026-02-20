@@ -111,6 +111,31 @@ void main() {
       await queue.cancel();
     });
 
+    test('extracts JSON containing brackets and braces in strings', () async {
+      final StreamQueue<GenerationEvent> queue = StreamQueue(stream);
+
+      controller.add('Start ');
+      controller.add('{ "version": "v0.9", "deleteSurface": ');
+      controller.add('{ "surfaceId": "[{]bar[}]" } }');
+      controller.add(' End');
+
+      expect(
+        (await queue.next) as TextEvent,
+        isA<TextEvent>().having((e) => e.text, 'text', 'Start '),
+      );
+
+      final msgEvent = (await queue.next) as A2uiMessageEvent;
+      expect(msgEvent.message, isA<DeleteSurface>());
+      expect((msgEvent.message as DeleteSurface).surfaceId, '[{]bar[}]');
+
+      expect(
+        (await queue.next) as TextEvent,
+        isA<TextEvent>().having((e) => e.text, 'text', ' End'),
+      );
+
+      await queue.cancel();
+    });
+
     test('flushes buffer on done', () async {
       final StreamQueue<GenerationEvent> queue = StreamQueue(stream);
 

@@ -166,6 +166,20 @@ void main() {
             'true',
           );
         });
+
+        test('handles unmatched braces gracefully', () async {
+          expect(
+            await eval<String>(parser.parse(r'Hello ${world')),
+            r'Hello ${world',
+          );
+        });
+
+        test('handles missing colon in named arguments gracefully', () async {
+          expect(
+            await eval<String>(parser.parse(r'${required(value "test")}')),
+            'false',
+          );
+        });
       });
 
       group('Recursion Depth', () {

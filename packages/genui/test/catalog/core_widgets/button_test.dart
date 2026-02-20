@@ -152,6 +152,112 @@ void main() {
     await streamController.close();
     surfaceController.dispose();
   });
+
+  testWidgets(
+    'Button widget is disabled when checks fail and enabled when they pass',
+    (WidgetTester tester) async {
+      ChatMessage? message;
+      final surfaceController = SurfaceController(
+        catalogs: [
+          BasicCatalogItems.asCatalog().copyWith(catalogId: 'test_catalog'),
+        ],
+      );
+      addTearDown(surfaceController.dispose);
+      surfaceController.onSubmit.listen((event) => message = event);
+
+      const surfaceId = 'validationTest';
+      // Initialize with a value that fails the check
+      surfaceController.handleMessage(
+        UpdateDataModel(
+          surfaceId: surfaceId,
+          path: DataPath('/count'),
+          value: 0,
+        ),
+      );
+
+      final components = [
+        const Component(
+          id: 'root',
+          type: 'Button',
+          properties: {
+            'child': 'button_text',
+            'action': {
+              'event': {'name': 'testAction'},
+            },
+            'checks': [
+              {
+                'message': 'Cannot click when count is 0',
+                'condition': {
+                  'call': 'numeric',
+                  'args': {
+                    'value': {'path': '/count'},
+                    'min': 1,
+                  },
+                },
+              },
+            ],
+          },
+        ),
+        const Component(
+          id: 'button_text',
+          type: 'Text',
+          properties: {'text': 'Click Me'},
+        ),
+      ];
+
+      surfaceController.handleMessage(
+        UpdateComponents(surfaceId: surfaceId, components: components),
+      );
+      surfaceController.handleMessage(
+        const CreateSurface(surfaceId: surfaceId, catalogId: 'test_catalog'),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Surface(
+              surfaceContext: surfaceController.contextFor(surfaceId),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder buttonFinder = find.byType(ElevatedButton);
+      expect(buttonFinder, findsOneWidget);
+
+      // Button should be disabled -> onPressed is null
+      ElevatedButton buttonElem = tester.widget<ElevatedButton>(buttonFinder);
+      expect(buttonElem.onPressed, isNull);
+
+      // Try tapping, nothing should happen
+      expect(message, isNull);
+      await tester.tap(buttonFinder);
+      await tester.pumpAndSettle();
+      expect(message, isNull);
+
+      // Update data model to pass the check
+      surfaceController.handleMessage(
+        UpdateDataModel(
+          surfaceId: surfaceId,
+          path: DataPath('/count'),
+          value: 1,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Button should now be enabled
+      ElevatedButton buttonElemAfter = tester.widget<ElevatedButton>(
+        buttonFinder,
+      );
+      expect(buttonElemAfter.onPressed, isNotNull);
+
+      // Try tapping, action should fire
+      await tester.tap(buttonFinder);
+      await tester.pumpAndSettle();
+      expect(message, isNotNull);
+    },
+  );
 }
 
 class MockFunction implements ClientFunction {

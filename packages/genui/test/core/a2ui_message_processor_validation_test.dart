@@ -33,5 +33,47 @@ void main() {
 
       await future;
     });
+
+    test(
+      'CreateSurface fails schema validation for invalid component',
+      () async {
+        final controller = SurfaceController(
+          catalogs: [BasicCatalogItems.asCatalog()],
+        );
+
+        final Future<void> future = expectLater(
+          controller.onSubmit,
+          emits(
+            predicate((ChatMessage message) {
+              final UiInteractionPart part =
+                  message.parts.uiInteractionParts.first;
+              final json = jsonDecode(part.interaction) as Map<String, dynamic>;
+              final error = json['error'] as Map<String, dynamic>;
+              return error['code'] == 'VALIDATION_FAILED' &&
+                  error['path'] == '/components/badText';
+            }),
+          ),
+        );
+
+        controller.handleMessage(
+          const CreateSurface(surfaceId: 'surf1', catalogId: basicCatalogId),
+        );
+
+        controller.handleMessage(
+          const UpdateComponents(
+            surfaceId: 'surf1',
+            components: [
+              Component(
+                id: 'badText',
+                type: 'Text',
+                properties: {},
+              ), // Missing 'text' property
+            ],
+          ),
+        );
+
+        await future;
+      },
+    );
   });
 }
