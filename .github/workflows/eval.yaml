@@ -26,7 +26,7 @@ concurrency:
 jobs:
   test:
     # Prevents the job from running on forks or fork PRs (which don't have access to secrets).
-    if: github.repository == 'flutter/genui' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    # if: github.repository == 'flutter/genui' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     name: examples/eval (${{ matrix.flutter_version }})
     runs-on: ${{ matrix.os }}
     strategy:
