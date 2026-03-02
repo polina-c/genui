@@ -56,6 +56,11 @@ jobs:
       - name: Install dependencies
         working-directory: examples/eval
         run: dart pub get
+      - name: check api key
+        working-directory: examples/eval
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
       - name: Run tests
         working-directory: examples/eval
         env:
