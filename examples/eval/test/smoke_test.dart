@@ -10,5 +10,6 @@ void main() {
   test('smoke test', () {
     final String key = apiKey();
     expect(key, isNotEmpty);
+    print('API Key: ${key.substring(0, 2)}...${key.substring(key.length - 2)}');
   });
 }
