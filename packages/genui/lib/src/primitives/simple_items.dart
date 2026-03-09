@@ -12,3 +12,10 @@ const String surfaceIdKey = 'surfaceId';
 
 /// Generates a unique ID (UUID v4).
 String generateId() => const Uuid().v4();
+
+class ComponentAddress {
+  final String surfaceId;
+  final String componentId;
+
+  ComponentAddress({required this.surfaceId, required this.componentId});
+}
