@@ -65,3 +65,7 @@ jobs:
       - name: Run tests 2
         working-directory: examples/eval
         run: flutter test
+      - name: Run tests 3
+        working-directory: examples/eval
+        run: |
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} flutter test
