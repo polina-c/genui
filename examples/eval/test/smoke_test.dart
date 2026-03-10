@@ -7,9 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'test_infra/io_get_api_key.dart';
 
 void main() {
-  test('smoke test', () {
+  test('test can read api key "$geminiApiKeyName"', () {
     final String key = apiKey();
     expect(key, isNotEmpty);
+    // ignore: avoid_print
     print('API Key: ${key.substring(0, 2)}...${key.substring(key.length - 2)}');
   });
 }
