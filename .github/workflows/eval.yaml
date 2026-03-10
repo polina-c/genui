@@ -46,8 +46,10 @@ jobs:
         with:
           channel: ${{ matrix.flutter_version }}
           cache: true
-      - name: check api key
+      - name: check api key 1
         run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+      - name: check api key 2
+        run: echo "GEMINI_API_KEY=$GEMINI_API_KEY"
       - name: Print Flutter version
         run: flutter --version
       - name: Cache Pub dependencies
