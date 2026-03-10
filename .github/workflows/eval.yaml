@@ -59,8 +59,9 @@ jobs:
       - name: Install dependencies
         working-directory: examples/eval
         run: dart pub get
-      - name: Run tests
+      - name: Run tests 1
         working-directory: examples/eval
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: flutter test --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+        run: flutter test --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+      - name: Run tests 2
+        working-directory: examples/eval
+        run: flutter test

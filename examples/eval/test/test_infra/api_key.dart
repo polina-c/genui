@@ -11,7 +11,7 @@ const geminiApiKeyName = 'GEMINI_API_KEY';
 /// Specify this when running the app with "-D GEMINI_API_KEY=$GEMINI_API_KEY"
 const String geminiApiKey = String.fromEnvironment(geminiApiKeyName);
 
-String apiKey() {
+String apiKeyForEval() {
   String apiKey = geminiApiKey.isEmpty
       ? Platform.environment[geminiApiKeyName] ?? ''
       : geminiApiKey;
