@@ -18,22 +18,36 @@ class ComponentContext {
 
   ComponentContext({required this.model, required this.address});
 
-  ListValueNotifier<T?> listNotifier<T>(ValueRef<List<T>> ref) =>
+  ListValueNotifier<T?> listNotifier<T>(ValueRefNode<List<T>> ref) =>
       throw UnimplementedError();
 
-  ValueNotifier<T?> valueNotifier<T>(ValueRef<T> ref) =>
+  ValueNotifier<T?> valueNotifier<T>(ValueRefNode<T> ref) =>
       throw UnimplementedError();
 
-  T? value<T>(ValueRef<T> ref) => ref.value(model);
+  T? value<T>(ValueRefNode<T> ref) => ref.value(model);
 
   void dispose() {}
 }
 
 /// A reference to a value in the data model.
-class ValueRef<T> {
+class ValueRefNode<T> {
   final String path;
 
-  ValueRef(this.path);
+  ValueRefNode(this.path);
 
   T? value(DataModel model) => throw UnimplementedError();
+}
+
+/// Decoder for [ValueRefNode].
+class ValueRefDecoder<T> extends ComponentDecoder<ValueRefNode<T>> {
+  ValueRefDecoder() : super(schema: _schema);
+
+  static final Schema _schema = A2uiSchemas.dataBindingSchema(
+    description: 'The list of currently selected values (or single value).',
+  );
+
+  @override
+  ValueRefNode<T> decode(Object json, ComponentContext context) {
+    return ValueRefNode(json as String);
+  }
 }

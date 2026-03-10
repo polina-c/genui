@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:json_schema_builder/json_schema_builder.dart';
 import 'package:meta/meta.dart';
 
@@ -71,7 +72,23 @@ sealed class OptionPickerNode {
 final class OptionsPickerDecoder extends ComponentDecoder<OptionPickerNode> {
   OptionsPickerDecoder() : super(schema: _schema);
 
-  static final _schema = throw UnimplementedError();
+  static final _schema = S.object(
+    description:
+        'A component that allows selecting one or more options from a list.',
+    properties: {
+      'label': S.string(description: 'The label for the group of options.'),
+      'options': OptionsDecoder().schema,
+      'value': A2uiSchemas.dataBindingSchema(
+        description: 'The list of currently selected values (or single value).',
+      ),
+      'variant': S.string(
+        description:
+            'A hint for how the choice picker should be displayed and behave.',
+        enumValues: ['multipleSelection', 'mutuallyExclusive'],
+      ),
+    },
+    required: ['options', 'value'],
+  );
 
   @override
   OptionPickerNode decode(Object? json, ComponentContext context) {
@@ -79,14 +96,12 @@ final class OptionsPickerDecoder extends ComponentDecoder<OptionPickerNode> {
     if (map['variant'] == 'multipleSelection') {
       return MultipleOptionPickerNode(
         options: OptionsDecoder().decode(json['options'], context).options,
-        selections: context.listNotifier(
-          ValueRef<Iterable<String>>(json['selection']),
-        ),
+        selections: ValueRefNode<Iterable<String>>(json['selection'] as String),
       );
     } else {
       return SingleOptionPickerNode(
         options: OptionsDecoder().decode(json['options'], context).options,
-        selection: context.valueNotifier(ValueRef(json['selection'])),
+        selection: ValueRefNode<String?>(json['selection'] as String),
       );
     }
   }
@@ -96,7 +111,7 @@ final class OptionsPickerDecoder extends ComponentDecoder<OptionPickerNode> {
 final class SingleOptionPickerNode extends OptionPickerNode {
   SingleOptionPickerNode({required super.options, required this.selection});
 
-  final ValueNotifier<String?> selection;
+  final ValueRefNode<String?> selection;
 }
 
 @immutable
@@ -107,6 +122,6 @@ final class MultipleOptionPickerNode extends OptionPickerNode {
     this.maxSelections,
   });
 
-  final ListNotifier<List<String>> selections;
+  final ValueRefNode<Iterable<String>> selections;
   final int? maxSelections;
 }
