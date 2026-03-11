@@ -15,7 +15,8 @@ jobs:
     - name: secret
       env:
         MY_TEST_VAR: ${{ secrets.MY_TEST_VAR }}
-        MY_VAR_NAME: 
+        MY_VAR_NAME: ${{ env.MY_VAR_NAME }}
       run: |
         echo "MY_TEST_VAR has ${#MY_TEST_VAR} chars"
         echo 'Hi ${{ env.MY_VAR_NAME }}'
+        echo "Hi $MY_VAR_NAME"
