@@ -7,8 +7,8 @@ on:
 
 jobs:
   test:
-    environment: eval
     runs-on: ubuntu-latest
+    environment: eval
     steps:
     - uses: actions/checkout@v2
 
