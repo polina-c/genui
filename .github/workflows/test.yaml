@@ -14,8 +14,8 @@ jobs:
 
     - name: secret
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} 
-        TEST  _KEY: ${{ secrets.TEST_KEY }} 
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        TEST_KEY: ${{ secrets.TEST_KEY }}
       run: |
-        echo "GEMINI_API_KEY: $GEMINI_API_KEY"
-        echo "TEST_KEY: $TEST_KEY"
+        if [ -n "$GEMINI_API_KEY" ]; then echo "GEMINI_API_KEY is set (${#GEMINI_API_KEY} chars)"; else echo "GEMINI_API_KEY is NOT set"; fi
+        if [ -n "$TEST_KEY" ]; then echo "TEST_KEY is set (${#TEST_KEY} chars)"; else echo "TEST_KEY is NOT set"; fi
