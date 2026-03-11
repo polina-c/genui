@@ -4,9 +4,10 @@ on:
   pull_request:
     branches:
       - main
-      
+
 jobs:
-  build:
+  test:
+    environment: eval
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
