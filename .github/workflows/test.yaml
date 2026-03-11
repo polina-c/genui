@@ -1,0 +1,17 @@
+name: CI/CD Pipeline
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Use the secret in an environment variable
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} 
+        TEST  _KEY: ${{ secrets.TEST_KEY }} 
+      run: |
+        echo "GEMINI_API_KEY: $GEMINI_API_KEY"
+        echo "TEST_KEY: $TEST_KEY"
