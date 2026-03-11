@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Use the secret in an environment variable
+    - name: secret
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} 
         TEST  _KEY: ${{ secrets.TEST_KEY }} 
