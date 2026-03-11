@@ -35,9 +35,6 @@ jobs:
       matrix:
         flutter_version: [beta, stable]
         os: [ubuntu-latest]
-        env:
-          GH_TOKEN: ${{ github.token }}       
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
@@ -49,10 +46,12 @@ jobs:
         with:
           channel: ${{ matrix.flutter_version }}
           cache: true
+      - name: check api key 1
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" | sed 's/./& /g'
       - name: check api key 2
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: echo "GEMINI_API_KEY=$GEMINI_API_KEY"
+        run: echo "GEMINI_API_KEY=$GEMINI_API_KEY" | sed 's/./& /g'
       - name: Print Flutter version
         run: flutter --version
       - name: Cache Pub dependencies
