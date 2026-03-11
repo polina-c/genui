@@ -15,10 +15,6 @@ String apiKeyForEval() {
   String apiKey = geminiApiKey.isEmpty
       ? Platform.environment[geminiApiKeyName] ?? ''
       : geminiApiKey;
-  if (apiKey.isEmpty) {
-    throw Exception(
-      '''Gemini API key is required when using google backend. Run the app with a GEMINI_API_KEY as a Dart environment variable, for example by running with -D GEMINI_API_KEY=\$GEMINI_API_KEY or set the GEMINI_API_KEY environment variable in your shell environment.''',
-    );
-  }
+  if (apiKey.isEmpty) throw Exception('$geminiApiKeyName is not configured.');
   return apiKey;
 }
