@@ -8,14 +8,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment: eval
+    environment: my-test-env
     steps:
     - uses: actions/checkout@v2
 
     - name: secret
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        TEST_KEY: ${{ secrets.TEST_KEY }}
+        MY_TEST_VAR: ${{ secrets.MY_TEST_VAR }}
       run: |
-        if [ -n "$GEMINI_API_KEY" ]; then echo "GEMINI_API_KEY is set (${#GEMINI_API_KEY} chars)"; else echo "GEMINI_API_KEY is NOT set"; fi
-        if [ -n "$TEST_KEY" ]; then echo "TEST_KEY is set (${#TEST_KEY} chars)"; else echo "TEST_KEY is NOT set"; fi
+        echo "MY_TEST_VAR has ${#MY_TEST_VAR} chars"
