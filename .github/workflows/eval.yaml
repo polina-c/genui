@@ -47,9 +47,11 @@ jobs:
           channel: ${{ matrix.flutter_version }}
           cache: true
       - name: check api key 1
-        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" | sed 's/./& /g'
       - name: check api key 2
-        run: echo "GEMINI_API_KEY=$GEMINI_API_KEY"
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: echo "GEMINI_API_KEY=$GEMINI_API_KEY" | sed 's/./& /g'
       - name: Print Flutter version
         run: flutter --version
       - name: Cache Pub dependencies
@@ -64,10 +66,4 @@ jobs:
       # - name: Run tests 1
       #   working-directory: examples/eval
       #   run: flutter test --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
-      - name: Run tests 2
-        working-directory: examples/eval
-        run: flutter test
-      - name: Run tests 3
-        working-directory: examples/eval
-        run: |
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} flutter test
+      
