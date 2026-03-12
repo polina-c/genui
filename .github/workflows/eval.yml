@@ -17,4 +17,4 @@ jobs:
           S="${{ secrets.MYSECRET }}"
           echo "MYSECRET has ${#S} characters"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
