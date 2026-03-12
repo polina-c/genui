@@ -1,9 +1,8 @@
 name: eval-workflow
 
 on:
-  push:
-    branches:
-      - main
+  push: 
+    # Workflow runs on push to any branch.
   schedule:
     - cron: "0 * * * *" # hourly
 
