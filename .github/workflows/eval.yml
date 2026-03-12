@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: eval
     steps:
-      - name: Check that key is available
+      - name: Check that REPO_GEMINI_API_KEY is set and available
         env:
-          GEMINI_API_KEY: ${{ secrets.ENV_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
         run: |
           echo "GEMINI_API_KEY has ${#GEMINI_API_KEY} characters"
           
