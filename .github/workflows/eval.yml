@@ -9,6 +9,8 @@ jobs:
   print-env:
     runs-on: ubuntu-latest
     environment: myenv
+    permissions:
+      environments: read
     steps:
       - name: Print variable and secret
         run: |
