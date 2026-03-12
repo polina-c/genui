@@ -18,7 +18,12 @@ jobs:
           echo "MYSECRET has ${#S} characters"
           echo "K=${K}"
           echo "S=${S}"
+          echo "REP_VAR=${REP_VAR}"
+          echo "REP_VAR=${{ vars.REP_VAR }}"
         env:
           GH_TOKEN: ${{ github.token }}
           K: ${{ vars.MYVAR }}
           S: ${{ secrets.MYSECRET }}
+          REP_VAR: ${{ vars.REP_VAR }}
+          
+
