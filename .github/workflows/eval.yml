@@ -1,0 +1,18 @@
+name: presubmit-eval
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  print-env:
+    runs-on: ubuntu-latest
+    environment: myenv
+    steps:
+      - name: Print variable and secret
+        run: |
+          echo "Variable MYVAR=${{ vars.MYVAR }}"
+          echo "Secret MYSECRET=${{ secrets.MYSECRET }}"
+          S="${{ secrets.MYSECRET }}"
+          echo "MYSECRET has ${#S} characters"
