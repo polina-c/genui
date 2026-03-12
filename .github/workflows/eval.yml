@@ -14,13 +14,13 @@ jobs:
     environment: eval
     steps:
       - name: Check that key is available
-        run: |
-          echo "ENV_KEY has ${#ENV_KEY} characters"
-          echo "REPO_KEY has ${#REPO_KEY} characters"
-          
         env:
-          ENV_KEY: ${{ secrets.ENV_GEMINI_API_KEY }}
-          REPO_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.ENV_GEMINI_API_KEY }}
+        run: |
+          echo "GEMINI_API_KEY has ${#GEMINI_API_KEY} characters"
+          
+        
+          
           
           
 
