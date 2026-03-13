@@ -15,10 +15,12 @@ jobs:
     steps:
       - name: Check that REPO_GEMINI_API_KEY is set and available
         env:
+          # REPO_GEMINI_API_KEY is expected to be set in the repository secrets
+          # See https://docs.github.com/en/actions/security-guides/encrypted-secrets
           GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
-            echo "ERROR: GEMINI_API_KEY is not set"
+            echo "ERROR: REPO_GEMINI_API_KEY is not set"
             exit 1
           fi
           echo "GEMINI_API_KEY has ${#GEMINI_API_KEY} characters"
