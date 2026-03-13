@@ -21,7 +21,7 @@ void main() {
     addTearDown(aiClient.dispose);
 
     final String result = await aiClient
-        .sendStream('Hello, how are you?', history: [])
+        .sendStream('Please, tell me a joke.', history: [])
         .first;
     expect(result, isNotEmpty);
     print('Result: $result');
