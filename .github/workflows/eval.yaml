@@ -24,13 +24,15 @@ jobs:
             exit 1
           fi
           echo "GEMINI_API_KEY has ${#GEMINI_API_KEY} characters"
-      - uses: subosito/flutter-action@e938fdf56512cc96ef2f93601a5a40bde3801046
+      - name: Install Flutter
+        uses: subosito/flutter-action@e938fdf56512cc96ef2f93601a5a40bde3801046
         with:
           channel: beta
           cache: true
       - name: Print Flutter version
         run: flutter --version
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Install dependencies
         working-directory: examples/eval
         run: dart pub get
