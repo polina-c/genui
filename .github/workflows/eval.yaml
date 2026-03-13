@@ -38,7 +38,7 @@ jobs:
           restore-keys: ${{ runner.os }}-pub-
       - name: Install dependencies
         working-directory: examples/eval
-        run: dart pub get
+        run: pwd && dart pub get
       - name: Run tests
         working-directory: examples/eval
         env:
