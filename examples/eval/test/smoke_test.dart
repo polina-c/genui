@@ -5,7 +5,6 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genui/genui.dart' as dartantic;
 
 import 'test_infra/ai_client.dart';
 import 'test_infra/api_key.dart';
@@ -25,7 +24,6 @@ void main() {
         .sendStream('Hello, how are you?', history: [])
         .first;
     expect(result, isNotEmpty);
-    print(result);
-    print(result);
+    print('Result: $result');
   });
 }
