@@ -1,59 +1,32 @@
-# Copyright 2025 The Flutter Authors.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
-
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-
-name: Eval CI
+name: eval-workflow
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  push: 
+    # Workflow runs on push to any branch.
   schedule:
-    # Tests may fail due to new dependency releases.
-    # Regular execution provides early detection of such regressions.
-    - cron: '0 * * * *' # hourly
+    - cron: "0 * * * *" # hourly
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+# TODO(polina-c): add steps that run tests
 
 jobs:
-  test:
-    # Prevents the job from running on forks or fork PRs (which don't have access to secrets).
-    # if: github.repository == 'flutter/genui' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-    name: examples/eval (${{ matrix.flutter_version }})
+  eval-job:
+    runs-on: ubuntu-latest
     environment: eval
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        flutter_version: [beta, stable]
-        os: [ubuntu-latest]
     steps:
-      - name: Check API key 1
+      - name: Check that REPO_GEMINI_API_KEY is set and available
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # REPO_GEMINI_API_KEY is expected to be set in the repository secrets
+          # See https://docs.github.com/en/actions/security-guides/encrypted-secrets
+          GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
         run: |
-          if [ -n "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY is set (${#GEMINI_API_KEY} chars)"
-          else
-            echo "GEMINI_API_KEY is NOT set"
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "ERROR: REPO_GEMINI_API_KEY is not set"
+            exit 1
           fi
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
-        with:
-          distribution: "zulu"
-          java-version: "17"
-          cache: "gradle"
+          echo "GEMINI_API_KEY has ${#GEMINI_API_KEY} characters"
       - uses: subosito/flutter-action@e938fdf56512cc96ef2f93601a5a40bde3801046
         with:
-          channel: ${{ matrix.flutter_version }}
+          channel: beta
           cache: true
       - name: Print Flutter version
         run: flutter --version
@@ -66,18 +39,15 @@ jobs:
       - name: Install dependencies
         working-directory: examples/eval
         run: dart pub get
-      - name: Check API key
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          if [ -n "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY is set (${#GEMINI_API_KEY} chars)"
-          else
-            echo "GEMINI_API_KEY is NOT set"
-          fi
       - name: Run tests
         working-directory: examples/eval
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
         run: flutter test --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+
+          
+        
+          
+          
+          
 
