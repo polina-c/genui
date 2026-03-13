@@ -11,6 +11,6 @@ void main() {
     final String key = apiKeyForEval();
     expect(key, isNotEmpty);
     // ignore: avoid_print
-    print('API Key: ${key.substring(0, 2)}...${key.substring(key.length - 2)}');
+    print('API Key: ${key.substring(0, 1)}...${key.substring(key.length - 1)}');
   });
 }
