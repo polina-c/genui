@@ -5,8 +5,6 @@
 include: package:lints/recommended.yaml
 
 analyzer:
-  errors:
-    avoid_print: ignore
   language:
     strict-casts: true
     strict-inference: true
