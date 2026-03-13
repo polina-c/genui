@@ -30,21 +30,22 @@ jobs:
           cache: true
       - name: Print Flutter version
         run: flutter --version
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Install dependencies
+        working-directory: examples/eval
+        run: dart pub get
+      - name: Run tests
+        working-directory: examples/eval
+        env:
+          GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
+        run: flutter test --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
       - name: Cache Pub dependencies
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
         with:
           path: ${{ env.PUB_CACHE }}
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
-      - name: Install dependencies
-        working-directory: examples/eval
-        run: pwd && dart pub get
-      - name: Run tests
-        working-directory: examples/eval
-        env:
-          GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
-        run: flutter test --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
-
+      
           
         
           
