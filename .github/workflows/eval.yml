@@ -17,6 +17,10 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.REPO_GEMINI_API_KEY }}
         run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "ERROR: GEMINI_API_KEY is not set"
+            exit 1
+          fi
           echo "GEMINI_API_KEY has ${#GEMINI_API_KEY} characters"
           
         
