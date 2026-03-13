@@ -2,15 +2,30 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flutter_test/flutter_test.dart';
+// ignore_for_file: avoid_print
 
+import 'package:flutter_test/flutter_test.dart';
+import 'package:genui/genui.dart' as dartantic;
+
+import 'test_infra/ai_client.dart';
 import 'test_infra/api_key.dart';
 
 void main() {
   test('test can read api key "$geminiApiKeyName"', () {
     final String key = apiKeyForEval();
     expect(key, isNotEmpty);
-    // ignore: avoid_print
     print('API Key: ${key.substring(0, 1)}...${key.substring(key.length - 1)}');
+  });
+
+  test('test can send message', () async {
+    final aiClient = DartanticAiClient();
+    addTearDown(aiClient.dispose);
+
+    final String result = await aiClient
+        .sendStream('Hello, how are you?', history: [])
+        .first;
+    expect(result, isNotEmpty);
+    print(result);
+    print(result);
   });
 }
