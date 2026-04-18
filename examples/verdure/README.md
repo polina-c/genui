@@ -33,7 +33,7 @@ b. Create a `.env` file with your Gemini API key:
 c. Install dependencies and run the server using UV:
 
    ```bash
-   uv run .
+   uv run verdure
    ```
 
    The server will start on `http://localhost:10002` by default.
