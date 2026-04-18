@@ -21,7 +21,7 @@ from typing import Any
 import jsonschema
 
 # --- IMPORT MODIFICATION ---
-from a2ui_schema import A2UI_SCHEMA
+from .a2ui_schema import A2UI_SCHEMA
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
@@ -29,14 +29,14 @@ from google.adk.models.lite_llm import LiteLlm
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
-from prompt_builder import (
+from .prompt_builder import (
     get_text_prompt,
     get_ui_prompt,
 )
 
 # --- END MODIFICATION ---
-from tools import get_landscape_options
-from ui_examples import LANDSCAPE_UI_EXAMPLES
+from .tools import get_landscape_options
+from .ui_examples import LANDSCAPE_UI_EXAMPLES
 
 logger = logging.getLogger(__name__)
 

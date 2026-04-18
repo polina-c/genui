@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # --- MODIFIED IMPORTS ---
-from a2ui_schema import A2UI_SCHEMA
-from ui_examples import LANDSCAPE_UI_EXAMPLES
+from .a2ui_schema import A2UI_SCHEMA
+from .ui_examples import LANDSCAPE_UI_EXAMPLES
 
 # --- END MODIFICATION ---
 

@@ -38,7 +38,7 @@ from a2a.utils import (
 )
 from a2a.utils.errors import ServerError
 from a2ui_ext import a2ui_MIME_TYPE
-from agent import LandscapeAgent
+from .agent import LandscapeAgent
 
 logger = logging.getLogger(__name__)
 
