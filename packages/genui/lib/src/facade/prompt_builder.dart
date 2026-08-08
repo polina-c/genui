@@ -6,8 +6,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../model/a2ui_message.dart';
 import '../model/catalog.dart';
+import '../primitives/constants.dart';
+import '../primitives/embedded_schemas.g.dart';
 import '../primitives/simple_items.dart';
 
 /// Common fragments for prompts, to explain agent behavior.
@@ -78,12 +79,14 @@ abstract class PromptBuilder {
   /// The builder will generate a prompt for a chat session,
   /// that instructs to create new surfaces for each response
   /// and restrict surface deletion and updates.
-  factory PromptBuilder.chat({
+  static PromptBuilder chat({
     required Catalog catalog,
     Iterable<String> systemPromptFragments = const [],
     String importancePrefix = defaultImportancePrefix,
     JsonMap? clientDataModel,
   }) {
+    final ({String commonTypes, String serverToClient}) schemas =
+        _loadSchemas();
     return _BasicPromptBuilder(
       catalog: catalog,
       systemPromptFragments: systemPromptFragments,
@@ -91,10 +94,12 @@ abstract class PromptBuilder {
       importancePrefix: importancePrefix,
       clientDataModel: clientDataModel,
       technicalPossibilities: const TechnicalPossibilities(),
+      commonTypesSchema: schemas.commonTypes,
+      serverToClientSchema: schemas.serverToClient,
     );
   }
 
-  factory PromptBuilder.custom({
+  static PromptBuilder custom({
     required Catalog catalog,
     required SurfaceOperations allowedOperations,
     Iterable<String> systemPromptFragments = const [],
@@ -103,6 +108,8 @@ abstract class PromptBuilder {
         const TechnicalPossibilities(),
     JsonMap? clientDataModel,
   }) {
+    final ({String commonTypes, String serverToClient}) schemas =
+        _loadSchemas();
     return _BasicPromptBuilder(
       catalog: catalog,
       systemPromptFragments: systemPromptFragments,
@@ -110,6 +117,15 @@ abstract class PromptBuilder {
       importancePrefix: importancePrefix,
       clientDataModel: clientDataModel,
       technicalPossibilities: technicalPossibilities,
+      commonTypesSchema: schemas.commonTypes,
+      serverToClientSchema: schemas.serverToClient,
+    );
+  }
+
+  static ({String commonTypes, String serverToClient}) _loadSchemas() {
+    return (
+      commonTypes: commonTypesSchemaJson,
+      serverToClient: serverToClientSchemaJson,
     );
   }
 
@@ -131,7 +147,7 @@ enum ProtocolMessages {
     explanation: 'Creates a new surface.',
     properties: '''
 Requires `surfaceId` (you must always use a unique ID for each created surface),
-`catalogId` (use the catalog ID provided in system instructions),
+`catalogId` (use the active catalog ID if provided in system instructions),
 and `sendDataModel: true`.
 ''',
     // TODO: figure out why we instruct AI to always set sendDataModel: true,
@@ -284,7 +300,7 @@ You can control the UI by outputting valid A2UI JSON messages wrapped in markdow
     if (create)
       '''
 To create a new UI:
-1. Output a ${ProtocolMessages.createSurface.tickedName} message with a unique `surfaceId` and `catalogId` (use the catalog ID provided in system instructions).
+1. Output a ${ProtocolMessages.createSurface.tickedName} message with a unique `surfaceId` and `catalogId` (use the active catalog ID if provided in system instructions).
 2. Output an ${ProtocolMessages.updateComponents.tickedName} message with the `surfaceId` and the component definitions.
 ''',
     if (!update)
@@ -332,9 +348,13 @@ final class _BasicPromptBuilder extends PromptBuilder {
     required this.importancePrefix,
     required this.clientDataModel,
     required this.technicalPossibilities,
+    required this.commonTypesSchema,
+    required this.serverToClientSchema,
   }) : super._();
 
   final Catalog catalog;
+  final String commonTypesSchema;
+  final String serverToClientSchema;
 
   final SurfaceOperations allowedOperations;
 
@@ -352,28 +372,77 @@ final class _BasicPromptBuilder extends PromptBuilder {
 
   final JsonMap? clientDataModel;
 
+  final TechnicalPossibilities technicalPossibilities;
+
   Iterable<String> _fragmentsToPrompt(Iterable<String> fragments) =>
       fragments.map((e) => e.trim());
 
-  final TechnicalPossibilities technicalPossibilities;
-
   @override
   Iterable<String> systemPrompt() {
-    final String a2uiSchema = A2uiMessage.a2uiMessageSchema(
-      catalog,
-    ).toJson(indent: '  ');
+    final String catalogSchema = _generateCatalogSchema(catalog);
+
+    final String cleanCommonTypes = commonTypesSchema.replaceAll(
+      commonTypesSchemaId,
+      'common_types.json',
+    );
+    final String cleanServerToClient = serverToClientSchema.replaceAll(
+      commonTypesSchemaId,
+      'common_types.json',
+    );
+
+    final String? activeCatalogId = catalog.catalogId;
 
     final fragments = <String>[
       ...systemPromptFragments,
       'Use the provided tools to respond to user using rich UI elements.',
+      if (activeCatalogId != null)
+        'The active catalog ID is: "$activeCatalogId". '
+            'You must use this catalog ID when creating surfaces.',
       ...technicalPossibilities.systemPromptFragment(),
       ...catalog.systemPromptFragments,
       ...allowedOperations.systemPromptFragments,
-      _fenced(a2uiSchema, sectionName: 'A2UI JSON SCHEMA'),
+      _fenced(cleanCommonTypes, sectionName: 'COMMON TYPES'),
+      _fenced(catalogSchema, sectionName: 'CATALOG SCHEMA'),
+      _fenced(cleanServerToClient, sectionName: 'MESSAGE SCHEMA'),
       ?_encodedDataModel(clientDataModel),
     ];
 
     return _fragmentsToPrompt(fragments);
+  }
+
+  String _generateCatalogSchema(Catalog catalog) {
+    final catalogJson = Map<String, dynamic>.from(
+      catalog.fullSchema.value as Map<String, dynamic>,
+    );
+
+    final Map<String, dynamic> functions = {
+      for (final func in catalog.functions)
+        func.name: {
+          'description': func.description,
+          'parameters': func.argumentSchema.value,
+          'returnType': func.returnType.value,
+        },
+    };
+
+    final defs = Map<String, dynamic>.from(
+      catalogJson[r'$defs'] as Map<String, dynamic>,
+    );
+    catalogJson[r'$defs'] = defs;
+
+    if (functions.isNotEmpty) {
+      catalogJson['functions'] = functions;
+      defs['anyFunction'] = {
+        'oneOf': [
+          for (final name in functions.keys) {r'$ref': '#/functions/$name'},
+        ],
+      };
+    } else {
+      catalogJson.remove('functions');
+      defs['anyFunction'] = {'not': <String, dynamic>{}};
+    }
+
+    final String json = const JsonEncoder.withIndent('  ').convert(catalogJson);
+    return json.replaceAll(commonTypesSchemaId, 'common_types.json');
   }
 
   static String? _encodedDataModel(JsonMap? clientDataModel) {
