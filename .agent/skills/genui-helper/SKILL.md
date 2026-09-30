@@ -65,6 +65,3 @@ When creating a new UI component in `genui`:
 ## Code visibility
 
 Make every code element (like class, function, methid, property, parameter, variable) as private as it can be.
-If tests need access, use the language's test-visibility mechanism.
-For example, in Dart, annotate the element with @visibleForTesting.
-
