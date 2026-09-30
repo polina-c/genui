@@ -66,5 +66,5 @@ When creating a new UI component in `genui`:
 
 Make every code element as private as it can be. If tests need access, use the
 language's test-visibility mechanism instead of making the element public.
-For example, in Dart, annotate the element with `@visibleForTesting`.
+For example, in Dart, remove the _ prefix and annotate the element with @visibleForTesting.
 
