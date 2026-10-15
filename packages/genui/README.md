@@ -449,3 +449,5 @@ Firebase has a
 for Apple's platforms, which might be higher than Flutter's default. Check your
 `Podfile` (for iOS) and `CMakeLists.txt` (for macOS) to ensure you're targeting
 a version that meets or exceeds Firebase's requirements.
+
+<!-- No-op change to run CI on main. Do not merge. -->
