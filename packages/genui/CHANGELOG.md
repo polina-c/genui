@@ -6,6 +6,11 @@
   [`a2ui_core`](https://pub.dev/packages/a2ui_core),
   [`a2ui_agent`](https://pub.dev/packages/a2ui_agent), and
   [`a2ui_flutter`](https://pub.dev/packages/a2ui_flutter).
+- **BREAKING**: genui no longer depends on `package:a2ui_core`. It runs on its
+  own copy of `a2ui_core` 0.1.0, exported as `package:genui/a2ui_core.dart`.
+  Import that library instead of `package:a2ui_core/a2ui_core.dart` for the
+  messages and other A2UI types you pass to or get from genui: types from
+  `package:a2ui_core` are no longer accepted.
 - Added `AsynchronousClientFunction` base class for single-shot asynchronous
   client functions returning a `Future` (via `executeAsync`), complementing
   `SynchronousClientFunction` (`executeSync`).
